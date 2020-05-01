@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pyro_cg", # Replace with your own username
-    version="0.0.2",
+    version="0.0.3",
     author="Craig Bakker",
     author_email="craig.bakker@pnnl.gov",
     description="A package for creating causal graphs in pyro",

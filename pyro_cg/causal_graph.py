@@ -14,7 +14,7 @@ import pyro
 
 import importlib
 
-from cg_node import cg_node
+from . import graph_node as gn
 
 # create a class of causal graphs
 
@@ -169,7 +169,7 @@ class cg_graph():
                     node_type = 'continuous'
                     print('BEL node type ' + str_temp + ' not known -- defaulting to continuous')
             
-            node_dict[entity_list[i]] = cg_node(np.sum(adj_mat[:,i]),entity_list[i],node_type)
+            node_dict[entity_list[i]] = gn.cg_node(np.sum(adj_mat[:,i]),entity_list[i],node_type)
         
         self.node_dict = node_dict
         

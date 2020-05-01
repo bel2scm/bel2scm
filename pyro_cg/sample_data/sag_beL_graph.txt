@@ -1,0 +1,87 @@
+# This document was created by PyBEL v0.14.6 and bel-resources v0.0.3 on Mon Apr  6 11:41:33 2020
+
+################################################################################
+#| Metadata
+################################################################################
+
+SET DOCUMENT Name = "Sialic Acid Graph"
+SET DOCUMENT Version = "1.0.0"
+SET DOCUMENT Description = "The downstream effects of sialic acid in immune signaling"
+SET DOCUMENT Authors = "Charles Tapley Hoyt"
+SET DOCUMENT ContactInfo = "cthoyt@gmail.com"
+
+################################################################################
+#| Namespaces
+################################################################################
+
+# Enumerated Namespaces
+# ---------------------
+DEFINE NAMESPACE CHEBI AS URL "https://raw.githubusercontent.com/pharmacome/conso/d67144bc27a21626a514837b3b4382413dd6866b/external/chebi-names.belns"
+DEFINE NAMESPACE GO AS URL "https://raw.githubusercontent.com/pharmacome/conso/d9d270e11aac480542c412d4222983a5f042b8ae/external/go-names.belns"
+DEFINE NAMESPACE HGNC AS URL "https://raw.githubusercontent.com/pharmacome/conso/d67144bc27a21626a514837b3b4382413dd6866b/external/hgnc-names.belns"
+
+################################################################################
+#| Annotations
+################################################################################
+
+# Enumerated Annotations
+# ----------------------
+DEFINE ANNOTATION Confidence AS URL "https://arty.scai.fraunhofer.de/artifactory/bel/annotation/confidence/confidence-1.0.0.belanno"
+
+# Regular Expression Annotations
+# ------------------------------
+DEFINE ANNOTATION Species AS PATTERN "^\d+$"
+
+################################################################################
+#| Statements
+################################################################################
+SET Citation = {"PubMed", "26438529"}
+
+SET SupportingText = "Sialic acid binding activates CD33, resulting in phosphorylation of the CD33 immunoreceptor tyrosine-based inhibitory motif (ITIM) domains and activation of the SHP-1 and SHP-2 tyrosine phosphatases [66, 67]."
+SET Confidence = "High"
+SET Species = "9606"
+complex(a(CHEBI:26667 ! "sialic acid"), p(HGNC:1659 ! CD33)) increases act(p(HGNC:1659 ! CD33))
+UNSET {Confidence, Species}
+SET Confidence = "High"
+SET Species = "9606"
+act(p(HGNC:1659 ! CD33)) increases p(HGNC:1659 ! CD33, pmod(Ph))
+UNSET {Confidence, Species}
+SET Confidence = "High"
+SET Species = "9606"
+act(p(HGNC:1659 ! CD33, pmod(Ph))) directlyIncreases act(p(HGNC:9658 ! PTPN6), ma(phos))
+UNSET {Confidence, Species}
+SET Confidence = "High"
+SET Species = "9606"
+act(p(HGNC:1659 ! CD33, pmod(Ph))) directlyIncreases act(p(HGNC:9644 ! PTPN11), ma(phos))
+UNSET {Confidence, Species}
+UNSET SupportingText
+SET SupportingText = "These phosphatases act on multiple substrates, including Syk, to inhibit immune activation [68, 69]. Hence, CD33 activation leads to increased SHP-1 and SHP-2 activity that antagonizes Syk, inhibiting ITAM-signaling proteins, possibly including TREM2/DAP12 (Fig. 1, [70, 71])."
+SET Confidence = "High"
+SET Species = "9606"
+act(p(HGNC:9658 ! PTPN6)) directlyDecreases act(p(HGNC:11491 ! SYK))
+UNSET {Confidence, Species}
+SET Confidence = "High"
+SET Species = "9606"
+act(p(HGNC:9644 ! PTPN11)) directlyDecreases act(p(HGNC:11491 ! SYK))
+UNSET {Confidence, Species}
+SET Confidence = "Low"
+SET Species = "9606"
+act(p(HGNC:11491 ! SYK)) increases act(p(HGNC:17761 ! TREM2))
+UNSET {Confidence, Species}
+SET Confidence = "Low"
+SET Species = "9606"
+act(p(HGNC:11491 ! SYK)) increases act(p(HGNC:12449 ! TYROBP))
+UNSET {Confidence, Species}
+UNSET SupportingText
+UNSET Citation
+
+################################################################################
+###############################################
+
+SET Citation = {"PubMed", "29048466"}
+SET SupportingText = "Automatically added by PyBEL"
+a(CHEBI:26667 ! "sialic acid") partOf complex(a(CHEBI:26667 ! "sialic acid"), p(HGNC:1659 ! CD33))
+p(HGNC:1659 ! CD33) partOf complex(a(CHEBI:26667 ! "sialic acid"), p(HGNC:1659 ! CD33))
+p(HGNC:1659 ! CD33) hasVariant p(HGNC:1659 ! CD33, pmod(Ph))
+UNSET SupportingText
+UNSET Citation

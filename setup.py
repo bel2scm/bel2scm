@@ -11,7 +11,7 @@ setuptools.setup(
     description="A package for creating causal graphs in pyro",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/cbakker2/pyro_cg",
+    url="https://github.com/COVID-19-Causal-Reasoning/bel2scm",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",

@@ -6,8 +6,6 @@ from scipy import stats
 
 import pybel as pb
 import json
-import time
-import csv
 
 import torch
 import pyro

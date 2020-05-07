@@ -13,6 +13,15 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/COVID-19-Causal-Reasoning/bel2scm",
     packages=setuptools.find_packages(),
+    install_requires=[
+    	'numpy',
+    	'torch',
+    	'pyro',
+    	'networkx',
+    	'scipy',
+    	'json',
+    	'pybel'
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

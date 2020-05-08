@@ -16,7 +16,7 @@ from . import graph_node as gn
 
 class cg_graph():
     
-    def __init__(self,str_list=[],bel_graph=[],json_file=[],type_dict=[],only_creases=True):
+    def __init__(self,str_list=[],bel_graph=[],json_file=[],type_dict=[],nano_pub = [], only_creases=True):
         
         self.only_creases = only_creases
         
@@ -102,6 +102,43 @@ class cg_graph():
             for item in loaded_json['edges']:
                 edge_list.append([item['from'],item['to'],''])
         
+        elif nano_pub:
+            # construct graph from json file
+            file1 = open(nano_pub)
+            loaded_json = json.load(file1)
+            
+            entity_list = []
+            edge_list = []
+            
+            for item in loaded_json[0]['nanopub']['assertions']:
+                sub_temp = str(item['subject'])
+                obj_temp = str(item['object'])
+                rel_temp = item['relation']
+                
+                if sub_temp not in entity_list:
+                    entity_list.append(sub_temp)
+                if obj_temp not in entity_list:
+                    entity_list.append(obj_temp)
+                
+                if only_creases:
+                    # ignore hasVariant, partOf relations
+
+                    if rel_temp.find('crease') > 0:
+                        edge_list.append([sub_temp,obj_temp,rel_temp])
+                
+                else:
+                    # check for duplicate edges
+                    nodes_temp = [sub_temp,obj_temp]
+                    list_temp = [[item[0],item[1]] for item in edge_list]
+                    if nodes_temp in list_temp:
+                        ind_temp = list_temp.index(nodes_temp)
+                        edge_list[ind_temp][2] += ',' + rel_temp
+                    else:
+                        edge_list.append([sub_temp,obj_temp,rel_temp])
+            
+                
+            
+        
         n_nodes = len(entity_list)
         self.n_nodes = n_nodes
 
@@ -152,7 +189,7 @@ class cg_graph():
             
             if str_list or json_file:
                 node_type = type_dict[entity_list[i]]
-            elif bel_graph:
+            elif bel_graph or nano_pub:
                 ind_temp = entity_list[i].find('(')
                 str_temp = entity_list[i][:ind_temp]
                 

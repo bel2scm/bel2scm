@@ -16,7 +16,7 @@ setuptools.setup(
     install_requires=[
     	'numpy',
     	'torch',
-    	'pyro',
+    	'pyro-ppl',
     	'networkx',
     	'scipy',
     	'json',

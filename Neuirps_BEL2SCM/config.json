@@ -12,6 +12,8 @@
     "cat_0": 0.5,
     "alpha": 0.5,
     "beta": 2.0,
+    "mu_n": 0,
+    "sigma_n": 0.1,
     "weights": 1.0,
     "threshold": 0.5
   },

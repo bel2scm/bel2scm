@@ -64,6 +64,23 @@ def get_transformation_sample(weights_t: list, p_sample_t: list):
     return sum(x * y * y for x, y in zip(weights_t, p_sample_t))
 
 
+def cat_parents(parent_label: list, parent_name: list, relation: list, w: list, samples: dict, groupby: list):
+    increase_parent = []
+    decrease_parent = []
+    weight_i = []
+    weight_d = []
+    for i in range(len(parent_label)):
+        if relation[i] == 'decreases' or relation[i] == 'directlyDecreases':
+            if parent_label[i] in groupby:
+                decrease_parent.append(samples[parent_name[i]])
+                weight_d.append(w[i])
+        else:
+            if parent_label[i] in groupby:
+                increase_parent.append(samples[parent_name[i]])
+                weight_i.append(w[i])
+    return increase_parent, decrease_parent, weight_i, weight_d
+
+
 def get_sample(child_name: str,
                child_label: str,
                parent_label: list,
@@ -80,7 +97,9 @@ def get_sample(child_name: str,
                increase_transformation,
                decrease_transformation,
                weights_ti: list,
-               weights_td: list) -> float:
+               weights_td: list,
+               ) -> (float, str):
+
     child_increase_N = get_abundance_sample(weights_ai, increase_abundance) + \
                        get_transformation_sample(weights_ti, increase_transformation)
 
@@ -113,4 +132,4 @@ def get_sample(child_name: str,
         else:
             child_N = torch.tensor(0.)
 
-    return child_N
+    return child_N, child_name_noise

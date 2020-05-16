@@ -174,8 +174,6 @@ class cg_graph():
             print('Cycle edges:')
             for item in cycle_edge_list:
                 print(item)
-<<<<<<< HEAD
-                
         
         node_dict = {}
         
@@ -203,8 +201,6 @@ class cg_graph():
             node_dict[entity_list[i]] = gn.cg_node(np.sum(adj_mat[:,i]),entity_list[i],node_type)
         
         self.node_dict = node_dict
-=======
->>>>>>> c7bcd673926cf6ef5fc12473ce49f1579f393675
         
         self.cond_list = []
         

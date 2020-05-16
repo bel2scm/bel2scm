@@ -35,7 +35,7 @@
                 {
                     "subject": "bp(GO:\"tumor necrosis factor-mediated signaling pathway\")",
                     "relation": "increases",
-                    "object": "act(complex(GO:\"NF-kappaB p50/p65 complex\"))",
+                    "object": "act(complex(GO:\"NF-kappaB complex\"))",
                     "validation": null
                 },
                 {

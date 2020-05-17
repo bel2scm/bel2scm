@@ -1,7 +1,78 @@
 from Neuirps_BEL2SCM.causal_utilities import *
+from Neuirps_BEL2SCM.Tree import Tree
+import json
+
+class SCM:
+    '''
+    4. Add functions as described below
+    '''
+    def __init__(self, bel_file_path, config_file_path):
+
+        # 1. get tree from bel
+        self.tree = Tree("nanopub_file", bel_file_path)
+        # 2. set parameters from config
+
+        # 3. Model
+        return self.model()
+
+    def _json_load(self, filepath):
+        try:
+            with open(filepath) as json_file:
+                return json.load(json_file)
+        except FileNotFoundError:
+            print("Error: Wrong file or file path")
+
+    def model(self):
+        return NotImplementedError
+
+    # [Todo]
+    def counterfactual_infernce(self):
+        return NotImplementedError
+
+    # [Todo]
+    def condition(self, condition_data):
+        '''
+        It conditions self.model with condition data
+        Returns: Conditioned pyro model
+        '''
+        # conditioned_model = pyro.condition(self.model, value)
+        return NotImplementedError
+
+    # [Todo]
+    def intervention(self, intervention_data):
+        '''
+        It intervenes self.model with intervention data
+        Returns: intervention pyro model
+        '''
+        # intervention_model = pyro.do(self.model, value)
+        return NotImplementedError
+
+    # [Todo]
+    def infer(self, target_variables, infer_method):
+        '''
+        this performs inference for target_variables
+        Args:
+            target_variables:
+            infer_method:
+
+        Returns: Not sure now
+
+        '''
+        return NotImplementedError
+
+    # [Todo]
+    def fit_parameters(self, data):
+        '''
+        Fits parameters of self.model
+        Args:
+            data:
+
+        Returns: Nothing
+
+        '''
 
 
-def SCM(nodes, config):
+def scm(nodes, config):
     """
     Description: This function is to be build a Structural Causal Model for
                   for any child-parent cluster

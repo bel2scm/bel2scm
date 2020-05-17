@@ -18,6 +18,7 @@ class SCM:
         # 3. Build model
         self._build_model()
 
+    # [Todo] Move to Utils
     def _json_load(self, filepath):
         try:
             with open(filepath) as json_file:

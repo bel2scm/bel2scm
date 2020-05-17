@@ -19,23 +19,6 @@ class Tree:
         self.file_type = file_type
         self.file_name = file_name
 
-        if file_type == 'str_list':
-            self.get_nodes_from_str_list(file_name)
-
-        elif file_type == 'bel_graph':
-            self.get_nodes_from_bel_graph(file_name)
-
-        elif file_type == 'jgf_file':
-            self.get_nodes_from_jgf_file(file_name)
-
-        elif file_type == 'nanopub_file':
-            self.get_nodes_from_nanopub_file(file_name)
-        else:
-            raise Exception("Invalid file type!")
-
-        return self.nodes
-
-
     def get_nodes_from_str_list(self, file_name):
         '''
         Disc
@@ -129,16 +112,13 @@ class Tree:
                 obj_node.update_parent_information_in_child_node(sub_temp, rel_temp)
                 self.nodes[obj_temp] = obj_node
 
-    def get_nodes_from_nanopub_file(self, file_name):
+    def get_nodes_from_nanopub_file(self):
         '''
-
-        Args:
-            file_name:
 
         Returns:
 
         '''
-        json_text = open(file_name)
+        json_text = open(self.file_name)
         loaded_nanopub = json.load(json_text)
 
         for item in loaded_nanopub[0]['nanopub']['assertions']:

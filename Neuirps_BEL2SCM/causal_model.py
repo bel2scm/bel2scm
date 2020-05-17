@@ -8,21 +8,24 @@ class SCM:
     '''
     def __init__(self, bel_file_path, config_file_path):
 
-        # 1. get tree from bel
-        self.tree = Tree("nanopub_file", bel_file_path)
-        # 2. set parameters from config
+        # 1. get tree from bel - Done.
+        tree_object = Tree("nanopub_file", bel_file_path)
+        self.tree = tree_object.get_nodes_from_nanopub_file()
 
-        # 3. Model
-        return self.model()
+        # 2. set parameters from config - Done.
+        self.config = self._json_load(config_file_path)
+
+        # 3. Build model
+        self._build_model()
 
     def _json_load(self, filepath):
         try:
             with open(filepath) as json_file:
                 return json.load(json_file)
         except FileNotFoundError:
-            print("Error: Wrong file or file path")
+            print("Error: Wrong file or file path.")
 
-    def model(self):
+    def _build_model(self):
         return NotImplementedError
 
     # [Todo]

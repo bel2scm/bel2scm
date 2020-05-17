@@ -1,5 +1,5 @@
-class Node():
-    LABEL_DICT = {
+
+LABEL_DICT = {
         'transformation': ['sec', 'surf', 'deg', 'rxn', 'tloc', 'fromLoc',
                            'products', 'reactants', 'toLoc'],
         'abundance': ['a', 'abundance', 'complex', 'complexAbundance', 'geneAbundance', 'g',
@@ -11,7 +11,9 @@ class Node():
         'process': ['biologicalProcess', 'bp'],
         'pathology': ['pathology', 'path']
     }
-    VALID_RELATIONS = ["increases", "decreases", "directlyIncreases", "directlyDecreases"]
+VALID_RELATIONS = ["increases", "decreases", "directlyIncreases", "directlyDecreases"]
+
+class Node():
 
     def __init__(self):
         # root is True by default. We change this variable in self.update_parent_information_in_child_node()
@@ -27,7 +29,10 @@ class Node():
 
     def get_node_information(self, sub, obj, rel):
         # If relation is valid
-        if rel in self.VALID_RELATIONS:
+        if rel in VALID_RELATIONS:
+
+            # Update name
+            self.name = sub
 
             # Get parent and child type
             p = sub
@@ -40,11 +45,11 @@ class Node():
             self.node_label = "Others"
             child_label = "Others"
 
-            for label in self.LABEL_DICT:
-                if ptype in self.LABEL_DICT[label]:
+            for label in LABEL_DICT:
+                if ptype in LABEL_DICT[label]:
                     self.node_label = label
-            for label in self.LABEL_DICT:
-                if ctype in self.LABEL_DICT[label]:
+            for label in LABEL_DICT:
+                if ctype in LABEL_DICT[label]:
                     child_label = label
 
             # Add Child to children_info
@@ -66,7 +71,7 @@ class Node():
     def update_child_information_in_parent_node(self, obj, rel):
 
         # If relation is valid
-        if rel in self.VALID_RELATIONS:
+        if rel in VALID_RELATIONS:
 
             # Get Child type
             c = obj
@@ -76,8 +81,8 @@ class Node():
             # child_label will be Others unless they find a match in LABEL_DICT
             child_label = 'Others'
 
-            for label in self.LABEL_DICT:
-                if ctype in self.LABEL_DICT[label]:
+            for label in LABEL_DICT:
+                if ctype in LABEL_DICT[label]:
                     child_label = label
 
             # Add child to children_info
@@ -102,7 +107,7 @@ class Node():
         self.root = False
 
         # If relation is valid
-        if rel in self.VALID_RELATIONS:
+        if rel in VALID_RELATIONS:
 
             # Get parent type
             p = sub
@@ -111,8 +116,8 @@ class Node():
             # Get parent label
             # parent_label will be "Others" unless they find a match in LABEL_DICT
             parent_label = "Others"
-            for label in self.LABEL_DICT:
-                if ptype in self.LABEL_DICT[label]:
+            for label in LABEL_DICT:
+                if ptype in LABEL_DICT[label]:
                     parent_label = label
 
             # Add parent to parent_info

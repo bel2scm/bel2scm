@@ -8,6 +8,22 @@ from pyro.infer import Importance, EmpiricalMarginal
 from torch.distributions.transforms import AffineTransform
 import pyro.distributions as dist
 
+PYRO_DISTRIBUTIONS = {
+    "Categorical": dist.Categorical,
+    "Normal": dist.Normal,
+    "LogNormal": dist.LogNormal,
+    "Gamma": dist.Gamma,
+    "Delta": dist.Delta,
+    "MultivariateNormal": dist.MultivariateNormal,
+    "BetaBinomial": dist.BetaBinomial
+}
+
+def json_load(filepath):
+    try:
+        with open(filepath) as json_file:
+            return json.load(json_file)
+    except FileNotFoundError:
+        print("Error: Wrong file or file path.")
 
 def get_distribution(node_dist: str, dist_parameters: list) -> dist:
     """

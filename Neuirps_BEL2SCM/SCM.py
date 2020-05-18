@@ -1,5 +1,6 @@
 from Neuirps_BEL2SCM.Utils import *
 from Neuirps_BEL2SCM.BelGraph import BelGraph
+from Neuirps_BEL2SCM.Utils import json_load
 import json
 
 
@@ -13,21 +14,16 @@ class SCM:
         self.graph = BelGraph("nanopub_file", bel_file_path).construct_graph_from_nanopub_file()
 
         # 2. set parameters from config - Done.
-        self.config = self._json_load(config_file_path)
+        self.config = json_load(config_file_path)
+        self._set_config_parameters()
 
         # 3. Build model
         self._build_model()
 
-    # [Todo] Move to Utils
-    def _json_load(self, filepath):
-        try:
-            with open(filepath) as json_file:
-                return json.load(json_file)
-        except FileNotFoundError:
-            print("Error: Wrong file or file path.")
-
     def _build_model(self):
-        return NotImplementedError
+
+        graph = self.graph
+
 
     # [Todo]
     def counterfactual_infernce(self):
@@ -74,6 +70,10 @@ class SCM:
         Returns: Nothing
 
         '''
+
+    def _set_config_parameters(self):
+
+        pass
 
 
 def scm(nodes, config):

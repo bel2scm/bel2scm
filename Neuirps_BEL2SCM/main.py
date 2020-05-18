@@ -1,6 +1,6 @@
 import json
 # from Neuirps_BEL2SCM.extract_nodes import get_nodes
-from Neuirps_BEL2SCM.causal_model import SCM
+from Neuirps_BEL2SCM.SCM import SCM
 
 
 def main():

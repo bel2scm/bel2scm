@@ -1,6 +1,7 @@
-from Neuirps_BEL2SCM.causal_utilities import *
-from Neuirps_BEL2SCM.Tree import Tree
+from Neuirps_BEL2SCM.Utils import *
+from Neuirps_BEL2SCM.BelGraph import BelGraph
 import json
+
 
 class SCM:
     '''
@@ -9,8 +10,8 @@ class SCM:
     def __init__(self, bel_file_path, config_file_path):
 
         # 1. get tree from bel - Done.
-        tree_object = Tree("nanopub_file", bel_file_path)
-        self.tree = tree_object.get_nodes_from_nanopub_file()
+        graph_object = BelGraph("nanopub_file", bel_file_path)
+        self.graph = graph_object.construct_graph_from_nanopub_file()
 
         # 2. set parameters from config - Done.
         self.config = self._json_load(config_file_path)

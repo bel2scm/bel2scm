@@ -1,4 +1,4 @@
-from Neuirps_BEL2SCM.nodes import *
+from Neuirps_BEL2SCM.Node import *
 import json
 
 ## a generic function to take BEL statements as input
@@ -8,7 +8,7 @@ import json
 ## Created with the assumptions that inputs are bel statements of some sort
 
 
-class Tree:
+class BelGraph:
     '''
     It loads all the nodes from given input BEL statements.
     '''
@@ -19,7 +19,7 @@ class Tree:
         self.file_type = file_type
         self.file_name = file_name
 
-    def get_nodes_from_str_list(self, file_name):
+    def construct_graph_from_str_list(self, file_name):
         '''
         Disc
         Args:
@@ -50,7 +50,7 @@ class Tree:
                 obj_node.update_parent_information_in_child_node(sub_temp, rel_temp)
                 self.nodes[obj_temp] = obj_node
 
-    def get_nodes_from_bel_graph(self, file_name):
+    def construct_graph_from_bel_graph(self, file_name):
         '''
 
         Args:
@@ -81,7 +81,7 @@ class Tree:
                 obj_node.update_parent_information_in_child_node(sub_temp, rel_temp)
                 self.nodes[obj_temp] = obj_node
 
-    def get_nodes_from_jgf_file(self, file_name):
+    def construct_graph_from_jgf_file(self, file_name):
         '''
 
         Args:
@@ -112,7 +112,7 @@ class Tree:
                 obj_node.update_parent_information_in_child_node(sub_temp, rel_temp)
                 self.nodes[obj_temp] = obj_node
 
-    def get_nodes_from_nanopub_file(self):
+    def construct_graph_from_nanopub_file(self):
         '''
 
         Returns:

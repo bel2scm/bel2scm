@@ -1,0 +1,27 @@
+{
+  "scm_parameters": {
+    "mu_a": 0.0,
+    "sigma_a": 1.0,
+    "mu_t": 0.0,
+    "sigma_t": 1.0,
+    "cat_1": 0.5,
+    "cat_0": 0.5,
+    "alpha": 0.5,
+    "beta": 2.0,
+    "mu_n": 0,
+    "sigma_n": 0.1,
+    "weights": 1.0,
+    "threshold": 0.5
+  },
+  "node_label_distribution_info": {
+    "activity": "Categorical",
+    "abundance": "Lognormal",
+    "transformation": "Lognormal",
+    "reaction": "Normal",
+    "process": "Categorical",
+    "pathology": "Categorical",
+    "Others": "Lognormal"
+  },
+  "exogenous_var_distribution_info": "Normal",
+  "relation_type": "AND"
+}

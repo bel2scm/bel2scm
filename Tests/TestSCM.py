@@ -31,13 +31,13 @@ class TestSCM(unittest.TestCase):
         prior_weight_check = "prior_weight" in config.keys()
         prior_threshold = "prior_threshold" in config.keys()
         node_label_distribution_info = "node_label_distribution_info" in config.keys()
-        exogenous_var_distribution_info = "exogenous_var_distribution_info" in config.keys()
+        exogenous_distribution_info = "exogenous_distribution_info" in config.keys()
         relation_type = "relation_type" in config.keys()
 
         self.assertTrue(prior_weight_check)
         self.assertTrue(prior_threshold)
         self.assertTrue(node_label_distribution_info)
-        self.assertTrue(exogenous_var_distribution_info)
+        self.assertTrue(exogenous_distribution_info)
         self.assertTrue(relation_type)
 
     def _get_unique_name_count_from_bel_assertion(self, bel_assertions):

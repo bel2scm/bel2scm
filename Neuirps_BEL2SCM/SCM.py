@@ -1,8 +1,18 @@
 from Neuirps_BEL2SCM.Utils import *
 from Neuirps_BEL2SCM.BelGraph import BelGraph
 from Neuirps_BEL2SCM.Utils import json_load
+import pyro
 import json
 
+PYRO_DISTRIBUTIONS = {
+    "Categorical": pyro.distributions.Categorical,
+    "Normal": pyro.distributions.Normal,
+    "LogNormal": pyro.distributions.LogNormal,
+    "Gamma": pyro.distributions.Gamma,
+    "Delta": pyro.distributions.Delta,
+    "MultivariateNormal": pyro.distributions.MultivariateNormal,
+    "BetaBinomial": pyro.distributions.BetaBinomial
+}
 
 class SCM:
     '''
@@ -14,8 +24,7 @@ class SCM:
         self.graph = BelGraph("nanopub_file", bel_file_path).construct_graph_from_nanopub_file()
 
         # 2. set parameters from config - Done.
-        self.config = json_load(config_file_path)
-        self._set_config_parameters()
+        self.config = Config(config_file_path)
 
         # 3. Build model
         self._build_model()
@@ -71,9 +80,62 @@ class SCM:
 
         '''
 
+
+class Config:
+    '''
+    Loads config file.
+    '''
+    def __init__(self, config_file_path):
+        self.config_dict = json_load(config_file_path)
+        #self._check_config()
+        self._set_config_parameters()
+
     def _set_config_parameters(self):
 
+        config = self.config_dict
+        self.prior_weight = config["prior_weight"]
+        self.prior_threshold = config["prior_threshold"]
+        self.node_label_distribution_info = self._get_pyro_dist_from_text(config["node_label_distribution_info"])
+        self.exogenous_distribution_info = self._get_exogenous_dist_from_text(config["exogenous_distribution_info"])
+        self.relation_type = config["relation_type"]
+
+    def _get_pyro_dist_from_text(self, node_label_distribution_info):
+        '''
+        Converts string distribution names in config to pyro distributions. The names should be exact match.
+        Args:
+            node_label_distribution_info:
+
+        Returns:
+
+        '''
+        label_pyro_dist_dict = {}
+        for label, dist_with_params in node_label_distribution_info.items():
+            # Get distribution name and its parameters
+            dist_str = list(dist_with_params.keys())[0]
+            dist_params = dist_with_params[dist_str]
+
+            # Convert distribution name to pyro distribution
+            if dist_str in PYRO_DISTRIBUTIONS:
+                label_pyro_dist_dict[label] = (PYRO_DISTRIBUTIONS[dist_str], dist_params)
+            else:
+                raise Exception("Distribution not supported.")
+        return label_pyro_dist_dict
+
+    def _check_config(self):
+        # [Todo] - Check the syntax of config just like we did in the testcase.
         pass
+
+    def _get_exogenous_dist_from_text(self, exogenous_distribution_info):
+
+        # Get distribution name and its parameters
+        dist_str = list(exogenous_distribution_info.keys())[0]
+        dist_params = exogenous_distribution_info[dist_str]
+
+        # Convert distribution name to pyro distribution
+        if dist_str in PYRO_DISTRIBUTIONS:
+            return (PYRO_DISTRIBUTIONS[dist_str], dist_params)
+        else:
+            raise Exception("Distribution not supported.")
 
 
 def scm(nodes, config):

@@ -1,4 +1,4 @@
-# Example Package
+# bel2scm
 
 This package is for creating Structural Causal Models (SCMs) in Pyro and evaluating various conditions with those models.  
 

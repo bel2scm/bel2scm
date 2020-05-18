@@ -1,5 +1,5 @@
 import pytest
-from Neuirps_BEL2SCM.nodes import Node
+from Neuirps_BEL2SCM.Node import Node
 
 ## creating test node
 

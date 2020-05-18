@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="bel2scm", # Replace with your own username
-    version="0.0.3",
+    version="0.0.4",
     author="Craig Bakker",
     author_email="craig.bakker@pnnl.gov",
     description="A package for creating causal graphs in pyro",

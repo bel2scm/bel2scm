@@ -147,3 +147,15 @@ class BelGraph:
                 obj_node.update_parent_information_in_child_node(subject, relation)
                 self.nodes[object] = obj_node
         return self.nodes
+
+    def get_nodes_with_no_parents(self):
+        # new dictionary to add nodes with no parents
+        node_dict_with_no_parents = {}
+
+        if len(self.nodes) > 0:
+            for key, node in self.nodes.items():
+                if node.root:
+                    node_dict_with_no_parents[key] = node
+            return node_dict_with_no_parents
+        else:
+            raise Exception("Empty graph.")

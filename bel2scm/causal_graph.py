@@ -15,12 +15,16 @@ from . import graph_node as gn
 # create a class of causal graphs
 
 class cg_graph():
+    """define a superclass for causal graphs"""
     
     def __init__(self):
         return
     
     
     def proc_data(self,b_or_mle,type_dict={}):
+        """ take the list of edges and entities (i.e., nodes) and process that information to produce
+        parent -> children and child -> parent mappings
+        initialize all of the nodes of the causal graph"""
         
         self.b_or_mle = b_or_mle
         n_nodes = len(self.entity_list)
@@ -130,7 +134,7 @@ class cg_graph():
         
     
     def remove_edge(self,edge_rem):
-        # remove all of the edges in edge_rem
+        """remove all of the edges in edge_rem from the causal graph"""
         
         for item in edge_rem:
             ind_remove = [i for i in range(0,len(self.edge_list)) 
@@ -156,8 +160,8 @@ class cg_graph():
                 self.entity_list[item] for item in self.child_ind_list[i]]
         return
     
-    def prob_init(self,data_in,lr):
-        # initialize all of the nodes' probability distributions given data_in
+    def prob_init(self,data_in,lr=1e-3):
+        """initialize all of the nodes' probability distributions given data_in; lr is the learning rate"""
         
         exog_list = []
         prob_dict = {}
@@ -179,7 +183,7 @@ class cg_graph():
         return
         
     def model_sample(self):
-        # produce a dictionary of samples for all variables in the graph
+        """produce a dictionary of samples for all variables in the graph"""
         
         # define exogenous samples
         
@@ -207,7 +211,7 @@ class cg_graph():
         return sample_dict
     
     def model_cond_sample(self,data_dict):
-        # sample the graph given the conditioned variables in data_dict
+        """sample the graph given the conditioned variables in data_dict"""
         
         data_in = {}
         for item in data_dict:
@@ -217,7 +221,7 @@ class cg_graph():
         return cond_model()
         
     def model_do_sample(self,do_dict):
-        # sample the graph given the do-variables in do_dict
+        """sample the graph given the do-variables in do_dict"""
         
         data_in = {}
         for item in do_dict:
@@ -227,7 +231,7 @@ class cg_graph():
         return do_model()
     
     def model_do_cond_sample(self,do_dict,data_dict):
-        # sample the graph given do-variables in do_dict and conditioned variables in data_dict
+        """sample the graph given do-variables in do_dict and conditioned variables in data_dict"""
         
         if np.any([[item1 == item2 for item1 in do_dict] for item2 in data_dict]):
             print('overlapping lists!')
@@ -246,8 +250,9 @@ class cg_graph():
             return cond_model()
     
     def model_counterfact(self,obs_dict,do_dict_counter):
-        # find conditional distribution on exogenous variables given observations in obs_dict 
-        # and do variable values in do_dict_counter
+        """find conditional distribution on exogenous variables given observations in obs_dict 
+        and do variable values in do_dict_counter"""
+        
         cond_dict = self.model_cond_sample(obs_dict)
         cond_dict_temp = {}
         for item in self.exog_list:
@@ -258,8 +263,9 @@ class cg_graph():
         
         
     def cond_mut_info(self,target,test,cond,data_in):
-        # calculate the conditional mutual information between target and test given data_in - I(target:test|cond)
-        # just uses input data, but have to bin data (creating discrete distribution) to perform calculations
+        """calculate the conditional mutual information between target and test given data_in
+        I(target:test|cond) just uses input data, but it's necessary to bin data 
+        (creating discrete distribution) to perform calculations"""
         
         n_data = len(data_in)
         
@@ -306,9 +312,8 @@ class cg_graph():
         return H_xz + H_yz - H_xyz - H_z
         
     def g_test(self,name,data_in):
-        # do the G-test on a single variable of interest 
-        # determine if causal graph captures underlying distribution
-        # have to bin data to perform calculations
+        """do the G-test on a single variable of interest determine if causal graph captures underlying distribution
+        have to bin data to perform calculations"""
         
         name_ind = self.entity_list.index(name[0])
         
@@ -341,8 +346,8 @@ class cg_graph():
         return g_val,p_val
         
     def tot_effect(self,target,do_dict,do_prime_dict,n_samples):
-        # calculate the total effect of changing an intervention from do_dict_prime values to do_dict values
-        # on the variables in target
+        """calculate the total effect of changing an intervention from do_dict_prime values to do_dict values
+        on the variables in target"""
         
         var_array = np.zeros((n_samples,len(target)))
         var_prime_array = np.zeros((n_samples,len(target)))
@@ -364,8 +369,8 @@ class cg_graph():
         return result_dict
     
     def cd_effect(self,target,do_dict,do_prime_dict,med_dict,n_samples):
-        # calculate the controlled direct effect of changing an intervention from do_dict_prime to do_dict values
-        # on the variables in target given fixed mediating values
+        """calculate the controlled direct effect of changing an intervention from do_dict_prime to do_dict values
+        on the variables in target given fixed mediating values"""
         
         new_do_dict = {**do_dict, **med_dict}
         new_do_prime_dict = {**do_prime_dict, **med_dict}
@@ -391,8 +396,8 @@ class cg_graph():
         
         
     def nd_effect(self,target,do_dict,do_prime_dict,n_samples):
-        # calculate the natural direct effect of changing an intervention from do_dict_prime values to do_dict 
-        # values on the variables in target
+        """calculate the natural direct effect of changing an intervention from do_dict_prime values to do_dict 
+        values on the variables in target"""
         
         # identify parents of target variables that aren't in the do_dicts
         
@@ -427,8 +432,8 @@ class cg_graph():
         return result_dict
         
     def ni_effect(self,target,do_dict,do_prime_dict,n_samples):
-        # calculate the natural indirect effect of changing an intervention from do_dict_prime values to do_dict 
-        # values on the variables in target
+        """calculate the natural indirect effect of changing an intervention from do_dict_prime values to do_dict 
+        values on the variables in target"""
         
         # identify parents of target variables that aren't in the do_dicts
         
@@ -472,7 +477,7 @@ class cg_graph():
         
   
     def write_to_cf(self,filename,spacing):
-        # write the causal graph to a text file to import into causal fusion
+        """write the causal graph to a text file to import into causal fusion"""
         
         pos_dict = nx.drawing.layout.planar_layout(self.graph)
         
@@ -544,6 +549,7 @@ class cg_graph():
             json.dump(write_dict, json_file)
         
 class str_graph(cg_graph):
+    """define class of causal graphs initialized using a list of BEL-statements represented as strings"""
     
     def __init__(self,str_list,b_or_mle,type_dict={}):
         
@@ -584,6 +590,7 @@ class str_graph(cg_graph):
         return
 
 class bel_graph(cg_graph):
+    """define class of causal graphs initialized using a pyBEL graph"""
     
     def __init__(self,bel_graph,b_or_mle,type_dict={},subset_rels=False):
         
@@ -629,6 +636,7 @@ class bel_graph(cg_graph):
         return
     
 class cf_graph(cg_graph):
+    """define class of causal graphs initialized using a json file generated by exporting from Causal Fusion"""
     
     def __init__(self,json_file,b_or_mle,type_dict={}):
         

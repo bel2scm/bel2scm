@@ -13,6 +13,7 @@ import pyro
 # generate data for the ice cream use case
 
 def indep_vars(n_samples):
+    """ generate temperature, cloudiness, and precipitation as (relatively) independent variables"""
     
     T_list = []
     C_list = []
@@ -30,6 +31,8 @@ def indep_vars(n_samples):
     return T_list,C_list,P_list
 
 def dep_vars(T_list,C_list,P_list):
+    """feed in existing temperature, cloudiness, and preciptation data lists to produce a corresponding list
+    of ice cream consumption"""
     
     n_pts = len(T_list)
     
@@ -50,6 +53,7 @@ def dep_vars(T_list,C_list,P_list):
     return I_list
 
 def data_gen(n_data):
+    """generate n_data number of data tuples"""
     temp,cloud,precip = indep_vars(n_data)
     icream = dep_vars(temp,cloud,precip)
     tot_data = torch.Tensor([temp,cloud,precip,icream])

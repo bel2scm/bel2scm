@@ -5,6 +5,8 @@ import pyro
 # create class of causal graph nodes
 
 class cg_node():
+    """ Define a superclass of nodes for a causal graph"""
+    
     def __init__(self,n_inputs,name,node_type):
         
         self.n_inputs = n_inputs
@@ -19,6 +21,7 @@ class cg_node():
         return
 
 class bayes_node(cg_node):
+    """ Define a node that uses a Bayesian approach to learn the node's conditional distribution from data"""
     
     def __init__(self,n_inputs,name,node_type):
         super().__init__(n_inputs,name,node_type)
@@ -27,6 +30,8 @@ class bayes_node(cg_node):
         
     
     def model_Bernoulli(self,var_data,parent_data):
+        """ model distribution for Bernoulli-distributed output variable"""
+        
         mu0 = torch.zeros(self.n_inputs+1)
         sig_sq0 = torch.ones(self.n_inputs+1)
         n_data = var_data.size()[0]
@@ -39,7 +44,8 @@ class bayes_node(cg_node):
             
         return
 
-    def guide_Bernoulli(self,var_data,parent_data):        
+    def guide_Bernoulli(self,var_data,parent_data):
+        """guide function for Benoulli-distributed output variable"""
 
         mu_j = pyro.param('mu_j_' + self.name,torch.ones(self.n_inputs+1),
             constraint=torch.distributions.constraints.positive)
@@ -52,6 +58,8 @@ class bayes_node(cg_node):
         
         
     def model_Normal(self,var_data,parent_data):
+        """ model distribution for Normal-distributed output variable"""
+        
         alpha0 = torch.ones(self.n_inputs+1)
         beta0 = torch.ones(self.n_inputs+1)
         mu0 = torch.ones(self.n_inputs+1)
@@ -71,6 +79,8 @@ class bayes_node(cg_node):
         return
 
     def guide_Normal(self,var_data,parent_data):
+        """guide function for Normal-distributed output variable"""
+        
         alpha_j = pyro.param('alpha_j_' + self.name,torch.ones(self.n_inputs+1),
             constraint=torch.distributions.constraints.positive)
         beta_j = pyro.param('beta_j_' + self.name,torch.ones(self.n_inputs+1),
@@ -88,7 +98,9 @@ class bayes_node(cg_node):
         return
     
     
-    def model_Lognormal(self,var_data,parent_data):
+    def model_Lognormal(self,var_data,parent_data):    
+        """model distribution for Lognormal-distributed output variable"""
+        
         alpha0 = torch.ones(self.n_inputs+1)
         beta0 = torch.ones(self.n_inputs+1)
         mu0 = torch.ones(self.n_inputs+1)
@@ -108,6 +120,8 @@ class bayes_node(cg_node):
         return
 
     def guide_Lognormal(self,var_data,parent_data):
+        """guide function for Lognormal-distributed output variable"""
+        
         
         alpha_j = pyro.param('alpha_j_' + self.name,torch.ones(self.n_inputs+1),
             constraint=torch.distributions.constraints.positive)
@@ -127,6 +141,8 @@ class bayes_node(cg_node):
     
     
     def model_Exponential(self,var_data,parent_data):
+        """model distribution for Exponential-distributed output variable"""
+        
         alpha0 = torch.ones(self.n_inputs+1)
         beta0 = torch.ones(self.n_inputs+1)
         n_data = var_data.size()[0]
@@ -140,6 +156,7 @@ class bayes_node(cg_node):
         return
 
     def guide_Exponential(self,var_data,parent_data):
+        """guide function for Exponential-distributed output variable"""
         
         alpha_j = pyro.param('alpha_j_' + self.name,torch.ones(self.n_inputs+1),
             constraint=torch.distributions.constraints.positive)
@@ -152,6 +169,8 @@ class bayes_node(cg_node):
         
         
     def model_Gamma(self,var_data,parent_data):
+        """model distribution for Gamma-distributed output variable"""
+        
         p0 = torch.ones(self.n_inputs+1)
         q0 = torch.ones(self.n_inputs+1)
         r0 = torch.ones(self.n_inputs+1)
@@ -171,6 +190,7 @@ class bayes_node(cg_node):
         return
 
     def guide_Gamma(self,var_data,parent_data):
+        """guide function for Gamma-distributed output variable"""
         
         p_j = pyro.param('p_j_' + self.name,torch.ones(self.n_inputs+1),
             constraint=torch.distributions.constraints.positive)
@@ -190,6 +210,10 @@ class bayes_node(cg_node):
         
     
     def prob_init(self,input_data,var_data,lr):
+        """learn the parameters associated with the relevant distributions
+        input_data - (n_data,n_parents) pytorch tensor of parent data
+        var_data - pytorch tensor of node output data
+        lr - learning rate to use for SVI"""
         
         # set up the optimizer
         adam_params = {"lr": lr, "betas": (0.90, 0.999)}
@@ -244,6 +268,7 @@ class bayes_node(cg_node):
         return
     
     def sample(self,data_in=[]):
+        """sample the node with data_in providing the parent data (if any) to define the relevant distribution"""
         
         if self.n_inputs == 0:
             if self.node_type == 'Bernoulli':
@@ -339,13 +364,15 @@ class bayes_node(cg_node):
         return y
     
 class mle_node(cg_node):
-    
+    """ Define a node that uses a Maximum-Likelihood Estimation approach to learn the 
+    node's conditional distribution from data"""
     def __init__(self,n_inputs,name,node_type):
         super().__init__(n_inputs,name,node_type)
         
         return
     
     def batch_calc(self):
+        """define the indices needed for doing mini-batch training on the input data"""
         # break up data into mini-batches for training the node parameters
         self.bat_per_epoch = int(self.n_data/self.batch_size)
 
@@ -359,46 +386,48 @@ class mle_node(cg_node):
         return indices
     
     def reg_calc_bin(self,data_vec,var_j,var_jk):
-        # calculate the probability associated with the Bernoulli distribution given the input data
-        # use sigmoid to ensure that 0 < p < 1
+        """calculate the probability associated with the Bernoulli distribution given the input data
+         use sigmoid to ensure that 0 < p < 1 """
         return torch.sigmoid(torch.matmul(data_vec,var_j[:self.n_inputs]) + var_j[self.n_inputs] 
             + torch.sum(torch.matmul(data_vec,var_jk)*data_vec,dim=-1))
 
     def reg_calc_abs(self,data_vec,var_j,var_jk):
-        # calculate the parameter given the input data
-        # use abs to ensure that its >= 0
+        """ calculate the parameter given the input data
+         use abs to ensure that its >= 0 """
         return torch.abs(torch.matmul(data_vec,var_j[:self.n_inputs]) + var_j[self.n_inputs] 
             + torch.sum(torch.matmul(data_vec,var_jk)*data_vec,dim=-1))
     
     def reg_calc(self,data_vec,var_j,var_jk):
-        # calculate the parameter given the input data
-        # use abs to ensure that its >= 0
+        """calculate the parameter given the input data"""
         return (torch.matmul(data_vec,var_j[:self.n_inputs]) + var_j[self.n_inputs] 
             + torch.sum(torch.matmul(data_vec,var_jk)*data_vec,dim=-1))
 
     def bernoulli_log_fcn(self,data_in,p_var):
-        # calculate negative (for minimization, not maximization) log-likelihood for the Bernoulli distribution
+        """calculate negative (for minimization, not maximization) log-likelihood for the Bernoulli distribution"""
         return -torch.mean(data_in*torch.log(p_var) + (1-data_in)*torch.log(1-p_var))
 
     def gamma_log_fcn(self,data_in,alpha_var,beta_var):
-        # calculate negative (for minimization, not maximization) log-likelihood for the Gamma distribution
+        """calculate negative (for minimization, not maximization) log-likelihood for the Gamma distribution"""
         return -torch.mean(alpha_var*torch.log(beta_var) + (alpha_var-1)*torch.log(data_in)
             - beta_var*data_in - torch.lgamma(alpha_var))
     
     def normal_log_fcn(self,data_in,mu_var,sig_sq_var):
-        # calculate negative (for minimization, not maximization) log-likelihood for the Normal distribution       
+        """calculate negative (for minimization, not maximization) log-likelihood for the Normal distribution"""
         return torch.mean(torch.log(sig_sq_var))/2. + torch.mean((data_in - mu_var)**2/sig_sq_var)/2.
     
     def lognormal_log_fcn(self,data_in,mu_var,sig_sq_var):
-        # calculate negative (for minimization, not maximization) log-likelihood for the Lognormal distribution       
+        """calculate negative (for minimization, not maximization) log-likelihood for the Lognormal distribution"""
         return torch.mean(torch.log(sig_sq_var))/2. + torch.mean((torch.log(data_in) - mu_var)**2/sig_sq_var)/2.
     
     def exponential_log_fcn(self,data_in,lamb_var):
-        # calculate negative (for minimization, not maximization) log-likelihood for the Exponential distribution       
+        """calculate negative (for minimization, not maximization) log-likelihood for the Exponential distribution"""
         return -torch.mean(torch.log(lamb_var) - lamb_var*data_in)
     
     def bernoulli_init(self,input_data,var_data,lr):
-        # calculate Bernoulli MLE
+        """calculate Bernoulli MLE for node parameters
+        input_data - (n_data,n_parents) pytorch tensor for parent data
+        var_data - pytorch tensor of node output data
+        lr - learning rate for the training process"""
         
         if self.n_inputs == 0:
             self.p_jk = []
@@ -427,7 +456,10 @@ class mle_node(cg_node):
         return loss_tot
     
     def gamma_init(self,input_data,var_data,lr):
-        # calculate Gamma MLE
+        """calculate Gamma MLE for node parameters
+        input_data - (n_data,n_parents) pytorch tensor for parent data
+        var_data - pytorch tensor of node output data
+        lr - learning rate for the training process"""
         
         if self.n_inputs == 0:
                 
@@ -485,7 +517,10 @@ class mle_node(cg_node):
         return loss_tot
     
     def normal_init(self,input_data,var_data,lr):
-        # calculate Normal MLE
+        """calculate normal MLE for node parameters
+        input_data - (n_data,n_parents) pytorch tensor for parent data
+        var_data - pytorch tensor of node output data
+        lr - learning rate for the training process"""
         
         if self.n_inputs == 0:
                 
@@ -527,7 +562,10 @@ class mle_node(cg_node):
         return loss_tot
     
     def lognormal_init(self,input_data,var_data,lr):
-        # calculate Lognormal MLE
+        """calculate Lognormal MLE for node parameters
+        input_data - (n_data,n_parents) pytorch tensor for parent data
+        var_data - pytorch tensor of node output data
+        lr - learning rate for the training process"""
         
         if self.n_inputs == 0:
                 
@@ -569,7 +607,10 @@ class mle_node(cg_node):
         return loss_tot
     
     def exponential_init(self,input_data,var_data,lr):
-        # calculate Exponential MLE
+        """calculate Exponential MLE for node parameters
+        input_data - (n_data,n_parents) pytorch tensor for parent data
+        var_data - pytorch tensor of node output data
+        lr - learning rate for the training process"""
         
         if self.n_inputs == 0:
             self.lamb_jk = []
@@ -597,9 +638,8 @@ class mle_node(cg_node):
                 
     
     def prob_init(self,input_data,var_data,lr):
-        # calculate probability distribution parameters for node probability distributions
-        # distribution parameters are quadratic functions of input variables
-        # assumes that output variables are either Benoulli- or Gamma-distributed
+        """ calculate probability distribution parameters for node probability distributions
+        distribution parameters are quadratic functions of input variables"""
         
         # need to adjust max_epochs and learning rate
         
@@ -645,7 +685,7 @@ class mle_node(cg_node):
         return
     
     def sample(self,data_in=[]):
-        # sample your output variable given input data (for a non-exogenous variable)
+        """sample your output variable given input data (for a non-exogenous variable)"""
         
         if self.node_type == 'Bernoulli':
             if self.n_inputs == 0:

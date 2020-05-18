@@ -15,8 +15,8 @@ def main():
     # print(SCM(nodes, config))
 
     # bel and config file path
-    bel_file_path = "E:\Github\Bel2SCM\COVID-19-new.json"
-    config_file_path = "E:\Github\Bel2SCM\config.json"
+    bel_file_path = "E:\\Github\\Bel2SCM\\bel2scm\\Tests\\BELSourceFiles\\COVID-19-new.json"
+    config_file_path = "E:\\Github\\Bel2SCM\\bel2scm\\Tests\\Configs\\COVID-19-config.json"
 
     scm = SCM(bel_file_path, config_file_path)
 

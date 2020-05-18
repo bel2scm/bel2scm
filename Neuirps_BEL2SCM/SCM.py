@@ -10,8 +10,7 @@ class SCM:
     def __init__(self, bel_file_path, config_file_path):
 
         # 1. get tree from bel - Done.
-        graph_object = BelGraph("nanopub_file", bel_file_path)
-        self.graph = graph_object.construct_graph_from_nanopub_file()
+        self.graph = BelGraph("nanopub_file", bel_file_path).construct_graph_from_nanopub_file()
 
         # 2. set parameters from config - Done.
         self.config = self._json_load(config_file_path)

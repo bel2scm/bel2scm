@@ -146,3 +146,4 @@ class BelGraph:
                 obj_node.name = object
                 obj_node.update_parent_information_in_child_node(subject, relation)
                 self.nodes[object] = obj_node
+        return self.nodes

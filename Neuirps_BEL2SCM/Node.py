@@ -119,6 +119,13 @@ class Node():
             for label in LABEL_DICT:
                 if ptype in LABEL_DICT[label]:
                     parent_label = label
+            if self.node_label == "":
+                ctype = self._get_type(self.name)
+                self.node_label = "Others"
+                for label in LABEL_DICT:
+                    if ctype in LABEL_DICT[label]:
+                        self.node_label = label
+
 
             # Add parent to parent_info
             parent_dict = {
@@ -135,22 +142,22 @@ class Node():
                 "update_parent_information_in_child_node()::: Subject {0} is skipped because relation {1} is not a valid relation."
                 .format(sub, rel))
 
-    def __eq__(self, other):
-        if self.root == other.root and \
-                self.name == other.name and \
-                self.children == other.children and \
-                self.parent_relations == other.parent_relations and \
-                self.child_relations == other.child_relations and \
-                self.node_type == other.node_type and \
-                self.node_label == other.node_label and \
-                self.children_type == other.children_type and \
-                self.children_label == other.children_label and \
-                self.parents == other.parents and \
-                self.parent_type == other.parent_type and \
-                self.parent_label == other.parent_label:
-            return True
-        else:
-            return False
+    # def __eq__(self, other):
+    #     if self.root == other.root and \
+    #             self.name == other.name and \
+    #             self.children == other.children and \
+    #             self.parent_relations == other.parent_relations and \
+    #             self.child_relations == other.child_relations and \
+    #             self.node_type == other.node_type and \
+    #             self.node_label == other.node_label and \
+    #             self.children_type == other.children_type and \
+    #             self.children_label == other.children_label and \
+    #             self.parents == other.parents and \
+    #             self.parent_type == other.parent_type and \
+    #             self.parent_label == other.parent_label:
+    #         return True
+    #     else:
+    #         return False
 
     def _get_type(self, str):
         idx = str.find('(')

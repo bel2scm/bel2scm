@@ -1,10 +1,14 @@
 from Neuirps_BEL2SCM.Utils import *
 from Neuirps_BEL2SCM.BelGraph import BelGraph
 from Neuirps_BEL2SCM.Utils import json_load
+from Neuirps_BEL2SCM.Utils import all_parents_visited
+from Neuirps_BEL2SCM.Utils import get_sample
 import pyro
+from itertools import chain
 import json
 
 PYRO_DISTRIBUTIONS = {
+
     "Categorical": pyro.distributions.Categorical,
     "Normal": pyro.distributions.Normal,
     "LogNormal": pyro.distributions.LogNormal,
@@ -25,6 +29,7 @@ class SCM:
 
         # 2. set parameters from config - Done.
         self.config = Config(config_file_path)
+        self.roots = BelGraph("nanopub_file", bel_file_path).get_nodes_with_no_parents()
 
         # 3. Build model
         self._build_model()
@@ -32,6 +37,30 @@ class SCM:
     def _build_model(self):
 
         graph = self.graph
+        config = self.config
+        roots = self.roots
+        samples = dict()
+        node_list = list()
+        visited = list()
+        for node in roots.keys():
+            samples[node] = get_sample(roots[node], config)
+            node_list.append(roots[node].children_info.keys())
+            visited.append(node)
+        node_list = list(chain.from_iterable(node_list))
+        if len(node_list) == 0:
+            raise Exception("No edges found.")
+        while len(node_list) > 0:
+            current_node = node_list[0]
+            if current_node not in visited and all_parents_visited(graph[current_node], visited):
+                samples[current_node] = get_sample(graph[current_node], config)
+                child = list(graph[current_node].children_info.keys())
+                node_list.extend(child)
+                # node_list = list(chain.from_iterable(node_list))
+                visited.append(current_node)
+                node_list.pop(0)
+            else:
+                node_list.pop(0)
+
 
 
     # [Todo]
@@ -137,27 +166,17 @@ class Config:
         else:
             raise Exception("Distribution not supported.")
 
+"""
 
 def scm(nodes, config):
-    """
+
     Description: This function is to be build a Structural Causal Model for
                   for any child-parent cluster
     Parameters: knowledge graph as dataframe,
                 threshold for cutoff
                 weights for each parents
     Returns: sampled values for all nodes in tensor format
-    """
-    pyro_settings = config["pyro_settings"]
-    node_settings = config["node_type_settings"]
-    exogenous_var_settings = config["exogenous_var_settings"]
-    threshold = pyro_settings["threshold"]
-    weight = pyro_settings["weights"]
-    samples = {}
-    exogenous = []
-    current_node = None
-    root_list = []
-    node_list = []
-    visited = []
+
 
     for node in nodes:
         if nodes[node].root == True:
@@ -260,3 +279,4 @@ def scm(nodes, config):
         node_list.pop(0)
 
     return samples
+"""

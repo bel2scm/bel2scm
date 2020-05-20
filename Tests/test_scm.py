@@ -7,11 +7,11 @@ class TestSCM(unittest.TestCase):
 
     def test_scm_integration_test(self):
 
-        from Neuirps_BEL2SCM.SCM import SCM
-        from Neuirps_BEL2SCM.Utils import json_load
+        from Neuirps_BEL2SCM.scm import SCM
+        from Neuirps_BEL2SCM.utils import json_load
 
-        bel_file_path = "E:\\Github\\Bel2SCM\\bel2scm\\Tests\\BELSourceFiles\\COVID-19-new.json"
-        config_file_path = "E:\\Github\\Bel2SCM\\bel2scm\\Tests\\Configs\\COVID-19-config.json"
+        bel_file_path = "../Tests/BELSourceFiles/small-IGF-pwy.nanopub.graphdati.json"
+        config_file_path = "../Tests/Configs/COVID-19-config.json"
 
         scm = SCM(bel_file_path, config_file_path)
 
@@ -21,9 +21,9 @@ class TestSCM(unittest.TestCase):
         self.assertEqual(len(scm.graph), bel_assertion_count)
 
     def test_config(self):
-        from Neuirps_BEL2SCM.Utils import json_load
+        from Neuirps_BEL2SCM.utils import json_load
 
-        config_file_path = "E:\\Github\\Bel2SCM\\bel2scm\\Tests\\Configs\\COVID-19-config.json"
+        config_file_path = "../Tests/Configs/COVID-19-config.json"
 
         config = json_load(config_file_path)
 
@@ -49,6 +49,18 @@ class TestSCM(unittest.TestCase):
                 names.append(assertion["object"])
 
         return len(names)
+
+    def test_model(self):
+        from Neuirps_BEL2SCM.scm import SCM
+        from Neuirps_BEL2SCM.utils import json_load
+        bel_file_path = "../Tests/BELSourceFiles/small-IGF-pwy.nanopub.graphdati.json"
+        config_file_path = "../Tests/Configs/COVID-19-config.json"
+
+        scm = SCM(bel_file_path, config_file_path)
+
+        bel_assertions = json_load(bel_file_path)[0]['nanopub']['assertions']
+        scm._build_model()
+
 
 if __name__ == '__main__':
     unittest.main()

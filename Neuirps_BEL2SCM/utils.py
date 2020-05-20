@@ -1,13 +1,13 @@
-import numpy as np
 # import matplotlib.pyplot as plt
 # import scipy as sp
 import json
-import torch
+
 import pyro
-from pyro.infer import Importance, EmpiricalMarginal
-from torch.distributions.transforms import AffineTransform
 import pyro.distributions as dist
-from Neuirps_BEL2SCM.Node import Node
+import torch
+
+from Neuirps_BEL2SCM.node import Node
+from Neuirps_BEL2SCM.relation_types import RelationTypes
 
 PYRO_DISTRIBUTIONS = {
 
@@ -21,7 +21,6 @@ PYRO_DISTRIBUTIONS = {
 }
 
 
-
 def json_load(filepath):
     try:
         with open(filepath) as json_file:
@@ -33,26 +32,20 @@ def json_load(filepath):
 def all_parents_visited(node: Node, visited: list) -> bool:
     parents = list(node.parent_info.keys())
     visited_parents = list(set(visited).intersection(parents))
-    if len(visited_parents) == len(parents):
-        return True
-    else:
-        return False
+    return len(visited_parents) == len(parents)
 
-# def get_distribution(node_dist: str, dist_parameters: list) -> dist:
-#     """
-#     Description: This function is to get the distribution for a node based on its type
-#     Parameters: the node's type
-#     Returns: sampled values for node in tensor format based on its type
-#     """
-#
-#     if node_dist == 'Lognormal':
-#         return dist.LogNormal(torch.tensor(dist_parameters[0]), torch.tensor(dist_parameters[1]))
-#     if node_dist == 'Process':
-#         return dist.Categorical(torch.tensor(dist_parameters))
-#     if node_dist == "Gamma":
-#         return dist.Gamma(torch.tensor(dist_parameters[0]), torch.tensor(dist_parameters[1]))
-#     if node_dist == "Normal":
-#         return dist.Normal(torch.tensor(dist_parameters[0]), torch.tensor(dist_parameters[1]))
+
+def get_distribution(distribution_info: tuple) -> dist:
+    """
+    Description: This function is to get the distribution for a node based on its type
+    Parameters: the node's type
+    Returns: sampled values for node in tensor format based on its type
+    """
+    pyro_dist = distribution_info[0]
+    pyro_params = distribution_info[1]
+    if pyro_dist.__name__ == 'Categorical':
+        return pyro_dist(torch.tensor(pyro_params))
+    return pyro_dist(pyro_params[0], pyro_params[1])
 
 
 def check_increase(x: float, threshold: float) -> float:
@@ -63,11 +56,7 @@ def check_increase(x: float, threshold: float) -> float:
     Returns:     1.0 if value is greater than set threshold
                  else 0.0
     """
-
-    if x > threshold:
-        return 1.0
-    else:
-        return 0.0
+    return 0.0 if x > threshold else 1.0
 
 
 def check_decrease(x: float, threshold: float) -> float:
@@ -78,11 +67,7 @@ def check_decrease(x: float, threshold: float) -> float:
     Returns:     0.0 if value is greater than set threshold
                  else 1.0
     """
-
-    if x > threshold:
-        return 0.0
-    else:
-        return 1.0
+    return 0.0 if x > threshold else 1.0
 
 
 def get_abundance_sample(weights_a: list, p_sample_a: list):
@@ -93,38 +78,43 @@ def get_transformation_sample(weights_t: list, p_sample_t: list):
     return sum(x * y * y for x, y in zip(weights_t, p_sample_t))
 
 
-def cat_parents(parent_label: list, parent_name: list, relation: list, w: list, samples: dict, groupby: list):
-    increase_parent = []
-    decrease_parent = []
-    weight_i = []
-    weight_d = []
-    for i in range(len(parent_label)):
-        if relation[i] == 'decreases' or relation[i] == 'directlyDecreases':
-            if parent_label[i] in groupby:
-                decrease_parent.append(samples[parent_name[i]])
-                weight_d.append(w[i])
-        else:
-            if parent_label[i] in groupby:
-                increase_parent.append(samples[parent_name[i]])
-                weight_i.append(w[i])
-    return increase_parent, decrease_parent, weight_i, weight_d
+def get_parent_samples(node: Node, samples: dict) -> list:
+    parent_samples = list()
+    for p in list(node.parent_info.keys()):
+        parent_samples.append(samples[p])
+    return parent_samples
 
 
-def get_sample(node, config):
+def sample_with_and_relation(node, config, parent_samples):
+    pass
+
+
+def get_sample(node: Node, config: dict, parent_samples=[]):
     exog_name = node.name + "_N"
-    pyro_dist_exog = config.exogenous_distribution_info[0]
-    pyro_params = config.exogenous_distribution_info[1]
-    exog = pyro.sample(exog_name, pyro_dist_exog(pyro_params[0], pyro_params[1]))
-    pyro_dist_node = config.node_label_distribution_info[node.node_label][0]
-    pyro_params_node = config.node_label_distribution_info[node.node_label][1]
+    exog = pyro.sample(exog_name, get_distribution(config.exogenous_distribution_info))
 
-    # print(pyro_params_node)
-    # if node.root == True:
-    #     pass
-        # return pyro.sample(node.name, pyro.Delta())
+    if node.root:
+        node_dist = get_distribution(config.node_label_distribution_info[node.node_label])
+        node_sample = pyro.sample("node_sample", node_dist)
+        return pyro.sample(node.name, pyro.distributions.Delta(exog + node_sample))
+    if config.relation_type == RelationTypes.AND.value:
+        return sample_with_and_relation(node, config, parent_samples)
 
-
-
+# def cat_parents(parent_label: list, parent_name: list, relation: list, w: list, samples: dict, groupby: list):
+#     increase_parent = []
+#     decrease_parent = []
+#     weight_i = []
+#     weight_d = []
+#     for i in range(len(parent_label)):
+#         if relation[i] == 'decreases' or relation[i] == 'directlyDecreases':
+#             if parent_label[i] in groupby:
+#                 decrease_parent.append(samples[parent_name[i]])
+#                 weight_d.append(w[i])
+#         else:
+#             if parent_label[i] in groupby:
+#                 increase_parent.append(samples[parent_name[i]])
+#                 weight_i.append(w[i])
+#     return increase_parent, decrease_parent, weight_i, weight_d
 
 # def get_sample(child_name: str,
 #                child_label: str,

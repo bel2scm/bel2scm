@@ -1,11 +1,12 @@
-from Neuirps_BEL2SCM.Utils import *
-from Neuirps_BEL2SCM.BelGraph import BelGraph
-from Neuirps_BEL2SCM.Utils import json_load
-from Neuirps_BEL2SCM.Utils import all_parents_visited
-from Neuirps_BEL2SCM.Utils import get_sample
-import pyro
 from itertools import chain
-import json
+
+import pyro
+
+from Neuirps_BEL2SCM.bel_graph import BelGraph
+from Neuirps_BEL2SCM.utils import *
+from Neuirps_BEL2SCM.utils import all_parents_visited
+from Neuirps_BEL2SCM.utils import get_sample
+from Neuirps_BEL2SCM.utils import json_load
 
 PYRO_DISTRIBUTIONS = {
 
@@ -35,27 +36,29 @@ class SCM:
         self._build_model()
 
     def _build_model(self):
-
         graph = self.graph
         config = self.config
         roots = self.roots
         samples = dict()
         node_list = list()
         visited = list()
+
         for node in roots.keys():
             samples[node] = get_sample(roots[node], config)
             node_list.append(roots[node].children_info.keys())
             visited.append(node)
         node_list = list(chain.from_iterable(node_list))
+
         if len(node_list) == 0:
             raise Exception("No edges found.")
+
         while len(node_list) > 0:
             current_node = node_list[0]
             if current_node not in visited and all_parents_visited(graph[current_node], visited):
-                samples[current_node] = get_sample(graph[current_node], config)
+                parent_samples = get_parent_samples(graph[current_node], samples)
+                samples[current_node] = get_sample(graph[current_node], config, parent_samples)
                 child = list(graph[current_node].children_info.keys())
                 node_list.extend(child)
-                # node_list = list(chain.from_iterable(node_list))
                 visited.append(current_node)
                 node_list.pop(0)
             else:
@@ -64,7 +67,7 @@ class SCM:
 
 
     # [Todo]
-    def counterfactual_infernce(self):
+    def counterfactual_inference(self):
         return NotImplementedError
 
     # [Todo]

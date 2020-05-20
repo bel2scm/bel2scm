@@ -1,5 +1,7 @@
-from Neuirps_BEL2SCM.Node import *
 import json
+
+from Neuirps_BEL2SCM.node import *
+
 
 ## a generic function to take BEL statements as input
 ## in any form and return a data structure as output
@@ -90,8 +92,8 @@ class BelGraph:
         Returns:
 
         '''
-        file1 = open(file_name)
-        loaded_jgf = json.load(file1)
+        with open(file_name) as file1:
+            loaded_jgf = json.load(file1)
 
         for item in loaded_jgf['graph']['edges']:
             sub_temp = item['source']
@@ -118,8 +120,8 @@ class BelGraph:
         Returns:
 
         '''
-        json_text = open(self.file_name)
-        loaded_nanopub = json.load(json_text)
+        with open(self.file_name) as json_text:
+            loaded_nanopub = json.load(json_text)
 
         for item in loaded_nanopub[0]['nanopub']['assertions']:
             subject = item['subject']
@@ -146,6 +148,9 @@ class BelGraph:
                 obj_node.name = object
                 obj_node.update_parent_information_in_child_node(subject, relation)
                 self.nodes[object] = obj_node
+
+        if len(self.get_nodes_with_no_parents()) == 0:
+            raise I
         return self.nodes
 
     def get_nodes_with_no_parents(self):

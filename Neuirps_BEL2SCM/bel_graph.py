@@ -149,8 +149,6 @@ class BelGraph:
                 obj_node.update_parent_information_in_child_node(subject, relation)
                 self.nodes[object] = obj_node
 
-        if len(self.get_nodes_with_no_parents()) == 0:
-            raise I
         return self.nodes
 
     def get_nodes_with_no_parents(self):

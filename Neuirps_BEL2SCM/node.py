@@ -13,8 +13,8 @@ LABEL_DICT = {
     }
 VALID_RELATIONS = ["increases", "decreases", "directlyIncreases", "directlyDecreases"]
 
-class Node():
 
+class Node():
     def __init__(self):
         # root is True by default. We change this variable in self.update_parent_information_in_child_node()
         self.root = True
@@ -166,3 +166,4 @@ class Node():
             return str[:idx]
         else:
             raise Exception("_get_type(): Type not found for node {0}!".format(str))
+

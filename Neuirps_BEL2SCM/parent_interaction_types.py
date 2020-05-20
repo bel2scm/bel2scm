@@ -1,6 +1,6 @@
 from enum import Enum
 
 
-class RelationTypes(Enum):
+class ParentInteractionTypes(Enum):
     AND = "AND"
     OR = "OR"

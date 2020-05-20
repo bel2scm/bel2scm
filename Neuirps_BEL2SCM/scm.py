@@ -1,11 +1,9 @@
 from itertools import chain
 
-import pyro
-
 from Neuirps_BEL2SCM.bel_graph import BelGraph
 from Neuirps_BEL2SCM.utils import *
 from Neuirps_BEL2SCM.utils import all_parents_visited
-from Neuirps_BEL2SCM.utils import get_sample
+from Neuirps_BEL2SCM.utils import get_sample_for_non_roots
 from Neuirps_BEL2SCM.utils import json_load
 
 PYRO_DISTRIBUTIONS = {
@@ -26,6 +24,7 @@ class SCM:
     def __init__(self, bel_file_path, config_file_path):
 
         # 1. get tree from bel - Done.
+
         self.graph = BelGraph("nanopub_file", bel_file_path).construct_graph_from_nanopub_file()
 
         # 2. set parameters from config - Done.
@@ -39,30 +38,37 @@ class SCM:
         graph = self.graph
         config = self.config
         roots = self.roots
-        samples = dict()
-        node_list = list()
-        visited = list()
+        sample = dict()
+        node_queue_for_bfs_traversal = list()
+        visited_nodes = list()
 
-        for node in roots.keys():
-            samples[node] = get_sample(roots[node], config)
-            node_list.append(roots[node].children_info.keys())
-            visited.append(node)
-        node_list = list(chain.from_iterable(node_list))
+        # add root nodes for BFS traversal
+        for node_name in roots.keys():
+            sample[node_name] = get_sample_for_roots(roots[node_name], config)
+            # add child nodes to queue
+            node_queue_for_bfs_traversal.append(roots[node_name].children_info.keys())
+            # mark current node as visited
+            visited_nodes.append(node_name)
+        node_queue_for_bfs_traversal = list(chain.from_iterable(node_queue_for_bfs_traversal))
 
-        if len(node_list) == 0:
+        if len(node_queue_for_bfs_traversal) == 0:
             raise Exception("No edges found.")
 
-        while len(node_list) > 0:
-            current_node = node_list[0]
-            if current_node not in visited and all_parents_visited(graph[current_node], visited):
-                parent_samples = get_parent_samples(graph[current_node], samples)
-                samples[current_node] = get_sample(graph[current_node], config, parent_samples)
-                child = list(graph[current_node].children_info.keys())
-                node_list.extend(child)
-                visited.append(current_node)
-                node_list.pop(0)
+        while len(node_queue_for_bfs_traversal) > 0:
+            # get current node from queue
+            current_node_name = node_queue_for_bfs_traversal.top()
+            # if current node is not visited and all of its parents are visited
+            if current_node_name not in visited_nodes and \
+                    all_parents_visited(graph[current_node_name], visited_nodes):
+                parent_sample_dict = get_parent_samples(graph[current_node_name], sample)
+                sample[current_node_name] = get_sample_for_non_roots(graph[current_node_name], config,
+                                                                     parent_sample_dict)
+                child = list(graph[current_node_name].children_info.keys())
+                node_queue_for_bfs_traversal.extend(child)
+                visited_nodes.append(current_node_name)
+                node_queue_for_bfs_traversal.pop(0)
             else:
-                node_list.pop(0)
+                node_queue_for_bfs_traversal.pop(0)
 
 
 
@@ -129,7 +135,7 @@ class Config:
         self.prior_threshold = config["prior_threshold"]
         self.node_label_distribution_info = self._get_pyro_dist_from_text(config["node_label_distribution_info"])
         self.exogenous_distribution_info = self._get_exogenous_dist_from_text(config["exogenous_distribution_info"])
-        self.relation_type = config["relation_type"]
+        self.parent_interaction_type = config["relation_type"]
 
     def _get_pyro_dist_from_text(self, node_label_distribution_info):
         '''

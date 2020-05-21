@@ -90,18 +90,33 @@ def get_parent_samples(node: Node, sample: dict) -> dict:
 
 
 def sample_with_and_interaction(node, config, parent_samples):
-    # # labels of the parents
-    p_labels = list()
-    p_relations = list()
-    weight = config.prior_weight
-    for key in parent_samples.keys():
-        p_labels.append(node.parent_info[key]["label"])
-        p_relations.append(node.parent_info[key]["relation"])
 
-    # weights of the parents
+    # List(Tuple<String Label, String Relation>) - Ex.: <'abundance','increases'>
+    parent_label_and_relation = list()
+    for parent_name in parent_samples.keys():
+        parent_label = node.parent_info[parent_name]["label"]
+        parent_relation = node.parent_info[parent_name]["relation"]
+        parent_label_and_relation.append((parent_label, parent_relation))
+
+        # weights of the parents
+        weight = pyro.sample(parent_name+"_weight",dist.Normal((config.prior_weight, 1.0)))
     # relations with the parents
+    # "activity": {"Categorical": [0.5, 0.5]},
+    # "abundance": {"LogNormal": [0.0, 1.0]},
+    # "transformation": {"LogNormal": [0.0, 1.0]},
+    # "reaction": {"Categorical": [0.5, 0.5]},
+    # "process": {"Categorical": [0.5, 0.5]},
+    # "pathology": {"Categorical": [0.5, 0.5]},
+    # "Others": {"LogNormal": [0.0, 1.0]}
     # If we don't have a compound case, so if parent_labels = process only -> we need boolean condition
     # if parent_labels = abundance -> call get abundance sample
+
+    # P1 (Abundance) -> C (Abundace): C = W*P1 + Nc
+    # P1 (Abundance) -> C (Transformation): C = W*P1 + W*P1^2 + Nc
+    # P1 (Abundance) -> C (Process): C = [if (P1>Threshold), Then 1 + Nc else 0 + Nc.
+    # P1 (Transformation) -> C (Abundance): C = W*P1 + W*P1^2 + Nc
+    # P1 (Aundance) AND P2 (Process) -> C (Abundance): If (P2), Then C = W*P1, Else C = Nc
+    # P1 ()
     pass
     # parent_labels = node.parent_info
 

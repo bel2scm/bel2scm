@@ -56,7 +56,7 @@ class SCM:
 
         while len(node_queue_for_bfs_traversal) > 0:
             # get current node from queue
-            current_node_name = node_queue_for_bfs_traversal.top()
+            current_node_name = node_queue_for_bfs_traversal[0]
             # if current node is not visited and all of its parents are visited
             if current_node_name not in visited_nodes and \
                     all_parents_visited(graph[current_node_name], visited_nodes):

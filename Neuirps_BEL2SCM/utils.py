@@ -5,7 +5,7 @@ import json
 import pyro
 import pyro.distributions as dist
 import torch
-
+import numpy as np
 from Neuirps_BEL2SCM.node import Node
 from Neuirps_BEL2SCM.parent_interaction_types import ParentInteractionTypes
 
@@ -89,57 +89,116 @@ def get_parent_samples(node: Node, sample: dict) -> dict:
     return parent_sample_dict
 
 
-def sample_with_and_interaction(node, config, parent_samples):
-
-    # List(Tuple<String Label, String Relation>) - Ex.: <'abundance','increases'>
-    parent_label_and_relation = list()
+def generate_process_condition(parent_info, parent_samples):
+    active_list = list()
     for parent_name in parent_samples.keys():
-        parent_label = node.parent_info[parent_name]["label"]
-        parent_relation = node.parent_info[parent_name]["relation"]
-        parent_label_and_relation.append((parent_label, parent_relation))
+        if parent_info[parent_name]["label"] in ["process", "activity", "reaction", "pathology"]:
+            if parent_info[parent_name]["relation"] in ["increases", "directlyIncreases"]:
+                # increases type process parents need to be active
+                if parent_samples[parent_name] == 1.0:
+                    active_list.append(1)
+                else:
+                    active_list.append(0)
+            else:
+                # decreases type process parents need to be inactive
+                if parent_samples[parent_name] == 0.0:
+                    active_list.append(1)
+                else:
+                    active_list.append(0)
+    if len(active_list) == sum(active_list):
+        return True
+    return False
 
+
+def get_sign_weight_parent_vector(parent_info, weight_dict, parent_samples):
+    sign_vector = []
+    weight_vector = []
+    parent_samples_vector = []
+    for parent_name in parent_info.keys():
+        if parent_info[parent_name]["label"] == "abundance":
+            if parent_info[parent_name]["relation"] in ["directlyIncreases", "increases"]:
+                sign_vector.append(1)
+            else:
+                sign_vector.append(-1)
+            weight_vector.append(weight_dict[parent_name])
+            parent_samples_vector.append(parent_samples[parent_name])
+        if parent_info[parent_name]["label"] == "transformation":
+            if parent_info[parent_name]["relation"] in ["directlyIncreases", "increases"]:
+                sign_vector.append(1)
+            else:
+                sign_vector.append(-1)
+            weight_vector.append(weight_dict[parent_name])
+            parent_value = parent_samples[parent_name] + parent_samples[parent_name]**2
+            parent_samples_vector.append(parent_value)
+
+    return np.array(sign_vector), np.array(weight_vector), np.array(parent_samples_vector)
+
+
+def sigmoid(X):
+    return 1 / (1 + np.exp(-X))
+
+
+def get_parent_combination(node, parent_info, parent_samples, weight_dict, noise):
+    sign, weights, parent_samples_vector = get_sign_weight_parent_vector(parent_info, weight_dict, parent_samples)
+    signed_weights = sign * weights
+    parent_combination = signed_weights * parent_samples_vector.T + noise
+    return parent_combination
+
+
+def get_sample_for_process(node, parent_samples, weight_dict, exog, threshold):
+    process_check = generate_process_condition(node.parent_info, parent_samples)
+    if process_check:
+        parent_combo = get_parent_combination(node, node.parent_info, parent_samples, weight_dict, exog)
+        c = sigmoid(parent_combo)
+        if c > threshold:
+            return 1.0
+        else:
+            return 0.0
+    return 0.0
+
+
+def get_sample_for_abundance(node, parent_samples, weight_dict, exog):
+    process_check = generate_process_condition(node.parent_info, parent_samples)
+    child_distribution_tuple = ()
+    child_distribution_tuple[0] = node.node_label
+    if process_check:
+        c_mean = get_parent_combination(node, node.parent_info, parent_samples, weight_dict, exog)
+        child_distribution_tuple[1] = [c_mean, 1.0]
+    child_distribution_tuple[1] = [0.0, 1.0]
+
+    return get_distribution(child_distribution_tuple)
+
+
+def get_sample_for_transformation(node, parent_samples, weight_dict, exog):
+    process_check = generate_process_condition(node.parent_info, parent_samples)
+    child_distribution_tuple = ()
+    child_distribution_tuple[0] = node.node_label
+    if process_check:
+        c_mean = get_parent_combination(node, node.parent_info, parent_samples, weight_dict, exog)
+        child_distribution_tuple[1] = [c_mean, 1.0]
+    child_distribution_tuple[1] = [0.0, 1.0]
+
+    return get_distribution(child_distribution_tuple)
+
+
+def sample_with_and_interaction(node, config, parent_samples, exog):
+    # List(Tuple<String Label, String Relation>) - Ex.: <'abundance','increases'>
+    weight_dict = dict()
+    threshold = config.prior_threshold
+    for parent_name in parent_samples.keys():
         # weights of the parents
-        weight = pyro.sample(parent_name+"_weight",dist.Normal((config.prior_weight, 1.0)))
-    # relations with the parents
-    # "activity": {"Categorical": [0.5, 0.5]},
-    # "abundance": {"LogNormal": [0.0, 1.0]},
-    # "transformation": {"LogNormal": [0.0, 1.0]},
-    # "reaction": {"Categorical": [0.5, 0.5]},
-    # "process": {"Categorical": [0.5, 0.5]},
-    # "pathology": {"Categorical": [0.5, 0.5]},
-    # "Others": {"LogNormal": [0.0, 1.0]}
-    # If we don't have a compound case, so if parent_labels = process only -> we need boolean condition
-    # if parent_labels = abundance -> call get abundance sample
-
-    # P1 (Abundance) -> C (Abundace): C = W*P1 + Nc
-    # P1 (Abundance) -> C (Transformation): C = W*P1 + W*P1^2 + Nc
-    # P1 (Abundance) -> C (Process): C = [if (P1>Threshold), Then 1 + Nc else 0 + Nc.
-    # P1 (Transformation) -> C (Abundance): C = W*P1 + W*P1^2 + Nc
-    # P1 (Aundance) AND P2 (Process) -> C (Abundance): If (P2), Then C = W*P1, Else C = Nc
-    # P1 ()
-    pass
-    # parent_labels = node.parent_info
+        weight = pyro.sample(parent_name + "_weight", dist.Normal(config.prior_weight, 1.0))
+        weight_dict[parent_name] = weight
+        if node.node_label in ["process", "activity", "reaction", "pathology"]:
+            return get_sample_for_process(node, parent_samples, weight_dict, exog, threshold)
+        elif node.node_label == "abundance":
+            return get_sample_for_abundance(node, parent_samples, weight_dict, exog)
+        elif node.node_label == "transformation":
+            return get_sample_for_transformation(node, parent_samples, weight_dict, exog)
+        else:
+            raise Exception("invalid node type")
 
 
-# def cat_parents(parent_info, config, parent_samples):
-#     categorized_parents = dict()
-#     increase_process = []
-#     decrease_process = []
-#     weight_i = []
-#     weight_d = []
-#     for key in parent_samples.keys():
-#
-#
-#     for i in range(len(parent_label)):
-#         if relation[i] == 'decreases' or relation[i] == 'directlyDecreases':
-#             if parent_label[i] in groupby:
-#                 decrease_parent.append(samples[parent_name[i]])
-#                 weight_d.append(w[i])
-#         else:
-#             if parent_label[i] in groupby:
-#                 increase_parent.append(samples[parent_name[i]])
-#                 weight_i.append(w[i])
-#     return increase_parent, decrease_parent, weight_i, weight_d
 def get_sample_for_roots(node: Node, config: dict):
     exog_name = node.name + "_N"
     exog = pyro.sample(exog_name, get_distribution(config.exogenous_distribution_info))
@@ -155,59 +214,6 @@ def get_sample_for_non_roots(node: Node, config: dict, parent_samples=[]):
     exog = pyro.sample(exog_name, get_distribution(config.exogenous_distribution_info))
 
     if config.parent_interaction_type == ParentInteractionTypes.AND.value:
-        return sample_with_and_interaction(node, config, parent_samples)
+        return sample_with_and_interaction(node, config, parent_samples, exog)
     else:
         raise Exception("Invalid parent interaction type")
-
-# def get_sample(child_name: str,
-#                child_label: str,
-#                parent_label: list,
-#                threshold: float,
-#                normal: dist,
-#                gamma: dist,
-#                lognormal: dist,
-#                increase_process: list,
-#                decrease_process: list,
-#                increase_abundance: list,
-#                decrease_abundance: list,
-#                weights_ai: list,
-#                weights_ad: list,
-#                increase_transformation,
-#                decrease_transformation,
-#                weights_ti: list,
-#                weights_td: list,
-#                ) -> (float, str):
-#
-#     child_increase_N = get_abundance_sample(weights_ai, increase_abundance) + \
-#                        get_transformation_sample(weights_ti, increase_transformation)
-#
-#     child_decrease_N = get_abundance_sample(weights_ad, decrease_abundance) + \
-#                        get_transformation_sample(weights_td, decrease_transformation)
-#
-#     if child_label == 'transformation':
-#         child_name_noise = child_name + "_N"
-#         child_noise = pyro.sample(child_name_noise, gamma)
-#         child_N = child_increase_N - child_decrease_N + child_noise
-#
-#     elif child_label == 'Abundance':
-#         child_name_noise = child_name + "_N"
-#         child_noise = pyro.sample(child_name_noise, lognormal)
-#         child_N = child_increase_N - child_decrease_N + child_noise
-#
-#     else:
-#         child_name_noise = child_name + "_N"
-#         child_noise = pyro.sample(child_name_noise, normal)
-#         child_check = check_increase(child_increase_N + child_noise + sum(increase_process),
-#                                      (len(parent_label)) * threshold) + check_decrease(child_decrease_N + child_noise +
-#                                                                                        sum(decrease_process),
-#                                                                                        (len(parent_label)) * threshold)
-#         if len(increase_process) == 0 and len(decrease_process) > 0 and child_check == 1.0:
-#             child_N = torch.tensor(1.0)
-#         elif len(decrease_process) == 0 and len(increase_process) > 0 and child_check == 1.0:
-#             child_N = torch.tensor(1.0)
-#         elif child_check == 2.0:
-#             child_N = torch.tensor(1.0)
-#         else:
-#             child_N = torch.tensor(0.)
-#
-#     return child_N, child_name_noise

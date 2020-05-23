@@ -21,13 +21,16 @@ class SCM:
     '''
     4. Add functions as described below
     '''
-    def __init__(self, bel_file_path, config_file_path):
+    def __init__(self, bel_file_path, config_file_path, data_file_path):
 
-        # 1. get tree from bel - Done.
-
+        #  get nodes from bel file.
         self.graph = BelGraph("nanopub_file", bel_file_path).construct_graph_from_nanopub_file()
+        # Prepare data for all the nodes.
+        # self.graph.node_data contains (feature_data, target_data) at each node.
+        self.graph.prepare_and_assign_data(data_file_path)
+        # Learn
 
-        # 2. set parameters from config - Done.
+        # 2. set parameters from config file.
         self.config = Config(config_file_path)
         self.roots = BelGraph("nanopub_file", bel_file_path).get_nodes_with_no_parents()
 
@@ -174,6 +177,8 @@ class Config:
             return (PYRO_DISTRIBUTIONS[dist_str], dist_params)
         else:
             raise Exception("Distribution not supported.")
+
+
 
 """
 

@@ -1,3 +1,7 @@
+import collections
+
+import torch
+
 LABEL_DICT = {
     'transformation': ['sec', 'surf', 'deg', 'rxn', 'tloc', 'fromLoc',
                        'products', 'reactants', 'toLoc'],
@@ -14,17 +18,19 @@ VALID_RELATIONS = ["increases", "decreases", "directlyIncreases", "directlyDecre
 
 
 class Node:
+
     def __init__(self):
         # root is True by default. We change this variable in self.update_parent_information_in_child_node()
         self.root = True
         # Node name
         self.name = ""
-        # <ChildName, <Relation, Label>>
-        self.children_info = {}
-        # <ParentName, <Relation, Label>>
-        self.parent_info = {}
+        # <ChildName, <Name, Relation, Label>>
+        self.children_info = collections.OrderedDict()
+        # <ParentName, <Name, Relation, Label>>
+        self.parent_info = collections.OrderedDict()
         # Extract type from self.name and get label from LABEL_DICT
         self.node_label = ""
+
 
     def get_node_information(self, sub, obj, rel):
         # If relation is valid
@@ -53,6 +59,7 @@ class Node:
 
             # Add Child to children_info
             child_dict = {
+                "name": c,
                 "relation": rel,
                 "label": child_label
             }
@@ -88,6 +95,7 @@ class Node:
 
             # Add child to children_info
             child_dict = {
+                "name": c,
                 "relation": rel,
                 "label": child_label
             }
@@ -130,6 +138,7 @@ class Node:
 
             # Add parent to parent_info
             parent_dict = {
+                "name": p,
                 "relation": rel,
                 "label": parent_label
             }
@@ -150,3 +159,12 @@ class Node:
             return str[:idx]
         else:
             raise Exception("_get_type(): Type not found for node {0}!".format(str))
+
+
+class NodeData:
+    def __init__(self, features, target):
+        self.features = self._get_processed_features(features)
+        self.target = torch.tensor(target)
+
+    def _get_processed_features(self, features):
+        pass

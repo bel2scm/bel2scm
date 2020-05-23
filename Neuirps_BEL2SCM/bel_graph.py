@@ -1,4 +1,5 @@
 import json
+import pandas as pd
 
 from Neuirps_BEL2SCM.node import *
 
@@ -16,6 +17,8 @@ class BelGraph:
     '''
     # Dictionary<str, Node>
     nodes = dict()
+    # Dictionary<str, dict<features_df(parents), target(node)>>
+    node_data = dict()
 
     def __init__(self, file_type, file_name):
         self.file_type = file_type
@@ -162,3 +165,63 @@ class BelGraph:
             return node_dict_with_no_parents
         else:
             raise Exception("Empty graph.")
+
+    def prepare_and_assign_data(self, data_file_path):
+        """
+        This function iterates through nodes and prepares feature and target values for each node.
+        CAUTION: Data headers should have same name as BEL subjects or objects.
+        Args:
+            data_file_path:
+
+        Returns: node_data dictionary <str,
+
+        """
+        data = pd.read_csv(data_file_path)
+
+        data_headers = data.columns.tolist()
+
+        for node_str, node in self.nodes.items():
+            if node_str in data_headers:
+                if node.root:
+                    features = None
+                    target = self._get_single_node_data(node, data)
+                else:
+                    features, target = self._get_non_root_data(node, data)
+            else:
+                raise Exception("Invalid data! Some columns are not in the bel graph.")
+
+            self.node_data[node_str] = {
+                "features": features,
+                "target": target
+            }
+
+    def _get_single_node_data(self, node, data):
+        try:
+            return data[node.name]
+        except:
+            return Exception("Node " + node.name + " is not available in data.")
+
+    def _get_non_root_data(self, node, data):
+        """
+        Args:
+            data: original data with all columns
+
+        Returns: dataframe features, Series target
+        """
+
+        # Get the child data
+        child_data = self._get_single_node_data(node, data)
+
+        # Get parent list to get the data if the parent is not a process, then it goes to condition, and is not the part of the local model.
+        valid_parent_name_list = [parent_name for parent_name, parent_info in node.parent_info.items() if not parent_info["label"] == "process"]
+        are_continuous_parents_available = len(valid_parent_name_list) > 0
+
+        if are_continuous_parents_available:
+            try:
+                parent_data = data[valid_parent_name_list]
+            except:
+                print("Exception: one of the parent not available in data set")
+        else:
+            parent_data = None
+
+        return parent_data, child_data

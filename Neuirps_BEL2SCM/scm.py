@@ -1,6 +1,7 @@
 from itertools import chain
 
 from Neuirps_BEL2SCM.bel_graph import BelGraph
+from Neuirps_BEL2SCM.parameter_estimation import ParameterEstimation
 from Neuirps_BEL2SCM.utils import *
 from Neuirps_BEL2SCM.utils import all_parents_visited
 from Neuirps_BEL2SCM.utils import get_sample_for_non_roots
@@ -24,11 +25,15 @@ class SCM:
     def __init__(self, bel_file_path, config_file_path, data_file_path):
 
         #  get nodes from bel file.
-        self.graph = BelGraph("nanopub_file", bel_file_path).construct_graph_from_nanopub_file()
+        self.belgraph = BelGraph("nanopub_file", bel_file_path)
+        self.graph = self.belgraph.construct_graph_from_nanopub_file()
+
         # Prepare data for all the nodes.
-        # self.graph.node_data contains (feature_data, target_data) at each node.
-        self.graph.prepare_and_assign_data(data_file_path)
-        # Learn
+        # self.belgraph.node_data contains (feature_data, target_data) at each node.
+        self.belgraph.prepare_and_assign_data(data_file_path)
+
+        # Learn parameters
+        self.trained_networks = ParameterEstimation.get_model_for_each_node(self.belgraph)
 
         # 2. set parameters from config file.
         self.config = Config(config_file_path)

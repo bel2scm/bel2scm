@@ -61,6 +61,16 @@ class TestSCM(unittest.TestCase):
         bel_assertions = json_load(bel_file_path)[0]['nanopub']['assertions']
         scm._build_model()
 
+    def test_mapk(self):
+        from Neuirps_BEL2SCM.scm import SCM
+        from Neuirps_BEL2SCM.utils import json_load
+
+        bel_file_path = "../Tests/BELSourceFiles/mapk.json"
+        config_file_path = "../Tests/Configs/COVID-19-config.json"
+        data_file_path = "../Tests/Data/mapk100.csv"
+
+        scm = SCM(bel_file_path, config_file_path, data_file_path)
+
 
 if __name__ == '__main__':
     unittest.main()

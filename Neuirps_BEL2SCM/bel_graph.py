@@ -123,8 +123,11 @@ class BelGraph:
         Returns:
 
         '''
-        with open(self.file_name) as json_text:
-            loaded_nanopub = json.load(json_text)
+        try:
+            with open(self.file_name) as json_text:
+                loaded_nanopub = json.load(json_text)
+        except:
+            raise Exception("Bel file not found!!")
 
         for item in loaded_nanopub[0]['nanopub']['assertions']:
             subject = item['subject']
@@ -176,7 +179,10 @@ class BelGraph:
         Returns: node_data dictionary <str,
 
         """
-        data = pd.read_csv(data_file_path)
+        try:
+            data = pd.read_csv(data_file_path)
+        except:
+            raise Exception("Data file not found!")
 
         data_headers = data.columns.tolist()
 

@@ -200,15 +200,15 @@ def get_parameters_for_root_nodes(node_data, node_distribution_type):
     return parameters_list
 
 def get_sample_for_roots(node: Node, config, node_distribution_parameters):
-    exog_name = node.name + "_N"
-    exog = pyro.sample(exog_name, get_distribution(config.exogenous_distribution_info))
+    # exog_name = node.name + "_N"
+    # exog = pyro.sample(exog_name, get_distribution(config.exogenous_distribution_info))
     node_dist_info = config.node_label_distribution_info[node.node_label]
     node_distribution_type = node_dist_info[0]
     node_distribution_info = (node_distribution_type, node_distribution_parameters)
     node_dist = get_distribution(node_distribution_info)
     endog_name = node.name + "_endog"
     node_sample = pyro.sample(endog_name, node_dist)
-    return pyro.sample(node.name, pyro.distributions.Normal((exog + node_sample), 1.0))
+    return pyro.sample(node.name, pyro.distributions.Normal((node_sample), 1.0))
 
 
 def get_sample_for_non_roots(node: Node, config, parent_samples: dict):

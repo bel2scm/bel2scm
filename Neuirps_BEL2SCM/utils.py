@@ -1,12 +1,15 @@
 # import matplotlib.pyplot as plt
 # import scipy as sp
-import json
-
 import pyro
 import pyro.distributions as dist
+import json
+import statistics
+from statistics import mean
+from statistics import stdev
 import torch
 import numpy as np
 from Neuirps_BEL2SCM.node import Node
+from Neuirps_BEL2SCM.scm import *
 from Neuirps_BEL2SCM.parent_interaction_types import ParentInteractionTypes
 
 PYRO_DISTRIBUTIONS = {
@@ -48,27 +51,6 @@ def get_distribution(distribution_info: tuple) -> dist:
         return pyro_dist(torch.tensor(pyro_params))
     return pyro_dist(pyro_params[0], pyro_params[1])
 
-
-def check_increase(x: float, threshold: float) -> float:
-    """
-    Description: Helper function for SCM_model(),
-                 to be used with increasing type edges
-    Parameters:  Result of parents' equation (x)
-    Returns:     1.0 if value is greater than set threshold
-                 else 0.0
-    """
-    return 0.0 if x > threshold else 1.0
-
-
-def check_decrease(x: float, threshold: float) -> float:
-    """
-    Description: Helper function for SCM_model(),
-                 to be used with decreasing type edges
-    Parameters:  Result of parents' equation (x)
-    Returns:     0.0 if value is greater than set threshold
-                 else 1.0
-    """
-    return 0.0 if x > threshold else 1.0
 
 
 def get_abundance_sample(weights_a: list, p_sample_a: list):
@@ -134,11 +116,11 @@ def get_sign_weight_parent_vector(parent_info, weight_dict, parent_samples):
     return np.array(sign_vector), np.array(weight_vector), np.array(parent_samples_vector)
 
 
-def sigmoid(X):
-    return 1 / (1 + np.exp(-X))
+def sigmoid(node):
+    return 1 / (1 + np.exp(-node))
 
 
-def get_parent_combination(node, parent_info, parent_samples, weight_dict, noise):
+def get_parent_combination(parent_info, parent_samples, weight_dict, noise):
     sign, weights, parent_samples_vector = get_sign_weight_parent_vector(parent_info, weight_dict, parent_samples)
     signed_weights = sign * weights
     parent_combination = signed_weights * parent_samples_vector.T + noise
@@ -148,7 +130,7 @@ def get_parent_combination(node, parent_info, parent_samples, weight_dict, noise
 def get_sample_for_process(node, parent_samples, weight_dict, exog, threshold):
     process_check = generate_process_condition(node.parent_info, parent_samples)
     if process_check:
-        parent_combo = get_parent_combination(node, node.parent_info, parent_samples, weight_dict, exog)
+        parent_combo = get_parent_combination(node.parent_info, parent_samples, weight_dict, exog)
         c = sigmoid(parent_combo)
         if c > threshold:
             return 1.0
@@ -159,24 +141,26 @@ def get_sample_for_process(node, parent_samples, weight_dict, exog, threshold):
 
 def get_sample_for_abundance(node, parent_samples, weight_dict, exog):
     process_check = generate_process_condition(node.parent_info, parent_samples)
-    child_distribution_tuple = ()
-    child_distribution_tuple[0] = node.node_label
+    child_distribution_list = list()
+    child_distribution_list[0] = node.node_label
     if process_check:
-        c_mean = get_parent_combination(node, node.parent_info, parent_samples, weight_dict, exog)
-        child_distribution_tuple[1] = [c_mean, 1.0]
-    child_distribution_tuple[1] = [0.0, 1.0]
+        c_mean = get_parent_combination(node.parent_info, parent_samples, weight_dict, exog)
+        child_distribution_list[1] = [c_mean, 1.0]
+    child_distribution_list[1] = [0.0, 1.0]
+    child_distribution_tuple = tuple(child_distribution_list)
 
     return get_distribution(child_distribution_tuple)
 
 
 def get_sample_for_transformation(node, parent_samples, weight_dict, exog):
     process_check = generate_process_condition(node.parent_info, parent_samples)
-    child_distribution_tuple = ()
-    child_distribution_tuple[0] = node.node_label
+    child_distribution_list = list()
+    child_distribution_list[0] = node.node_label
     if process_check:
-        c_mean = get_parent_combination(node, node.parent_info, parent_samples, weight_dict, exog)
-        child_distribution_tuple[1] = [c_mean, 1.0]
-    child_distribution_tuple[1] = [0.0, 1.0]
+        c_mean = get_parent_combination(node.parent_info, parent_samples, weight_dict, exog)
+        child_distribution_list[1] = [c_mean, 1.0]
+    child_distribution_list[1] = [0.0, 1.0]
+    child_distribution_tuple = tuple(child_distribution_list)
 
     return get_distribution(child_distribution_tuple)
 
@@ -197,19 +181,37 @@ def sample_with_and_interaction(node, config, parent_samples, exog):
             return get_sample_for_transformation(node, parent_samples, weight_dict, exog)
         else:
             raise Exception("invalid node type")
+def get_parameters_for_root_nodes(node_data, node_distribution_type):
+    parameters_list = list()
+    if node_distribution_type == "Categorical":
+        mean_of_1 = statistics.mean(node_data)
+        parameters_list = [1-mean_of_1, mean_of_1]
+    elif node_distribution_type in ["LogNormal", "Normal"]:
+        mu = statistics.mean(node_data)
+        sigma = stdev(node_data)
+        parameters_list = [mu, sigma]
+    elif node_distribution_type == "Gamma":
+        mu = statistics.mean(node_data)
+        sigma = stdev(node_data)
+        alpha = (mu/sigma)**2
+        beta = (sigma**2) / mu
+        parameters_list = [alpha, beta]
 
+    return parameters_list
 
-def get_sample_for_roots(node: Node, config: dict):
-    exog_name = node.name + "_N"
-    exog = pyro.sample(exog_name, get_distribution(config.exogenous_distribution_info))
-    node_distribution_info = config.node_label_distribution_info[node.node_label]
+def get_sample_for_roots(node: Node, config, node_distribution_parameters):
+    # exog_name = node.name + "_N"
+    # exog = pyro.sample(exog_name, get_distribution(config.exogenous_distribution_info))
+    node_dist_info = config.node_label_distribution_info[node.node_label]
+    node_distribution_type = node_dist_info[0]
+    node_distribution_info = (node_distribution_type, node_distribution_parameters)
     node_dist = get_distribution(node_distribution_info)
     endog_name = node.name + "_endog"
     node_sample = pyro.sample(endog_name, node_dist)
-    return pyro.sample(node.name, pyro.distributions.Normal((exog + node_sample), 1.0))
+    return pyro.sample(node.name, pyro.distributions.Normal((node_sample), 1.0))
 
 
-def get_sample_for_non_roots(node: Node, config: dict, parent_samples=[]):
+def get_sample_for_non_roots(node: Node, config, parent_samples: dict):
     exog_name = node.name + "_N"
     exog = pyro.sample(exog_name, get_distribution(config.exogenous_distribution_info))
 
@@ -217,3 +219,4 @@ def get_sample_for_non_roots(node: Node, config: dict, parent_samples=[]):
         return sample_with_and_interaction(node, config, parent_samples, exog)
     else:
         raise Exception("Invalid parent interaction type")
+

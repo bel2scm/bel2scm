@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 
+
 class RegressionNet(torch.nn.Module):
 	"""
 	This class is used to train regression model for continuous nodes.
@@ -15,6 +16,7 @@ class RegressionNet(torch.nn.Module):
 		x = self.predict(x)			 # linear output
 		return x
 
+
 class LogisticNet(torch.nn.Module):
 	"""
 	This class is used to train classification model for binary nodes.
@@ -26,7 +28,7 @@ class LogisticNet(torch.nn.Module):
 
 	def forward(self, x):
 		x = F.relu(self.hidden(x))	  # activation function for hidden layer
-		x = self.predict(F.sigmoid(x))			 # linear output
+		x = self.predict(F.sigmoid(x))	 # linear output
 		return x
 
 
@@ -39,7 +41,7 @@ class TrainNet():
 	learning_rate = 0.01
 	n_hidden = 10
 	iterations = 10000
-	train_error = 0
+	train_loss = 0
 
 	def __init__(self, n_feature, n_output, isRegression):
 		if isRegression:
@@ -58,9 +60,12 @@ class TrainNet():
 			loss.backward()
 			self.optimizer.step()
 
+		# calculate train loss
+		self.train_loss = self.loss_func(self.predict(x), y)
 
 	def predict(self, x):
 		return self.net(x)
+
 
 class ParameterEstimation:
 	"""
@@ -74,16 +79,16 @@ class ParameterEstimation:
 		if not belgraph.nodes or not belgraph.node_data:
 			raise Exception("Empty Graph or data not loaded.")
 
-		self.graph = belgraph
+		self.belgraph = belgraph
 
 	def get_model_for_each_node(self):
 
-		for node_str, features_and_target_data in self.graph.node_data:
+		for node_str, features_and_target_data in self.belgraph.node_data.items():
 
 			# if node is not a root node, and it has continuous parents
-			if (not self.graph.nodes[node_str].root) and (features_and_target_data["features"] != None):
+			if (not self.belgraph.nodes[node_str].root) and (not features_and_target_data["features"].empty):
 				# [TODO] Add train-test split and add test metrics
-				if self.graph.nodes[node_str].label == "process":
+				if self.belgraph.nodes[node_str].node_label == "process":
 					trained_network = self._classification(features_and_target_data)
 				else:
 					trained_network = self._regression(features_and_target_data)
@@ -91,23 +96,23 @@ class ParameterEstimation:
 				self.trained_networks[node_str] = trained_network
 
 	def _regression(self, features_and_target_data):
-		feature_data = torch.tensor(features_and_target_data["features"])
-		number_of_features = len(feature_data)
+		feature_data = torch.tensor(features_and_target_data["features"].values).float()
+		number_of_features = feature_data.size()[1]
 
-		target_data = torch.tensor(features_and_target_data["target"])
+		target_data = torch.tensor(features_and_target_data["target"].values).float()
 
 		train_network = TrainNet(n_feature=number_of_features, n_output=1, isRegression=True)
-		train_network.train(feature_data, target_data)
+		train_network.fit(feature_data, target_data)
 
 		return train_network
 
 	def _logistic_regression(self, features_and_target_data):
-		feature_data = torch.tensor(features_and_target_data["features"])
+		feature_data = torch.tensor(features_and_target_data["features"].values).float()
 		number_of_features = len(feature_data)
 
-		target_data = torch.tensor(features_and_target_data["target"])
+		target_data = torch.tensor(features_and_target_data["target"].values).float()
 
 		train_network = TrainNet(n_feature=number_of_features, n_output=1, isRegression=False)
-		train_network.train(feature_data, target_data)
+		train_network.fit(feature_data, target_data)
 
 		return train_network

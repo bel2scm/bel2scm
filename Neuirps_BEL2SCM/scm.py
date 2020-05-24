@@ -33,7 +33,9 @@ class SCM:
         self.belgraph.prepare_and_assign_data(data_file_path)
 
         # Learn parameters
-        self.trained_networks = ParameterEstimation.get_model_for_each_node(self.belgraph)
+        parameter_estimation = ParameterEstimation(self.belgraph)
+        parameter_estimation.get_model_for_each_node()
+        self.trained_networks = parameter_estimation.trained_networks
 
         # 2. set parameters from config file.
         self.config = Config(config_file_path)

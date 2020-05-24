@@ -189,7 +189,7 @@ class BelGraph:
         for node_str, node in self.nodes.items():
             if node_str in data_headers:
                 if node.root:
-                    features = None
+                    features = pd.DataFrame()
                     target = self._get_single_node_data(node, data)
                 else:
                     features, target = self._get_non_root_data(node, data)
@@ -228,6 +228,6 @@ class BelGraph:
             except:
                 print("Exception: one of the parent not available in data set")
         else:
-            parent_data = None
+            parent_data = pd.DataFrame()
 
         return parent_data, child_data

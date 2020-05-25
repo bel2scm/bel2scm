@@ -59,7 +59,6 @@ class TrainNet():
 	def fit(self, x, y):
 		train_x, train_y, test_x, test_y = self._get_train_test_data(x, y)
 
-		# [TODO] Divide the train data into batches to increase the training performance.
 		for epoch in range(self.n_epochs):
 
 			# X is a torch Variable

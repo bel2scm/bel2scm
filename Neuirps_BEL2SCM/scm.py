@@ -4,11 +4,13 @@ from Neuirps_BEL2SCM.bel_graph import BelGraph
 from Neuirps_BEL2SCM.parameter_estimation import ParameterEstimation
 from Neuirps_BEL2SCM.utils import *
 from Neuirps_BEL2SCM.utils import all_parents_visited
-from Neuirps_BEL2SCM.utils import get_sample_for_non_roots
+from Neuirps_BEL2SCM.utils import get_sample_for_non_roots, get_parent_tensor
 from Neuirps_BEL2SCM.utils import json_load
 import pandas as pd
-PYRO_DISTRIBUTIONS = {
+import pyro
 
+PYRO_DISTRIBUTIONS = {
+    "Bernoulli": pyro.distributions.Bernoulli,
     "Categorical": pyro.distributions.Categorical,
     "Normal": pyro.distributions.Normal,
     "LogNormal": pyro.distributions.LogNormal,
@@ -24,65 +26,95 @@ class SCM:
     '''
     def __init__(self, bel_file_path, config_file_path, data_file_path):
 
-        #  get nodes from bel file.
-        self.belgraph = BelGraph("nanopub_file", bel_file_path)
-        self.graph = self.belgraph.construct_graph_from_nanopub_file()
+        # 1. set parameters from config file.
+        self.config = Config(config_file_path)
 
-        # Prepare data for all the nodes.
-        # self.belgraph.node_data contains (feature_data, target_data) at each node.
-        self.belgraph.prepare_and_assign_data(data_file_path)
+        # 2. get nodes from bel file.
+        self.belgraph = BelGraph("nanopub_file", bel_file_path, data_file_path)
+        self.belgraph.construct_graph_from_nanopub_file()
+        self.belgraph.prepare_and_assign_data()
+        self.graph = self.belgraph.nodes
 
         # Learn parameters
-        parameter_estimation = ParameterEstimation(self.belgraph)
-        parameter_estimation.get_model_for_each_node()
+        parameter_estimation = ParameterEstimation(self.belgraph, self.config)
+        parameter_estimation.get_distribution_for_roots_from_data()
+        parameter_estimation.get_model_for_each_non_root_node()
+
+        self.root_distributions = parameter_estimation.root_distributions
         self.trained_networks = parameter_estimation.trained_networks
 
-        # 2. set parameters from config file.
-        self.config = Config(config_file_path)
-        self.roots = BelGraph("nanopub_file", bel_file_path).get_nodes_with_no_parents()
-        # 3. Build model
-        self._build_model()
 
-    def _build_model(self):
+        self.roots = self.belgraph.get_nodes_with_no_parents()
+        # 3. Build model
+        self.model()
+
+    def model(self):
+
+        # Getting class variables.
         graph = self.graph
         config = self.config
         roots = self.roots
+        root_distributions = self.root_distributions
+        trained_networks = self.trained_networks
+
+        # Dictionary of pyro samples coming from pyro.sample() for each node.
         sample = dict()
+
+        # node queue for bfs traversal
         node_queue_for_bfs_traversal = list()
+
+        # visited nodes while traversal
         visited_nodes = list()
-        data = self.data
-        # add root nodes for BFS traversal
+
+        # process all root nodes first for BFS traversal
         for node_name in roots.keys():
-            node_distribution_type = config.node_label_distribution_info[roots[node_name].node_label][0]
-            sample[node_name] = get_sample_for_roots(roots[node_name], config,
-                                                     get_parameters_for_root_nodes(data[node_name],
-                                                                                   node_distribution_type))
+            node_distribution_type = config.node_label_distribution_info[roots[node_name].node_label]
+            sample[node_name] = pyro.sample(node_name, root_distributions[node_name])
             # add child nodes to queue
-            node_queue_for_bfs_traversal.append(roots[node_name].children_info.keys())
+            child_name_list = [value["name"] for (key, value) in roots[node_name].children_info.items()]
+            node_queue_for_bfs_traversal.extend(child_name_list)
             # mark current node as visited
             visited_nodes.append(node_name)
-        node_queue_for_bfs_traversal = list(chain.from_iterable(node_queue_for_bfs_traversal))
 
+        # if no nodes available for traversal!
         if len(node_queue_for_bfs_traversal) == 0:
             raise Exception("No edges found.")
 
         while len(node_queue_for_bfs_traversal) > 0:
-            # get current node from queue
+
+            # get first node from queue
             current_node_name = node_queue_for_bfs_traversal[0]
-            # if current node is not visited and all of its parents are visited
-            if current_node_name not in visited_nodes and \
-                    all_parents_visited(graph[current_node_name], visited_nodes):
+
+            # if current node is not visited AND all of its parents are visited
+            is_current_node_not_visited = current_node_name not in visited_nodes
+            are_all_parents_visited_for_current_node = all_parents_visited(graph[current_node_name], visited_nodes)
+
+            if is_current_node_not_visited and are_all_parents_visited_for_current_node:
+
                 parent_sample_dict = get_parent_samples(graph[current_node_name], sample)
+                continuous_parent_names = self.belgraph.valid_continuous_parent_name_list_for_nodes
+                deterministic_prediction = None
+
+                if len(continuous_parent_names[current_node_name]) > 0:
+                    parent_tensor = get_parent_tensor(parent_sample_dict, continuous_parent_names[current_node_name])
+                    deterministic_prediction = self._get_prediction(trained_networks[current_node_name], parent_tensor)
+
                 sample[current_node_name] = get_sample_for_non_roots(graph[current_node_name], config,
-                                                                     parent_sample_dict)
-                child = list(graph[current_node_name].children_info.keys())
-                node_queue_for_bfs_traversal.extend(child)
+                                                                     parent_sample_dict, deterministic_prediction)
+
+                # [TODO] Move below two lines to a function
+                child_name_list = [value["name"] for (key, value) in graph[current_node_name].children_info.items()]
+                node_queue_for_bfs_traversal.extend(child_name_list)
                 visited_nodes.append(current_node_name)
                 node_queue_for_bfs_traversal.pop(0)
+
+            #
             else:
+                # if all parents are not visited for a node, we assume that current node will be in the child info of
+                # the unvisited parents
                 node_queue_for_bfs_traversal.pop(0)
 
-
+        return sample
 
     # [Todo]
     def counterfactual_inference(self):
@@ -130,6 +162,12 @@ class SCM:
 
         '''
 
+    def _get_prediction(self, trained_network, parent_tensor):
+        try:
+            return trained_network.predict(parent_tensor)
+        except:
+            raise Exception("Error getting deterministic prediction.")
+
 
 class Config:
     '''
@@ -143,7 +181,6 @@ class Config:
     def _set_config_parameters(self):
 
         config = self.config_dict
-        self.prior_weight = config["prior_weight"]
         self.prior_threshold = config["prior_threshold"]
         self.node_label_distribution_info = self._get_pyro_dist_from_text(config["node_label_distribution_info"])
         self.exogenous_distribution_info = self._get_exogenous_dist_from_text(config["exogenous_distribution_info"])
@@ -159,14 +196,11 @@ class Config:
 
         '''
         label_pyro_dist_dict = {}
-        for label, dist_with_params in node_label_distribution_info.items():
-            # Get distribution name and its parameters
-            dist_str = list(dist_with_params.keys())[0]
-            dist_params = dist_with_params[dist_str]
+        for label, distribution_name in node_label_distribution_info.items():
 
             # Convert distribution name to pyro distribution
-            if dist_str in PYRO_DISTRIBUTIONS:
-                label_pyro_dist_dict[label] = (PYRO_DISTRIBUTIONS[dist_str], dist_params)
+            if distribution_name in PYRO_DISTRIBUTIONS:
+                label_pyro_dist_dict[label] = PYRO_DISTRIBUTIONS[distribution_name]
             else:
                 raise Exception("Distribution not supported.")
         return label_pyro_dist_dict

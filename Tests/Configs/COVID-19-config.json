@@ -1,15 +1,14 @@
 {
-    "prior_weight": 1.0,
     "prior_threshold": 0.5,
     "node_label_distribution_info": {
-    "activity": {"Categorical": [0.5, 0.5]},
-    "abundance": {"LogNormal": [0.0, 1.0]},
-    "transformation": {"LogNormal": [0.0, 1.0]},
-    "reaction": {"Categorical": [0.5, 0.5]},
-    "process": {"Categorical": [0.5, 0.5]},
-    "pathology": {"Categorical": [0.5, 0.5]},
-    "Others": {"LogNormal": [0.0, 1.0]}
+    "activity": "Bernoulli",
+    "abundance": "Normal",
+    "transformation": "LogNormal",
+    "reaction": "Bernoulli",
+    "process": "Bernoulli",
+    "pathology": "Bernoulli",
+    "Others": "LogNormal"
   },
-  "exogenous_distribution_info": {"Normal": [0.0, 1.0]},
+  "exogenous_distribution_info": {"Normal": [0.0, 0.05]},
   "relation_type": "AND"
 }

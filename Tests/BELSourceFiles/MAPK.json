@@ -32,15 +32,15 @@
             },
             "assertions": [
                 {
-                    "subject": "act(p(HGNC:LAMTOR3))",
+                    "subject": "a(p(Mek))",
                     "relation": "directlyIncreases",
-                    "object": "act(p(HGNC:MAPK1))",
+                    "object": "a(p(Erk))",
                     "validation": null
                 },
                 {
-                    "subject": "act(p(HGNC:RAF1))",
+                    "subject": "a(p(Raf))",
                     "relation": "directlyIncreases",
-                    "object": "act(p(HGNC:LAMTOR3))",
+                    "object": "a(p(Mek))",
                     "validation": null
                 }
             ],

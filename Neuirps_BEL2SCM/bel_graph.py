@@ -15,14 +15,19 @@ class BelGraph:
     '''
     It loads all the nodes from given input BEL statements.
     '''
-    # Dictionary<str, Node>
-    nodes = dict()
-    # Dictionary<str, dict<features_df(parents), target(node)>>
-    node_data = dict()
 
-    def __init__(self, file_type, file_name):
+
+    def __init__(self, file_type, file_name, data_file_path):
         self.file_type = file_type
         self.file_name = file_name
+        self.data_file_path = data_file_path
+
+        # Dictionary<str, Node>
+        self.nodes = dict()
+        # Dictionary<str, dict<features_df(parents), target(node)>>
+        self.node_data = dict()
+        # Dictionary<str, list>
+        self.valid_continuous_parent_name_list_for_nodes = dict()
 
     def construct_graph_from_str_list(self, file_name):
         '''
@@ -169,7 +174,7 @@ class BelGraph:
         else:
             raise Exception("Empty graph.")
 
-    def prepare_and_assign_data(self, data_file_path):
+    def prepare_and_assign_data(self):
         """
         This function iterates through nodes and prepares feature and target values for each node.
         CAUTION: Data headers should have same name as BEL subjects or objects.
@@ -180,7 +185,7 @@ class BelGraph:
 
         """
         try:
-            data = pd.read_csv(data_file_path)
+            data = pd.read_csv(self.data_file_path)
         except:
             raise Exception("Data file not found!")
 
@@ -219,10 +224,12 @@ class BelGraph:
         child_data = self._get_single_node_data(node, data)
 
         # Get parent list to get the data if the parent is not a process, then it goes to condition, and is not the part of the local model.
+        # [TODO] Polish the label condition here.s
         valid_parent_name_list = [parent_name for parent_name, parent_info in node.parent_info.items() if not parent_info["label"] == "process"]
         are_continuous_parents_available = len(valid_parent_name_list) > 0
 
         if are_continuous_parents_available:
+            self.valid_continuous_parent_name_list_for_nodes[node.name] = valid_parent_name_list
             try:
                 parent_data = data[valid_parent_name_list]
             except:

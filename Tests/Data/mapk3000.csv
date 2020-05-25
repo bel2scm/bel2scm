@@ -1,4 +1,4 @@
-act(p(HGNC:RAF1)),act(p(HGNC:LAMTOR3)),act(p(HGNC:MAPK1))
+a(p(Raf)),a(p(Mek)),a(p(Erk))
 46,56,82
 57,75,91
 47,55,79

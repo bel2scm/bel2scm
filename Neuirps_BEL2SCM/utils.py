@@ -1,5 +1,7 @@
 # import matplotlib.pyplot as plt
 # import scipy as sp
+import collections
+
 import pyro
 import pyro.distributions as dist
 import json
@@ -11,6 +13,7 @@ import numpy as np
 from Neuirps_BEL2SCM.node import Node
 from Neuirps_BEL2SCM.scm import *
 from Neuirps_BEL2SCM.parent_interaction_types import ParentInteractionTypes
+import pickle
 
 PYRO_DISTRIBUTIONS = {
 
@@ -65,10 +68,11 @@ def get_parent_samples(node: Node, sample: dict) -> dict:
     """
     returns subset of sample
     """
-    parent_sample_dict = dict()
+    parent_sample_dict = collections.OrderedDict()
     for parent_name in list(node.parent_info.keys()):
         parent_sample_dict[parent_name] = sample[parent_name]
     return parent_sample_dict
+
 
 
 def generate_process_condition(parent_info, parent_samples):
@@ -77,13 +81,13 @@ def generate_process_condition(parent_info, parent_samples):
         if parent_info[parent_name]["label"] in ["process", "activity", "reaction", "pathology"]:
             if parent_info[parent_name]["relation"] in ["increases", "directlyIncreases"]:
                 # increases type process parents need to be active
-                if parent_samples[parent_name] == 1.0:
+                if parent_samples[parent_name] > 0.5:
                     active_list.append(1)
                 else:
                     active_list.append(0)
             else:
                 # decreases type process parents need to be inactive
-                if parent_samples[parent_name] == 0.0:
+                if parent_samples[parent_name] <= 0.5:
                     active_list.append(1)
                 else:
                     active_list.append(0)
@@ -120,67 +124,40 @@ def sigmoid(node):
     return 1 / (1 + np.exp(-node))
 
 
-def get_parent_combination(parent_info, parent_samples, weight_dict, noise):
-    sign, weights, parent_samples_vector = get_sign_weight_parent_vector(parent_info, weight_dict, parent_samples)
-    signed_weights = sign * weights
-    parent_combination = signed_weights * parent_samples_vector.T + noise
-    return parent_combination
-
-
-def get_sample_for_process(node, parent_samples, weight_dict, exog, threshold):
+def get_sample_for_binary_node(node, parent_samples, exog, node_distribution, deterministic_prediction):
     process_check = generate_process_condition(node.parent_info, parent_samples)
     if process_check:
-        parent_combo = get_parent_combination(node.parent_info, parent_samples, weight_dict, exog)
-        c = sigmoid(parent_combo)
-        if c > threshold:
-            return 1.0
-        else:
-            return 0.0
-    return 0.0
+        c = sigmoid(deterministic_prediction + exog)
+    else:
+        # [TODO] Refactor: We assume that node distribution is Bernoulli.
+        c = sigmoid(0.0 + exog)
+    return pyro.sample(node.name, node_distribution(c))
 
 
-def get_sample_for_abundance(node, parent_samples, weight_dict, exog):
+def get_sample_for_continuous_node(node, parent_samples, exog, node_distribution, deterministic_prediction):
     process_check = generate_process_condition(node.parent_info, parent_samples)
-    child_distribution_list = list()
-    child_distribution_list[0] = node.node_label
+
     if process_check:
-        c_mean = get_parent_combination(node.parent_info, parent_samples, weight_dict, exog)
-        child_distribution_list[1] = [c_mean, 1.0]
-    child_distribution_list[1] = [0.0, 1.0]
-    child_distribution_tuple = tuple(child_distribution_list)
+        c_mean = torch.squeeze(deterministic_prediction) + exog
+    else:
+        c_mean = exog
 
-    return get_distribution(child_distribution_tuple)
-
-
-def get_sample_for_transformation(node, parent_samples, weight_dict, exog):
-    process_check = generate_process_condition(node.parent_info, parent_samples)
-    child_distribution_list = list()
-    child_distribution_list[0] = node.node_label
-    if process_check:
-        c_mean = get_parent_combination(node.parent_info, parent_samples, weight_dict, exog)
-        child_distribution_list[1] = [c_mean, 1.0]
-    child_distribution_list[1] = [0.0, 1.0]
-    child_distribution_tuple = tuple(child_distribution_list)
-
-    return get_distribution(child_distribution_tuple)
+    # [TODO]: Get the std from TrainedModel and that should be the std below.
+    return pyro.sample(node.name, node_distribution(c_mean, 1.0))
 
 
-def sample_with_and_interaction(node, config, parent_samples, exog):
+def sample_with_and_interaction(node, config, parent_samples, exog, deterministic_prediction):
     # List(Tuple<String Label, String Relation>) - Ex.: <'abundance','increases'>
-    weight_dict = dict()
     threshold = config.prior_threshold
-    for parent_name in parent_samples.keys():
-        # weights of the parents
-        weight = pyro.sample(parent_name + "_weight", dist.Normal(config.prior_weight, 1.0))
-        weight_dict[parent_name] = weight
-        if node.node_label in ["process", "activity", "reaction", "pathology"]:
-            return get_sample_for_process(node, parent_samples, weight_dict, exog, threshold)
-        elif node.node_label == "abundance":
-            return get_sample_for_abundance(node, parent_samples, weight_dict, exog)
-        elif node.node_label == "transformation":
-            return get_sample_for_transformation(node, parent_samples, weight_dict, exog)
-        else:
-            raise Exception("invalid node type")
+    node_distribution = config.node_label_distribution_info[node.node_label]
+
+    if node.node_label in ["process", "activity", "reaction", "pathology"]:
+        return get_sample_for_binary_node(node, parent_samples, exog, node_distribution, deterministic_prediction)
+    elif node.node_label in ["abundance", "transformation"]:
+        return get_sample_for_continuous_node(node, parent_samples, exog, node_distribution, deterministic_prediction)
+    else:
+        raise Exception("invalid node type")
+
 def get_parameters_for_root_nodes(node_data, node_distribution_type):
     parameters_list = list()
     if node_distribution_type == "Categorical":
@@ -211,12 +188,37 @@ def get_sample_for_roots(node: Node, config, node_distribution_parameters):
     return pyro.sample(node.name, pyro.distributions.Normal((node_sample), 1.0))
 
 
-def get_sample_for_non_roots(node: Node, config, parent_samples: dict):
+def get_sample_for_non_roots(node: Node, config, parent_samples: dict, deterministic_prediction):
     exog_name = node.name + "_N"
     exog = pyro.sample(exog_name, get_distribution(config.exogenous_distribution_info))
 
     if config.parent_interaction_type == ParentInteractionTypes.AND.value:
-        return sample_with_and_interaction(node, config, parent_samples, exog)
+        return sample_with_and_interaction(node, config, parent_samples, exog, deterministic_prediction)
     else:
         raise Exception("Invalid parent interaction type")
 
+
+def check_parent_order(parent_info_from_node, parent_list_from_data) -> bool:
+    return parent_info_from_node == parent_list_from_data
+
+def get_parent_tensor(parent_sample_dict, continuous_parent_names):
+    continuous_sample_list = []
+    for parent_name in continuous_parent_names:
+        try:
+            continuous_sample_list.append(parent_sample_dict[parent_name])
+        except:
+            raise Exception("Something went wrong while get_parent_tensor")
+
+    # converting 1-d tensor to 2-d
+    output_tensor = torch.FloatTensor(continuous_sample_list).view(len(continuous_sample_list), 1)
+
+    return output_tensor
+
+def save_scm_object(pkl_file_path, scm):
+    pickle_out = open(pkl_file_path, "wb")
+    pickle.dump(scm, pickle_out)
+    pickle_out.close()
+
+def load_scm_object(pkl_file_path):
+    pickle_in = open(pkl_file_path, "rb")
+    return pickle.load(pickle_in)

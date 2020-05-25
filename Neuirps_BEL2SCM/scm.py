@@ -2,23 +2,12 @@ from itertools import chain
 
 from Neuirps_BEL2SCM.bel_graph import BelGraph
 from Neuirps_BEL2SCM.parameter_estimation import ParameterEstimation
-from Neuirps_BEL2SCM.utils import *
-from Neuirps_BEL2SCM.utils import all_parents_visited
-from Neuirps_BEL2SCM.utils import get_sample_for_non_roots, get_parent_tensor
-from Neuirps_BEL2SCM.utils import json_load
+from Neuirps_BEL2SCM.utils import get_sample_for_non_roots, get_parent_tensor, all_parents_visited, json_load, get_parent_samples
+from Neuirps_BEL2SCM.constants import PYRO_DISTRIBUTIONS
 import pandas as pd
 import pyro
 
-PYRO_DISTRIBUTIONS = {
-    "Bernoulli": pyro.distributions.Bernoulli,
-    "Categorical": pyro.distributions.Categorical,
-    "Normal": pyro.distributions.Normal,
-    "LogNormal": pyro.distributions.LogNormal,
-    "Gamma": pyro.distributions.Gamma,
-    "Delta": pyro.distributions.Delta,
-    "MultivariateNormal": pyro.distributions.MultivariateNormal,
-    "BetaBinomial": pyro.distributions.BetaBinomial
-}
+
 
 class SCM:
     '''
@@ -92,11 +81,11 @@ class SCM:
             if is_current_node_not_visited and are_all_parents_visited_for_current_node:
 
                 parent_sample_dict = get_parent_samples(graph[current_node_name], sample)
-                continuous_parent_names = self.belgraph.valid_continuous_parent_name_list_for_nodes
+                parent_names = self.belgraph.parent_name_list_for_nodes
                 deterministic_prediction = None
 
-                if len(continuous_parent_names[current_node_name]) > 0:
-                    parent_tensor = get_parent_tensor(parent_sample_dict, continuous_parent_names[current_node_name])
+                if len(parent_names[current_node_name]) > 0:
+                    parent_tensor = get_parent_tensor(parent_sample_dict, parent_names[current_node_name])
                     deterministic_prediction = self._get_prediction(trained_networks[current_node_name], parent_tensor)
 
                 sample[current_node_name] = get_sample_for_non_roots(graph[current_node_name], config,

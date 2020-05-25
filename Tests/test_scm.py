@@ -93,5 +93,29 @@ class TestSCM(unittest.TestCase):
         # [TODO] Compare the mean of each variable with data itself.
         self.assertTrue(True)
 
+    def test_binary_mapk(self):
+        from Neuirps_BEL2SCM.scm import SCM
+        from Neuirps_BEL2SCM.utils import json_load
+        import pickle
+        from Neuirps_BEL2SCM.utils import save_scm_object
+
+        bel_file_path = "../Tests/BELSourceFiles/MAPK-binary.json"
+        config_file_path = "../Tests/Configs/COVID-19-config.json"
+        data_file_path = "../Tests/Data/mapk3000-binary.csv"
+        output_pickle_object_file = "../../mapk_binary_scm.pkl"
+
+        scm = SCM(bel_file_path, config_file_path, data_file_path)
+        save_scm_object(output_pickle_object_file, scm)
+
+    def test_generate_binary_mapk_samples(self):
+        from Neuirps_BEL2SCM.scm import SCM
+        from Neuirps_BEL2SCM.utils import load_scm_object
+
+        scm = load_scm_object("../../mapk_binary_scm.pkl")
+        samples = [scm.model() for i in range(1000)]
+
+        # [TODO] Compare the mean of each variable with data itself.
+        self.assertTrue(True)
+
 if __name__ == '__main__':
     unittest.main()

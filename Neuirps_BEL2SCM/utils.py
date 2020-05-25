@@ -9,22 +9,13 @@ import statistics
 from statistics import mean
 from statistics import stdev
 import torch
+import torch.nn.functional as F
 import numpy as np
 from Neuirps_BEL2SCM.node import Node
 from Neuirps_BEL2SCM.scm import *
 from Neuirps_BEL2SCM.parent_interaction_types import ParentInteractionTypes
+from Neuirps_BEL2SCM.constants import PYRO_DISTRIBUTIONS, VARIABLE_TYPE
 import pickle
-
-PYRO_DISTRIBUTIONS = {
-
-    "Categorical": pyro.distributions.Categorical,
-    "Normal": pyro.distributions.Normal,
-    "LogNormal": pyro.distributions.LogNormal,
-    "Gamma": pyro.distributions.Gamma,
-    "Delta": pyro.distributions.Delta,
-    "MultivariateNormal": pyro.distributions.MultivariateNormal,
-    "BetaBinomial": pyro.distributions.BetaBinomial
-}
 
 
 def json_load(filepath):
@@ -78,7 +69,7 @@ def get_parent_samples(node: Node, sample: dict) -> dict:
 def generate_process_condition(parent_info, parent_samples):
     active_list = list()
     for parent_name in parent_samples.keys():
-        if parent_info[parent_name]["label"] in ["process", "activity", "reaction", "pathology"]:
+        if parent_info[parent_name]["label"] in VARIABLE_TYPE["Categorical"]:
             if parent_info[parent_name]["relation"] in ["increases", "directlyIncreases"]:
                 # increases type process parents need to be active
                 if parent_samples[parent_name] > 0.5:
@@ -95,53 +86,37 @@ def generate_process_condition(parent_info, parent_samples):
         return True
     return False
 
-
-def get_sign_weight_parent_vector(parent_info, weight_dict, parent_samples):
-    sign_vector = []
-    weight_vector = []
-    parent_samples_vector = []
-    for parent_name in parent_info.keys():
-        if parent_info[parent_name]["label"] == "abundance":
-            if parent_info[parent_name]["relation"] in ["directlyIncreases", "increases"]:
-                sign_vector.append(1)
-            else:
-                sign_vector.append(-1)
-            weight_vector.append(weight_dict[parent_name])
-            parent_samples_vector.append(parent_samples[parent_name])
-        if parent_info[parent_name]["label"] == "transformation":
-            if parent_info[parent_name]["relation"] in ["directlyIncreases", "increases"]:
-                sign_vector.append(1)
-            else:
-                sign_vector.append(-1)
-            weight_vector.append(weight_dict[parent_name])
-            parent_value = parent_samples[parent_name] + parent_samples[parent_name]**2
-            parent_samples_vector.append(parent_value)
-
-    return np.array(sign_vector), np.array(weight_vector), np.array(parent_samples_vector)
-
-
-def sigmoid(node):
-    return 1 / (1 + np.exp(-node))
+# def get_sign_weight_parent_vector(parent_info, weight_dict, parent_samples):
+#     sign_vector = []
+#     weight_vector = []
+#     parent_samples_vector = []
+#     for parent_name in parent_info.keys():
+#         if parent_info[parent_name]["label"] == "abundance":
+#             if parent_info[parent_name]["relation"] in ["directlyIncreases", "increases"]:
+#                 sign_vector.append(1)
+#             else:
+#                 sign_vector.append(-1)
+#             weight_vector.append(weight_dict[parent_name])
+#             parent_samples_vector.append(parent_samples[parent_name])
+#         if parent_info[parent_name]["label"] == "transformation":
+#             if parent_info[parent_name]["relation"] in ["directlyIncreases", "increases"]:
+#                 sign_vector.append(1)
+#             else:
+#                 sign_vector.append(-1)
+#             weight_vector.append(weight_dict[parent_name])
+#             parent_value = parent_samples[parent_name] + parent_samples[parent_name]**2
+#             parent_samples_vector.append(parent_value)
+#
+#     return np.array(sign_vector), np.array(weight_vector), np.array(parent_samples_vector)
 
 
 def get_sample_for_binary_node(node, parent_samples, exog, node_distribution, deterministic_prediction):
-    process_check = generate_process_condition(node.parent_info, parent_samples)
-    if process_check:
-        c = sigmoid(deterministic_prediction + exog)
-    else:
-        # [TODO] Refactor: We assume that node distribution is Bernoulli.
-        c = sigmoid(0.0 + exog)
+    c = F.sigmoid(deterministic_prediction + exog)
     return pyro.sample(node.name, node_distribution(c))
 
 
 def get_sample_for_continuous_node(node, parent_samples, exog, node_distribution, deterministic_prediction):
-    process_check = generate_process_condition(node.parent_info, parent_samples)
-
-    if process_check:
-        c_mean = torch.squeeze(deterministic_prediction) + exog
-    else:
-        c_mean = exog
-
+    c_mean = torch.squeeze(deterministic_prediction) + exog
     # [TODO]: Get the std from TrainedModel and that should be the std below.
     return pyro.sample(node.name, node_distribution(c_mean, 1.0))
 
@@ -151,9 +126,9 @@ def sample_with_and_interaction(node, config, parent_samples, exog, deterministi
     threshold = config.prior_threshold
     node_distribution = config.node_label_distribution_info[node.node_label]
 
-    if node.node_label in ["process", "activity", "reaction", "pathology"]:
+    if node.node_label in VARIABLE_TYPE["Categorical"]:
         return get_sample_for_binary_node(node, parent_samples, exog, node_distribution, deterministic_prediction)
-    elif node.node_label in ["abundance", "transformation"]:
+    elif node.node_label in VARIABLE_TYPE["Continuous"]:
         return get_sample_for_continuous_node(node, parent_samples, exog, node_distribution, deterministic_prediction)
     else:
         raise Exception("invalid node type")

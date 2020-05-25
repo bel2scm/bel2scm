@@ -1,24 +1,13 @@
 import collections
 
 import torch
-
-LABEL_DICT = {
-    'transformation': ['sec', 'surf', 'deg', 'rxn', 'tloc', 'fromLoc',
-                       'products', 'reactants', 'toLoc'],
-    'abundance': ['a', 'abundance', 'complex', 'complexAbundance', 'geneAbundance', 'g',
-                  'microRNAAbundance', 'm', 'populationAbundance', 'pop', 'proteinAbundance', 'p',
-                  'rnaAbundance', 'r', 'frag', 'fus', 'loc', 'pmod', 'var'
-                                                                     'compositeAbundance', 'composite'],
-    'activity': ['activity', 'act', 'molecularActivity', 'ma'],
-    'reaction': ['reaction', 'rxn'],
-    'process': ['biologicalProcess', 'bp'],
-    'pathology': ['pathology', 'path']
-}
-VALID_RELATIONS = ["increases", "decreases", "directlyIncreases", "directlyDecreases"]
+from Neuirps_BEL2SCM.constants import VALID_RELATIONS, LABEL_DICT
 
 
 class Node:
-
+    """
+    Node contains it's type, label, orderedDict of its children and parent type and label.
+    """
     def __init__(self):
         # root is True by default. We change this variable in self.update_parent_information_in_child_node()
         self.root = True

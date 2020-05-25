@@ -3,7 +3,6 @@ import pandas as pd
 
 from Neuirps_BEL2SCM.node import *
 
-
 ## a generic function to take BEL statements as input
 ## in any form and return a data structure as output
 ## in desired format
@@ -27,7 +26,7 @@ class BelGraph:
         # Dictionary<str, dict<features_df(parents), target(node)>>
         self.node_data = dict()
         # Dictionary<str, list>
-        self.valid_continuous_parent_name_list_for_nodes = dict()
+        self.parent_name_list_for_nodes = dict()
 
     def construct_graph_from_str_list(self, file_name):
         '''
@@ -223,18 +222,13 @@ class BelGraph:
         # Get the child data
         child_data = self._get_single_node_data(node, data)
 
-        # Get parent list to get the data if the parent is not a process, then it goes to condition, and is not the part of the local model.
-        # [TODO] Polish the label condition here.s
-        valid_parent_name_list = [parent_name for parent_name, parent_info in node.parent_info.items() if not parent_info["label"] == "process"]
-        are_continuous_parents_available = len(valid_parent_name_list) > 0
+        # Get parent list
+        valid_parent_name_list = [parent_name for parent_name, parent_info in node.parent_info.items()]
+        self.parent_name_list_for_nodes[node.name] = valid_parent_name_list
 
-        if are_continuous_parents_available:
-            self.valid_continuous_parent_name_list_for_nodes[node.name] = valid_parent_name_list
-            try:
-                parent_data = data[valid_parent_name_list]
-            except:
-                print("Exception: one of the parent not available in data set")
-        else:
-            parent_data = pd.DataFrame()
+        try:
+            parent_data = data[valid_parent_name_list]
+        except:
+            raise Exception("Exception: one of the parent not available in data set")
 
         return parent_data, child_data

@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 import time
 import pyro
-
+from Neuirps_BEL2SCM.constants import VARIABLE_TYPE
 
 class RegressionNet(torch.nn.Module):
 	"""
@@ -18,7 +18,6 @@ class RegressionNet(torch.nn.Module):
 		x = self.predict(x)			 # linear output
 		return x
 
-
 class LogisticNet(torch.nn.Module):
 	"""
 	This class is used to train classification model for binary nodes.
@@ -30,7 +29,7 @@ class LogisticNet(torch.nn.Module):
 
 	def forward(self, x):
 		x = F.relu(self.hidden(x))	  # activation function for hidden layer
-		x = self.predict(F.sigmoid(x))	 # linear output
+		x = F.sigmoid(self.predict((x)))	 # linear output
 		return x
 
 
@@ -42,10 +41,11 @@ class TrainNet():
 	# All hardcoded hyperparameter resides here.
 	learning_rate = 0.01
 	n_hidden = 10
-	iterations = 3000
 	train_loss = 0
 	test_loss = 0
 	train_test_split_index = 2000
+	n_epochs = 10
+	batch_size = 128
 
 	def __init__(self, n_feature, n_output, isRegression):
 		if isRegression:
@@ -57,21 +57,24 @@ class TrainNet():
 		self.optimizer =  torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
 
 	def fit(self, x, y):
-		# train data
-		train_x = x[:self.train_test_split_index]
-		train_y = y[:self.train_test_split_index]
-
-		# test data
-		test_x = x[self.train_test_split_index:]
-		test_y = y[self.train_test_split_index:]
+		train_x, train_y, test_x, test_y = self._get_train_test_data(x, y)
 
 		# [TODO] Divide the train data into batches to increase the training performance.
-		for t in range(self.iterations):
-			prediction = self.net(train_x)
-			loss = self.loss_func(prediction, train_y)
-			self.optimizer.zero_grad()
-			loss.backward()
-			self.optimizer.step()
+		for epoch in range(self.n_epochs):
+
+			# X is a torch Variable
+			permutation = torch.randperm(train_x.size()[0])
+
+			for i in range(0, train_x.size()[0], self.batch_size):
+				self.optimizer.zero_grad()
+				# get batch_x, batch_y
+				indices = permutation[i:i + self.batch_size]
+				batch_x, batch_y = train_x[indices], train_y[indices]
+
+				prediction = self.net(batch_x)
+				loss = self.loss_func(prediction, batch_y)
+				loss.backward()
+				self.optimizer.step()
 
 		# calculate train loss
 		self.train_loss = self.loss_func(self.predict(train_x), train_y)
@@ -79,6 +82,17 @@ class TrainNet():
 
 	def predict(self, x):
 		return self.net(x)
+
+	def _get_train_test_data(self, x, y):
+		# train data
+		train_x = x[:self.train_test_split_index].flatten().view(-1, 1)
+		train_y = y[:self.train_test_split_index]
+
+		# test data
+		test_x = x[self.train_test_split_index:].flatten().view(-1, 1)
+		test_y = y[self.train_test_split_index:]
+
+		return train_x, train_y, test_x, test_y
 
 
 class ParameterEstimation:
@@ -112,8 +126,8 @@ class ParameterEstimation:
 				# Getting corresponding distribution from config
 				node_distribution = self.config.node_label_distribution_info[node_label]
 
-				# if the node distribution is set to Bernoulli
-				if node_distribution is pyro.distributions.Bernoulli:
+				# if the node label belongs to categorical
+				if node_label in VARIABLE_TYPE["Categorical"]:
 					self.root_distributions[node_str] = self._get_distribution_for_binary_root(
 						node_distribution,
 						features_and_target_data)
@@ -137,8 +151,13 @@ class ParameterEstimation:
 				# we need node label to search for the corresponding distribution from config
 				node_label = self.belgraph.nodes[node_str].node_label
 
-				if self.config.node_label_distribution_info[node_label] is pyro.distributions.Bernoulli:
+				# Currently, only binary classification is supported. [TODO] Add support for multi-class classification for categorical variable
+				if node_label in VARIABLE_TYPE["Categorical"]:
+					print("Start training of node:", node_str)
+					time1 = time.time()
 					trained_network = self._classification(features_and_target_data)
+					print("Finished training of node:", node_str, "in ", (time.time() - time1), " seconds")
+					print("Test error:", trained_network.test_loss)
 				else:
 					print("Start training of node:", node_str)
 					time1 = time.time()
@@ -166,10 +185,11 @@ class ParameterEstimation:
 
 	def _classification(self, features_and_target_data):
 		feature_data = torch.tensor(features_and_target_data["features"].values).float()
-		number_of_features = len(feature_data)
+		number_of_features = feature_data.size()[1]
 
 		target_data = torch.tensor(features_and_target_data["target"].values).float()
 
+		# new instance of TrainNet with isRegression=false.
 		train_network = TrainNet(n_feature=number_of_features, n_output=1, isRegression=False)
 		train_network.fit(feature_data, target_data)
 
@@ -180,6 +200,7 @@ class ParameterEstimation:
 		# convert target series to float tensor.
 		mean = torch.tensor(features_and_target_data["target"].mean())
 
+		# mean should be a probability that becomes the parameter for Bernoulli
 		if 0 <= mean <= 1:
 			try:
 				return node_distribution(mean)

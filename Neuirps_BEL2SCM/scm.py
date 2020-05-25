@@ -88,8 +88,7 @@ class SCM:
                     parent_tensor = get_parent_tensor(parent_sample_dict, parent_names[current_node_name])
                     deterministic_prediction = self._get_prediction(trained_networks[current_node_name], parent_tensor)
 
-                sample[current_node_name] = get_sample_for_non_roots(graph[current_node_name], config,
-                                                                     parent_sample_dict, deterministic_prediction)
+                sample[current_node_name] = get_sample_for_non_roots(graph[current_node_name], config, deterministic_prediction)
 
                 # [TODO] Move below two lines to a function
                 child_name_list = [value["name"] for (key, value) in graph[current_node_name].children_info.items()]

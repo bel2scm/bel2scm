@@ -44,7 +44,7 @@ class TrainNet():
 	train_loss = 0
 	test_loss = 0
 	train_test_split_index = 2000
-	n_epochs = 10
+	n_epochs = 30
 	batch_size = 128
 
 	def __init__(self, n_feature, n_output, isRegression):

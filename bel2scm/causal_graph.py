@@ -16,104 +16,22 @@ from . import graph_node as gn
 
 class cg_graph():
     
-    def __init__(self,str_list=[],bel_graph=[],json_file=[],type_dict=[],only_creases=True):
+    def __init__(self):
+        return
+    
+    
+    def proc_data(self,b_or_mle,type_dict={}):
         
-        self.only_creases = only_creases
-        
-        edge_list = []
-
-        entity_list = []
-        
-        if str_list:
-            # construct graph from list of BEL statement strings
-
-            for item in str_list:
-
-                sub_ind = item.find('=')
-
-                sub_temp = item[:sub_ind-1]
-                obj_temp = item[sub_ind+3:]
-                
-                rel_temp = item[sub_ind:sub_ind+2]
-
-                if sub_temp not in entity_list:
-                    entity_list.append(sub_temp)
-                if obj_temp not in entity_list:
-                    entity_list.append(obj_temp)
-                    
-                if only_creases:
-                    # ignore hasVariant, partOf relations
-
-                    if rel_temp.find('crease') > 0:
-                        edge_list.append([sub_temp,obj_temp,rel_temp])
-                
-                else:
-                    # check for duplicate edges
-                    nodes_temp = [sub_temp,obj_temp]
-                    list_temp = [[item[0],item[1]] for item in edge_list]
-                    if nodes_temp in list_temp:
-                        ind_temp = list_temp.index(nodes_temp)
-                        edge_list[ind_temp][2] += ',' + rel_temp
-                    else:
-                        edge_list.append([sub_temp,obj_temp,rel_temp])
-                
-        elif bel_graph:
-            # construct graph from pyBEL graph
-            
-            for item in bel_graph.edges:
-                edge_temp = bel_graph.get_edge_data(item[0],item[1],item[2])
-                sub_temp = str(item[0]).replace('"','')
-                obj_temp = str(item[1]).replace('"','')
-                rel_temp = edge_temp['relation']
-                
-                if sub_temp not in entity_list:
-                    entity_list.append(sub_temp)
-                if obj_temp not in entity_list:
-                    entity_list.append(obj_temp)
-                
-                if only_creases:
-                    # ignore hasVariant, partOf relations
-
-                    if rel_temp.find('crease') > 0:
-                        edge_list.append([sub_temp,obj_temp,rel_temp])
-                
-                else:
-                    # check for duplicate edges
-                    nodes_temp = [sub_temp,obj_temp]
-                    list_temp = [[item[0],item[1]] for item in edge_list]
-                    if nodes_temp in list_temp:
-                        ind_temp = list_temp.index(nodes_temp)
-                        edge_list[ind_temp][2] += ',' + rel_temp
-                    else:
-                        edge_list.append([sub_temp,obj_temp,rel_temp])
-        elif json_file:
-            # construct graph from json file
-            
-            file1 = open(json_file)
-            j_str = file1.readline()
-            file1.close()
-            loaded_json = json.loads(j_str)
-            
-            entity_list = []
-            for item in loaded_json['nodes']:
-                entity_list.append(item['name'])
-                
-            edge_list = []
-            for item in loaded_json['edges']:
-                edge_list.append([item['from'],item['to'],''])
-        
-        n_nodes = len(entity_list)
+        self.b_or_mle = b_or_mle
+        n_nodes = len(self.entity_list)
         self.n_nodes = n_nodes
+        adj_mat = np.zeros((self.n_nodes,self.n_nodes),dtype=int)
 
-        adj_mat = np.zeros((n_nodes,n_nodes),dtype=int)
-
-        for item in edge_list:
-            out_ind = entity_list.index(item[0])
-            in_ind = entity_list.index(item[1])
+        for item in self.edge_list:
+            out_ind = self.entity_list.index(item[0])
+            in_ind = self.entity_list.index(item[1])
             adj_mat[out_ind,in_ind] = 1
-            
-        self.edge_list = edge_list
-        self.entity_list = entity_list
+
         self.adj_mat = adj_mat
         
         self.graph = nx.DiGraph(adj_mat)
@@ -140,34 +58,6 @@ class cg_graph():
             print('Cycle edges:')
             for item in cycle_edge_list:
                 print(item)
-                
-        
-        node_dict = {}
-        
-        cont_list = ['a','abundance','complex','complexAbundance','geneAbundance','g','microRNAAbundance','m',
-            'populationAbundance','pop','proteinAbundance','p','reaction','rxn','rnaAbundance','r']
-        bin_list = ['activity','act','biologicalProcess','bp','pathology','path','molecularActivity','ma']
-        
-        for i in range(0,n_nodes):
-            
-            if str_list or json_file:
-                node_type = type_dict[entity_list[i]]
-            elif bel_graph:
-                ind_temp = entity_list[i].find('(')
-                str_temp = entity_list[i][:ind_temp]
-                
-                
-                if str_temp in cont_list:
-                    node_type = 'continuous'
-                elif str_temp in bin_list:
-                    node_type = 'binary'
-                else:
-                    node_type = 'continuous'
-                    print('BEL node type ' + str_temp + ' not known -- defaulting to continuous')
-            
-            node_dict[entity_list[i]] = gn.cg_node(np.sum(adj_mat[:,i]),entity_list[i],node_type)
-        
-        self.node_dict = node_dict
         
         self.cond_list = []
         
@@ -178,14 +68,66 @@ class cg_graph():
         self.parent_name_dict = {}
         self.child_name_dict = {}
         
-        self.parent_ind_list = [np.where(self.adj_mat[:,i] > 0)[0] for i in range(0,n_nodes)]
-        self.child_ind_list = [np.where(self.adj_mat[i,:] > 0)[0] for i in range(0,n_nodes)]
+        self.parent_ind_list = [np.where(self.adj_mat[:,i] > 0)[0] for i in range(0,self.n_nodes)]
+        self.child_ind_list = [np.where(self.adj_mat[i,:] > 0)[0] for i in range(0,self.n_nodes)]
+        
+        node_dict = {}
         
         for i in range(0,n_nodes):
-            self.parent_name_dict[entity_list[i]] = [entity_list[item] for item in self.parent_ind_list[i]]
-            self.child_name_dict[entity_list[i]] = [entity_list[item] for item in self.child_ind_list[i]]
+            self.parent_name_dict[self.entity_list[i]] = [self.entity_list[item] 
+                for item in self.parent_ind_list[i]]
+            self.child_name_dict[self.entity_list[i]] = [self.entity_list[item] 
+                for item in self.child_ind_list[i]]
+        
+            if type_dict:
+                node_type = type_dict[self.entity_list[i]]
 
+            else:
+
+                bel_dict = {}
+                bel_dict['activity'] = ['activity','act','molecularActivity','ma']
+                bel_dict['abundance'] = ['a','abundance','complex','complexAbundance','geneAbundance','g',
+                    'microRNAAbundance','m','populationAbundance','pop','proteinAbundance','p','rnaAbundance','r',
+                    'compositeAbundance','composite']
+                bel_dict['reaction'] = ['reaction','rxn']
+                bel_dict['process'] = ['biologicalProcess','bp']
+                bel_dict['pathology'] = ['pathology','path']
+
+                vartype_dict = {}
+                vartype_dict['activity'] = 'Bernoulli'
+                vartype_dict['abundance'] = 'Gamma'
+                vartype_dict['reaction'] = 'Normal'
+                vartype_dict['process'] = 'Bernoulli'
+                vartype_dict['pathology'] = 'Bernoulli'
+
+
+                for i in range(0,self.n_nodes):
+
+                    ind_temp = self.entity_list[i].find('(')
+                    str_temp = self.entity_list[i][:ind_temp]
+
+                    node_type = ''
+
+                    for item in bel_dict:
+                        if str_temp in bel_dict[item]:
+                            node_type = vartype_dict[item]
+
+                    if node_type == '':
+                        node_type = 'Normal'
+                        print('BEL node type ' + str_temp + ' not known -- defaulting to Normal')
+
+            if self.b_or_mle == 'Bayes':
+                node_dict[self.entity_list[i]] = gn.bayes_node(np.sum(adj_mat[:,i]),self.entity_list[i],node_type)
+            elif self.b_or_mle == 'MLE':
+                node_dict[self.entity_list[i]] = gn.mle_node(np.sum(adj_mat[:,i]),self.entity_list[i],node_type)
+            else:
+                print('node type ' + self.b_or_mle + 'not recognized -- defaulting to MLE')
+                node_dict[self.entity_list[i]] =gn.mle_node(np.sum(adj_mat[:,i]),self.entity_list[i],node_type)
+        
+        self.node_dict = node_dict
+        
         return
+        
     
     def remove_edge(self,edge_rem):
         # remove all of the edges in edge_rem
@@ -214,7 +156,7 @@ class cg_graph():
                 self.entity_list[item] for item in self.child_ind_list[i]]
         return
     
-    def prob_init(self,data_in):
+    def prob_init(self,data_in,lr):
         # initialize all of the nodes' probability distributions given data_in
         
         exog_list = []
@@ -225,7 +167,7 @@ class cg_graph():
             data_in_temp = data_in[:,self.parent_ind_list[i]]
             data_out_temp = data_in[:,i]
             print(name)
-            self.node_dict[name].p_init(data_in_temp,data_out_temp)
+            self.node_dict[name].prob_init(data_in_temp,data_out_temp,lr)
             
             if self.node_dict[name].n_inputs == 0:
                 exog_list.append(name)
@@ -600,3 +542,120 @@ class cg_graph():
                 
         with open(filename + '.json', 'w') as json_file:
             json.dump(write_dict, json_file)
+        
+class str_graph(cg_graph):
+    
+    def __init__(self,str_list,b_or_mle,type_dict={}):
+        
+        super().__init__()
+        
+        edge_list = []
+        entity_list = []
+        
+        # construct graph from list of BEL statement strings
+            
+        for item in str_list:
+
+            sub_ind = item.find('=')
+
+            sub_temp = item[:sub_ind-1]
+            obj_temp = item[sub_ind+3:]
+
+            rel_temp = item[sub_ind:sub_ind+2]
+
+            if sub_temp not in entity_list:
+                entity_list.append(sub_temp)
+            if obj_temp not in entity_list:
+                entity_list.append(obj_temp)
+
+            nodes_temp = [sub_temp,obj_temp]
+            list_temp = [[item[0],item[1]] for item in edge_list]
+            if nodes_temp in list_temp:
+                ind_temp = list_temp.index(nodes_temp)
+                edge_list[ind_temp][2] += ',' + rel_temp
+            else:
+                edge_list.append([sub_temp,obj_temp,rel_temp])
+                
+        self.entity_list = entity_list
+        self.edge_list = edge_list
+        
+        self.proc_data(b_or_mle,type_dict)
+        
+        return
+
+class bel_graph(cg_graph):
+    
+    def __init__(self,bel_graph,b_or_mle,type_dict={},subset_rels=False):
+        
+        super().__init__()
+        
+        edge_list = []
+        entity_list = []
+
+        # construct graph from pyBEL graph
+            
+        for item in bel_graph.edges:
+            edge_temp = bel_graph.get_edge_data(item[0],item[1],item[2])
+            sub_temp = str(item[0]).replace('"','')
+            obj_temp = str(item[1]).replace('"','')
+            rel_temp = edge_temp['relation']
+
+            if sub_temp not in entity_list:
+                entity_list.append(sub_temp)
+            if obj_temp not in entity_list:
+                entity_list.append(obj_temp)
+
+            if subset_rels:
+                # ignore hasVariant, partOf relations
+
+                if rel_temp.find('crease') > 0 or rel_temp.find('regulate') > 0:
+                    edge_list.append([sub_temp,obj_temp,rel_temp])
+
+            else:
+                # check for duplicate edges
+                nodes_temp = [sub_temp,obj_temp]
+                list_temp = [[item[0],item[1]] for item in edge_list]
+                if nodes_temp in list_temp:
+                    ind_temp = list_temp.index(nodes_temp)
+                    edge_list[ind_temp][2] += ',' + rel_temp
+                else:
+                    edge_list.append([sub_temp,obj_temp,rel_temp])
+        
+        self.entity_list = entity_list
+        self.edge_list = edge_list
+        
+        self.proc_data(b_or_mle,type_dict)
+        
+        return
+    
+class cf_graph(cg_graph):
+    
+    def __init__(self,json_file,b_or_mle,type_dict={}):
+        
+        super().__init__()
+        
+        edge_list = []
+        entity_list = []
+        
+        file1 = open(json_file)
+        j_str = file1.readline()
+        file1.close()
+        loaded_json = json.loads(j_str)
+
+        entity_list = []
+        for item in loaded_json['nodes']:
+            entity_list.append(item['name'])
+
+        edge_list = []
+        for item in loaded_json['edges']:
+            edge_list.append([item['from'],item['to'],''])
+        
+        n_nodes = len(entity_list)
+        self.n_nodes = n_nodes
+
+        self.entity_list = entity_list
+        self.edge_list = edge_list
+        
+        self.proc_data(b_or_mle,type_dict)
+
+        return

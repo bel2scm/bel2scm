@@ -1,0 +1,70 @@
+[
+    {
+        "_key": "01E8MX5CM0W8EX96PWK9AFNC96",
+        "rev": "_aglQ4-2--_",
+        "owners": [
+            {
+                "user_id": "01e531dddgcphm8ysgw2v92pk2",
+                "first_name": "Jeremy",
+                "last_name": "Zucker",
+                "full_name": "Jeremy Zucker"
+            }
+        ],
+        "is_deleted": false,
+        "is_archived": null,
+        "is_public": false,
+        "nanopub": {
+            "type": {
+                "name": "BEL",
+                "version": "2.1.0"
+            },
+            "citation": {
+                "authors": null,
+                "database": {
+                    "name": "PubMed",
+                    "id": ""
+                },
+                "reference": null,
+                "title": "Integrating Markov processes with structural causal modeling enables counterfactual inference in complex systems",
+                "source_name": null,
+                "date_published": null,
+                "abstract": "This manuscript contributes a general and practical framework for casting a Markov process model of a system at equilibrium as a structural causal model, and carrying out counterfactual inference. Markov processes mathematically describe the mechanisms in the system, and predict the system’s equilibrium behavior upon intervention, but do not support counterfactual inference.  In contrast, structural causal models support counterfactual inference, but do not identify the mechanisms. This manuscript leverages the benefits of both approaches. We define the structural causal models in terms of the parameters and the equilibrium dynamics of the Markov process models, and counterfactual inference flows from these settings. The proposed approach alleviates the identifiability drawback of the structural causal models, in that the counterfactual inference is consistent with the counterfactual trajectories simulated from the Markov process model. We showcase the benefits of this framework in case studies of complex biomolecular systems with nonlinear dynamics. We illustrate that, in presence of Markov process model misspecification, counterfactual inference leverages prior data, and therefore estimates the outcome of an intervention more accurately than a direct simulation."
+            },
+            "assertions": [
+                {
+                    "subject": "a(p(Mek))",
+                    "relation": "directlyIncreases",
+                    "object": "a(p(Erk))",
+                    "validation": null
+                },
+                {
+                    "subject": "a(p(Raf))",
+                    "relation": "directlyIncreases",
+                    "object": "a(p(Mek))",
+                    "validation": null
+                }
+            ],
+            "id": "01E8MX5CM0W8EX96PWK9AFNC96",
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-1.1.0.yaml",
+            "annotations": [
+                {
+                    "type": "Species",
+                    "label": "human",
+                    "id": "TAX:9606",
+                    "validation": null
+                }
+            ],
+            "evidence": "Figure 1",
+            "metadata": {
+                "collections": [],
+                "gd_status": "draft",
+                "gd_createTS": "2020-05-18T22:06:13.631Z",
+                "gd_updateTS": "2020-05-18T22:06:27.338Z",
+                "gd_validation": [],
+                "gd_hash": "034bf90a53753e30",
+                "gd_creator": "01e531dddgcphm8ysgw2v92pk2"
+            }
+        },
+        "associated_ids": []
+    }
+]

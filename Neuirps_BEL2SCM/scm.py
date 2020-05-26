@@ -2,17 +2,18 @@ from itertools import chain
 
 from Neuirps_BEL2SCM.bel_graph import BelGraph
 from Neuirps_BEL2SCM.parameter_estimation import ParameterEstimation
-from Neuirps_BEL2SCM.utils import get_sample_for_non_roots, get_parent_tensor, all_parents_visited, json_load, get_parent_samples
+from Neuirps_BEL2SCM.utils import get_sample_for_non_roots, get_parent_tensor, all_parents_visited, json_load, \
+    get_parent_samples
 from Neuirps_BEL2SCM.constants import PYRO_DISTRIBUTIONS
 import pandas as pd
 import pyro
-
 
 
 class SCM:
     '''
     4. Add functions as described below
     '''
+
     def __init__(self, bel_file_path, config_file_path, data_file_path):
 
         # 1. set parameters from config file.
@@ -20,7 +21,7 @@ class SCM:
 
         # 2. get nodes from bel file.
         self.belgraph = BelGraph("nanopub_file", bel_file_path, data_file_path)
-        self.belgraph.construct_graph_from_nanopub_file()
+        self.belgraph.parse_input_to_construct_graph()
         self.belgraph.prepare_and_assign_data()
         self.graph = self.belgraph.nodes
 
@@ -31,7 +32,6 @@ class SCM:
 
         self.root_distributions = parameter_estimation.root_distributions
         self.trained_networks = parameter_estimation.trained_networks
-
 
         self.roots = self.belgraph.get_nodes_with_no_parents()
         # 3. Build model
@@ -88,7 +88,8 @@ class SCM:
                     parent_tensor = get_parent_tensor(parent_sample_dict, parent_names[current_node_name])
                     deterministic_prediction = self._get_prediction(trained_networks[current_node_name], parent_tensor)
 
-                sample[current_node_name] = get_sample_for_non_roots(graph[current_node_name], config, deterministic_prediction)
+                sample[current_node_name] = get_sample_for_non_roots(graph[current_node_name], config,
+                                                                     deterministic_prediction)
 
                 # [TODO] Move below two lines to a function
                 child_name_list = [value["name"] for (key, value) in graph[current_node_name].children_info.items()]
@@ -106,29 +107,30 @@ class SCM:
 
     # [Todo]
     def counterfactual_inference(self):
+
         return NotImplementedError
 
-    # [Todo]
-    def condition(self, condition_data):
-        '''
+    def condition(self, condition_data: dict):
+        """
         It conditions self.model with condition data
         Returns: Conditioned pyro model
-        '''
-        # conditioned_model = pyro.condition(self.model, value)
-        return NotImplementedError
+        """
 
-    # [Todo]
-    def intervention(self, intervention_data):
-        '''
+        conditioned_model = pyro.condition(self.model, condition_data)
+        return conditioned_model
+
+    def intervention(self, intervention_data: dict):
+        """
         It intervenes self.model with intervention data
         Returns: intervention pyro model
-        '''
-        # intervention_model = pyro.do(self.model, value)
-        return NotImplementedError
+        """
+
+        intervention_model = pyro.do(self.model, intervention_data)
+        return intervention_model
 
     # [Todo]
     def infer(self, target_variables, infer_method):
-        '''
+        """
         this performs inference for target_variables
         Args:
             target_variables:
@@ -136,19 +138,9 @@ class SCM:
 
         Returns: Not sure now
 
-        '''
+        """
         return NotImplementedError
 
-    # [Todo]
-    def fit_parameters(self, data):
-        '''
-        Fits parameters of self.model
-        Args:
-            data:
-
-        Returns: Nothing
-
-        '''
 
     def _get_prediction(self, trained_network, parent_tensor):
         try:
@@ -158,12 +150,13 @@ class SCM:
 
 
 class Config:
-    '''
+    """
     Loads config file.
-    '''
+    """
+
     def __init__(self, config_file_path):
         self.config_dict = json_load(config_file_path)
-        #self._check_config()
+        # self._check_config()
         self._set_config_parameters()
 
     def _set_config_parameters(self):
@@ -175,14 +168,14 @@ class Config:
         self.parent_interaction_type = config["relation_type"]
 
     def _get_pyro_dist_from_text(self, node_label_distribution_info):
-        '''
+        """
         Converts string distribution names in config to pyro distributions. The names should be exact match.
         Args:
             node_label_distribution_info:
 
         Returns:
 
-        '''
+        """
         label_pyro_dist_dict = {}
         for label, distribution_name in node_label_distribution_info.items():
 

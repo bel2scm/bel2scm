@@ -6,6 +6,7 @@ from Neuirps_BEL2SCM.utils import get_sample_for_non_roots, get_parent_tensor, a
 from Neuirps_BEL2SCM.constants import PYRO_DISTRIBUTIONS
 import pandas as pd
 import pyro
+import torch
 
 
 
@@ -109,13 +110,29 @@ class SCM:
         return NotImplementedError
 
     # [Todo]
-    def condition(self, condition_data):
+    def model_condition_data(self, cond_dict):
         '''
         It conditions self.model with condition data
         Returns: Conditioned pyro model
         '''
-        # conditioned_model = pyro.condition(self.model, value)
-        return NotImplementedError
+        data_in = {}
+        for item in cond_dict:
+            data_in[item] = cond_dict[item]
+
+        cond_model = pyro.condition(self.model, data=data_in)
+
+        return cond_model()
+    def model_do_sample(self,do_dict):
+        '''
+        Returns: Do pyro model
+        '''
+        data_in = {}
+        for item in do_dict:
+            data_in[item] = do_dict[item]
+
+        do_model = pyro.do(self.model, data=data_in)
+
+        return do_model()
 
     # [Todo]
     def intervention(self, intervention_data):

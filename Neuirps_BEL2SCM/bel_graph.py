@@ -3,18 +3,18 @@ import pandas as pd
 
 from Neuirps_BEL2SCM.node import *
 
-## a generic function to take BEL statements as input
-## in any form and return a data structure as output
-## in desired format
 
-## Created with the assumptions that inputs are bel statements of some sort
+# a generic function to take BEL statements as input
+# in any form and return a data structure as output
+# in desired format
+
+# Created with the assumptions that inputs are bel statements of some sort
 
 
 class BelGraph:
-    '''
+    """
     It loads all the nodes from given input BEL statements.
-    '''
-
+    """
 
     def __init__(self, file_type, file_name, data_file_path):
         self.file_type = file_type
@@ -28,22 +28,36 @@ class BelGraph:
         # Dictionary<str, list>
         self.parent_name_list_for_nodes = dict()
 
+    def parse_input_to_construct_graph(self):
+        file_type = self.file_type
+        file_name = self.file_name
+        if file_type == "str_list":
+            self.construct_graph_from_str_list(file_name)
+        elif file_type == "bel_graph":
+            self.construct_graph_from_bel_graph(file_name)
+        elif file_type == "jgf_file":
+            self.construct_graph_from_jgf_file()
+        elif file_type == "nanopub_file":
+            self.construct_graph_from_nanopub_file()
+        else:
+            raise Exception("Invalid file type!")
+
     def construct_graph_from_str_list(self, file_name):
-        '''
+        """
         Disc
         Args:
             file_name:
 
         Returns:
 
-        '''
+        """
         # extracting relevant information from string list format
         for item in file_name:
             sub_ind = item.find('=')
             sub_temp = item[:sub_ind - 1]
             obj_temp = item[sub_ind + 3:]
             rel_temp = item[sub_ind:sub_ind + 2]
-            ## keeping only increases/decreases type of edges
+            # keeping only increases/decreases type of edges
             if sub_temp in self.nodes:
                 self.nodes[sub_temp].update_child_information_in_parent_node(obj_temp, rel_temp)
             else:
@@ -60,14 +74,14 @@ class BelGraph:
                 self.nodes[obj_temp] = obj_node
 
     def construct_graph_from_bel_graph(self, file_name):
-        '''
+        """
 
         Args:
             file_name:
 
         Returns:
 
-        '''
+        """
         # extracting relevant information from pybel format
         for item in file_name.edges:
             edge_temp = file_name.get_edge_data(item[0], item[1], item[2])
@@ -90,16 +104,16 @@ class BelGraph:
                 obj_node.update_parent_information_in_child_node(sub_temp, rel_temp)
                 self.nodes[obj_temp] = obj_node
 
-    def construct_graph_from_jgf_file(self, file_name):
-        '''
+    def construct_graph_from_jgf_file(self):
+        """
 
         Args:
             file_name:
 
         Returns:
 
-        '''
-        with open(file_name) as file1:
+        """
+        with open(self.file_name) as file1:
             loaded_jgf = json.load(file1)
 
         for item in loaded_jgf['graph']['edges']:
@@ -122,11 +136,11 @@ class BelGraph:
                 self.nodes[obj_temp] = obj_node
 
     def construct_graph_from_nanopub_file(self):
-        '''
-
+        """
         Returns:
 
-        '''
+        """
+
         try:
             with open(self.file_name) as json_text:
                 loaded_nanopub = json.load(json_text)
@@ -232,3 +246,33 @@ class BelGraph:
             raise Exception("Exception: one of the parent not available in data set")
 
         return parent_data, child_data
+
+    def is_cyclic(self):
+        visited_nodes = list()
+        recursion_stack = list()
+        for node in self.nodes.keys():
+            if node not in visited_nodes:
+                if self.is_cyclic_recursion(self.nodes[node], visited_nodes, recursion_stack):
+                    return True
+        return False
+
+    def is_cyclic_recursion(self, node_obj, visited_nodes, recursion_stack):
+        visited_nodes.append(node_obj.name)
+        recursion_stack.append(node_obj.name)
+
+        # Recur for all neighbours
+        # if any neighbour is visited and in
+        # recStack then graph is cyclic
+
+        for child_name in [value["name"] for (key, value) in node_obj.children_info.items()]:
+            if child_name not in visited_nodes:
+                if self.is_cyclic_recursion(self.nodes[child_name], visited_nodes, recursion_stack):
+                    return True
+            elif child_name in recursion_stack:
+                return True
+
+        # The node needs to be popped from
+        # recursion stack before function ends
+        recursion_stack.remove(node_obj.name)
+        return False
+

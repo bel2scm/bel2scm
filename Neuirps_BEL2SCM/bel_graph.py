@@ -248,4 +248,31 @@ class BelGraph:
         return parent_data, child_data
 
     def is_cyclic(self):
-        pass
+        visited_nodes = list()
+        recursion_stack = list()
+        for node in self.nodes.keys():
+            if node not in visited_nodes:
+                if self.is_cyclic_recursion(self.nodes[node], visited_nodes, recursion_stack):
+                    return True
+        return False
+
+    def is_cyclic_recursion(self, node_obj, visited_nodes, recursion_stack):
+        visited_nodes.append(node_obj.name)
+        recursion_stack.append(node_obj.name)
+
+        # Recur for all neighbours
+        # if any neighbour is visited and in
+        # recStack then graph is cyclic
+
+        for child_name in [value["name"] for (key, value) in node_obj.children_info.items()]:
+            if child_name not in visited_nodes:
+                if self.is_cyclic_recursion(self.nodes[child_name], visited_nodes, recursion_stack):
+                    return True
+            elif child_name in recursion_stack:
+                return True
+
+        # The node needs to be popped from
+        # recursion stack before function ends
+        recursion_stack.remove(node_obj.name)
+        return False
+

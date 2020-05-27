@@ -41,6 +41,7 @@ def get_distribution(distribution_info: tuple) -> dist:
     else:
         return pyro_dist(pyro_params[0], pyro_params[1])
 
+
 def get_parent_samples(node: Node, sample: dict) -> dict:
     """
     returns subset of sample dict. It contains parent samples for the current node.
@@ -145,6 +146,24 @@ def get_parent_tensor(parent_sample_dict, continuous_parent_names):
     output_tensor = torch.FloatTensor(continuous_sample_list).view(len(continuous_sample_list), 1)
 
     return output_tensor
+
+
+def get_exogenous_samples(config, exogenous_std_dict):
+    """
+    Args:
+        config: config to get the user provided noise distribution
+        exogenous_std_dict: dictionary containing std for the noise distribution
+    Returns:
+        dictionary of exogenous samples
+
+    """
+    exogenous_dict = {}
+    noise_distribution = config.exogenous_distribution_info.keys()[0]
+    for node_name in exogenous_std_dict.keys():
+        exog_name = node_name + "_N"
+        exog_distribution_info = (noise_distribution, [torch.tensor(0.), exogenous_std_dict[node_name]])
+        exogenous_dict[exog_name] = pyro.sample(exog_name, get_distribution(exog_distribution_info))
+    return exogenous_dict
 
 
 def save_scm_object(pkl_file_path, scm):

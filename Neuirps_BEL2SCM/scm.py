@@ -1,20 +1,16 @@
 import statistics
 from collections import defaultdict
-from itertools import chain
 
-from pyro import poutine
-from pyro.infer import TraceEnum_ELBO, SVI, Trace_ELBO, Importance, EmpiricalMarginal
-from pyro.infer.autoguide import AutoDelta
+from pyro.infer import SVI, Trace_ELBO, Importance, EmpiricalMarginal
 import torch.distributions.constraints as constraints
 from torch.optim import SGD
 
 from Neuirps_BEL2SCM.bel_graph import BelGraph
 from Neuirps_BEL2SCM.parameter_estimation import ParameterEstimation
 from Neuirps_BEL2SCM.utils import get_sample_for_non_roots, get_parent_tensor, all_parents_visited, json_load, \
-    get_parent_samples, get_distribution
+    get_parent_samples, get_distribution, get_exogenous_samples
 from Neuirps_BEL2SCM.constants import PYRO_DISTRIBUTIONS
 import torch
-import pandas as pd
 import pyro
 
 
@@ -46,10 +42,14 @@ class SCM:
         self.trained_networks = parameter_estimation.trained_networks
 
         self.roots = self.belgraph.get_nodes_with_no_parents()
-        # 3. Build model
-        self.model = self.model()
 
-    def model(self):
+        # get exogenous distributions
+        self.exogenous_dict = get_exogenous_samples(self.config, parameter_estimation.exogenous_std_dict)
+
+        # 3. Build model
+        self.model(exogenous_dict=self.exogenous_dict)
+
+    def model(self, exogenous_dict):
 
         # Getting class variables.
         graph = self.graph
@@ -100,7 +100,8 @@ class SCM:
                     parent_tensor = get_parent_tensor(parent_sample_dict, parent_names[current_node_name])
                     deterministic_prediction = self._get_prediction(trained_networks[current_node_name], parent_tensor)
 
-                sample[current_node_name] = get_sample_for_non_roots(graph[current_node_name], config,
+                sample[current_node_name] = get_sample_for_non_roots(graph[current_node_name],
+                                                                     exogenous_dict[current_node_name],
                                                                      deterministic_prediction)
 
                 # [TODO] Move below two lines to a function

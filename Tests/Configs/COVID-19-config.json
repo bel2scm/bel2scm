@@ -1,0 +1,13 @@
+{
+    "prior_threshold": 0.5,
+    "node_label_distribution_info": {
+    "activity": "Bernoulli",
+    "abundance": "Normal",
+    "transformation": "LogNormal",
+    "reaction": "Bernoulli",
+    "process": "Bernoulli",
+    "pathology": "Bernoulli",
+    "Others": "LogNormal"
+  },
+  "relation_type": "AND"
+}

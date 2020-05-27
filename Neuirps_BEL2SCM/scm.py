@@ -14,16 +14,16 @@ from pyro.optim import Adam
 from Neuirps_BEL2SCM.bel_graph import BelGraph
 from Neuirps_BEL2SCM.parameter_estimation import ParameterEstimation
 from Neuirps_BEL2SCM.utils import get_sample_for_non_roots, get_parent_tensor, all_parents_visited, json_load, \
-    get_parent_samples, get_distribution
+    get_parent_samples, get_child_name_list
 from Neuirps_BEL2SCM.constants import PYRO_DISTRIBUTIONS, NOISE_TYPE, VARIABLE_TYPE, get_variable_type_from_label
 import torch
 import pyro
 
 
 class SCM:
-    '''
+    """
     4. Add functions as described below
-    '''
+    """
 
     def __init__(self, bel_file_path, config_file_path, data_file_path):
 
@@ -33,8 +33,6 @@ class SCM:
         # 2. get nodes from bel file.
         self.belgraph = BelGraph("nanopub_file", bel_file_path, data_file_path)
         self.belgraph.parse_input_to_construct_graph()
-        if self.belgraph.is_cyclic():
-            raise Exception("Graph contains cycles!")
 
         self.belgraph.prepare_and_assign_data()
         self.graph = self.belgraph.nodes
@@ -49,7 +47,7 @@ class SCM:
 
         self.roots = self.belgraph.get_nodes_with_no_parents()
 
-        # get exogenous distributions [TODO] Move to bel_graph.
+        # get exogenous distributions
         self.exogenous_dist_dict = self._get_exogenous_distributions()
         # exogenous_distribution_type = get_variable_type_from_label(roots[current_node_name].node_label)
 
@@ -80,12 +78,13 @@ class SCM:
 
             sample[current_node_name] = self._get_continuous_reparameterized_sample(current_node_name,
                                                                                     node_distribution,
-                                                                                    exogenous_dist_dict[current_node_name],
+                                                                                    exogenous_dist_dict[
+                                                                                        current_node_name],
                                                                                     root_parameters[current_node_name])
 
             # add child nodes to queue
-            child_name_list = [value["name"] for (key, value) in roots[current_node_name].children_info.items()]
-            node_queue_for_bfs_traversal.extend(child_name_list)
+            node_queue_for_bfs_traversal = get_child_name_list(roots[current_node_name].children_info,
+                                                               node_queue_for_bfs_traversal)
             # mark current node as visited
             visited_nodes.append(current_node_name)
 
@@ -105,7 +104,7 @@ class SCM:
             if is_current_node_not_visited and are_all_parents_visited_for_current_node:
                 current_variable_type = get_variable_type_from_label(graph[current_node_name].node_label)
                 # Get noise sample for current node.
-                current_noise_sample = pyro.sample(current_node_name+"_N", exogenous_dist_dict[current_node_name])
+                current_noise_sample = pyro.sample(current_node_name + "_N", exogenous_dist_dict[current_node_name])
 
                 parent_sample_dict = get_parent_samples(graph[current_node_name], sample)
                 parent_names = self.belgraph.parent_name_list_for_nodes
@@ -121,9 +120,9 @@ class SCM:
                                                                      config,
                                                                      deterministic_prediction)
 
-                # [TODO] Move below two lines to a function
-                child_name_list = [value["name"] for (key, value) in graph[current_node_name].children_info.items()]
-                node_queue_for_bfs_traversal.extend(child_name_list)
+                # add child nodes to queue
+                node_queue_for_bfs_traversal = get_child_name_list(graph[current_node_name].children_info,
+                                                                   node_queue_for_bfs_traversal)
                 visited_nodes.append(current_node_name)
                 node_queue_for_bfs_traversal.pop(0)
 
@@ -142,7 +141,7 @@ class SCM:
         # Step 2. Noise abduction
         if svi:
             updated_noise, _ = self.update_noise_svi(conditioned_model)
-        
+
         # Step 3. Intervene
         intervention_model = self.intervention(intervention_data)
 
@@ -156,7 +155,6 @@ class SCM:
             for _ in range(500)
         ]
         return scm_causal_effect_samples
-
 
     def condition(self, condition_data: dict):
         """
@@ -238,8 +236,7 @@ class SCM:
 
         return updated_noise, losses
 
-
-    def _get_prediction(self, trained_network, parent_tensor, current_noise_sample,current_variable_type):
+    def _get_prediction(self, trained_network, parent_tensor, current_noise_sample, current_variable_type):
         try:
             if current_variable_type == "Continuous":
                 return trained_network.continuous_predict(parent_tensor, current_noise_sample)
@@ -285,10 +282,9 @@ class SCM:
             residual_mean = trained_network.residual_mean
             residual_std = trained_network.residual_std
 
-            # Override the parameters written in the costants.py
+            # Override the parameters written in the constants.py
             exogenous_dist_dict[node_name] = exogenous_distribution(0.0, residual_std)
         return exogenous_dist_dict
-
 
 
 class Config:

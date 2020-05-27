@@ -9,13 +9,13 @@ from pyro import poutine
 from pyro.infer import TraceEnum_ELBO, SVI, Trace_ELBO, Importance, EmpiricalMarginal
 from pyro.infer.autoguide import AutoDelta
 import torch.distributions.constraints as constraints
-from torch.optim import SGD
+from pyro.optim import Adam
 
 from Neuirps_BEL2SCM.bel_graph import BelGraph
 from Neuirps_BEL2SCM.parameter_estimation import ParameterEstimation
 from Neuirps_BEL2SCM.utils import get_sample_for_non_roots, get_parent_tensor, all_parents_visited, json_load, \
-    get_parent_samples, get_distribution, get_exogenous_samples
-from Neuirps_BEL2SCM.constants import PYRO_DISTRIBUTIONS
+    get_parent_samples, get_distribution
+from Neuirps_BEL2SCM.constants import PYRO_DISTRIBUTIONS, NOISE_TYPE, VARIABLE_TYPE, get_variable_type_from_label
 import torch
 import pyro
 
@@ -44,24 +44,25 @@ class SCM:
         parameter_estimation.get_distribution_for_roots_from_data()
         parameter_estimation.get_model_for_each_non_root_node()
 
-        self.root_distributions = parameter_estimation.root_distributions
+        self.root_parameters = parameter_estimation.root_parameters
         self.trained_networks = parameter_estimation.trained_networks
 
         self.roots = self.belgraph.get_nodes_with_no_parents()
 
-        # get exogenous distributions
-        self.exogenous_dict = get_exogenous_samples(self.config, parameter_estimation.exogenous_std_dict)
+        # get exogenous distributions [TODO] Move to bel_graph.
+        self.exogenous_dist_dict = self._get_exogenous_distributions()
+        # exogenous_distribution_type = get_variable_type_from_label(roots[current_node_name].node_label)
 
         # 3. Build model
-        self.model(exogenous_dict=self.exogenous_dict)
+        self.model(exogenous_dist_dict=self.exogenous_dist_dict)
 
-    def model(self, exogenous_dict):
+    def model(self, exogenous_dist_dict):
 
         # Getting class variables.
         graph = self.graph
         config = self.config
         roots = self.roots
-        root_distributions = self.root_distributions
+        root_parameters = self.root_parameters
         trained_networks = self.trained_networks
 
         # Dictionary of pyro samples coming from pyro.sample() for each node.
@@ -74,14 +75,19 @@ class SCM:
         visited_nodes = list()
 
         # process all root nodes first for BFS traversal
-        for node_name in roots.keys():
-            node_distribution_type = config.node_label_distribution_info[roots[node_name].node_label]
-            sample[node_name] = pyro.sample(node_name, root_distributions[node_name])
+        for current_node_name in roots.keys():
+            node_distribution = config.node_label_distribution_info[roots[current_node_name].node_label]
+
+            sample[current_node_name] = self._get_continuous_reparameterized_sample(current_node_name,
+                                                                                    node_distribution,
+                                                                                    exogenous_dist_dict[current_node_name],
+                                                                                    root_parameters[current_node_name])
+
             # add child nodes to queue
-            child_name_list = [value["name"] for (key, value) in roots[node_name].children_info.items()]
+            child_name_list = [value["name"] for (key, value) in roots[current_node_name].children_info.items()]
             node_queue_for_bfs_traversal.extend(child_name_list)
             # mark current node as visited
-            visited_nodes.append(node_name)
+            visited_nodes.append(current_node_name)
 
         # if no nodes available for traversal!
         if len(node_queue_for_bfs_traversal) == 0:
@@ -97,6 +103,9 @@ class SCM:
             are_all_parents_visited_for_current_node = all_parents_visited(graph[current_node_name], visited_nodes)
 
             if is_current_node_not_visited and are_all_parents_visited_for_current_node:
+                current_variable_type = get_variable_type_from_label(graph[current_node_name].node_label)
+                # Get noise sample for current node.
+                current_noise_sample = pyro.sample(current_node_name+"_N", exogenous_dist_dict[current_node_name])
 
                 parent_sample_dict = get_parent_samples(graph[current_node_name], sample)
                 parent_names = self.belgraph.parent_name_list_for_nodes
@@ -104,9 +113,12 @@ class SCM:
 
                 if len(parent_names[current_node_name]) > 0:
                     parent_tensor = get_parent_tensor(parent_sample_dict, parent_names[current_node_name])
-                    deterministic_prediction = self._get_prediction(trained_networks[current_node_name], parent_tensor)
+                    deterministic_prediction = self._get_prediction(trained_networks[current_node_name],
+                                                                    parent_tensor,
+                                                                    current_noise_sample,
+                                                                    current_variable_type)
                 sample[current_node_name] = get_sample_for_non_roots(graph[current_node_name],
-                                                                     exogenous_dict[current_node_name],
+                                                                     config,
                                                                      deterministic_prediction)
 
                 # [TODO] Move below two lines to a function
@@ -122,24 +134,25 @@ class SCM:
         return sample
 
     # [Todo]
-    def counterfactual_inference(self, observation: dict, intervention_node_dict: dict, target, svi=True):
-        model = self.model
-        # [Todo]: get noise parameters from neural nets
-        noise = {}
-        noise_distribution_info = self.config.exogenous_distribution_info
-        for node in self.graph.keys():
-            exog_name = node.name + "_N"
-            noise[exog_name] = pyro.sample(exog_name, get_distribution(noise_distribution_info))
+    def counterfactual_inference(self, condition_data: dict, intervention_data: dict, target, svi=True):
 
+        # Step 1. Condition the model
+        conditioned_model = self.condition(condition_data)
+
+        # Step 2. Noise abduction
         if svi:
-            updated_noise, _ = model.update_noise_svi(observation, noise)
+            updated_noise, _ = self.update_noise_svi(conditioned_model)
+        
+        # Step 3. Intervene
+        intervention_model = self.intervention(intervention_data)
 
-        counterfactual_model = model.intervention(intervention_node_dict)
-        cf_posterior = model.infer(counterfactual_model, updated_noise)
+        # Pass abducted noises to intervention model
+        cf_posterior = self.infer(intervention_model, updated_noise)
         marginal = EmpiricalMarginal(cf_posterior, target)
 
+        # Calculate causal effect
         scm_causal_effect_samples = [
-            observation[target] - float(marginal.sample())
+            torch.abs(condition_data[target] - float(marginal.sample()))
             for _ in range(500)
         ]
         return scm_causal_effect_samples
@@ -167,44 +180,49 @@ class SCM:
     def infer(self, model, noise):
         return Importance(model, num_samples=1000).run(noise)
 
-    def update_noise_svi(self, observed_steady_state, initial_noise: dict):
+    def update_noise_svi(self, conditioned_model):
 
         """
         this performs stochastic variational inference for noise
         Args:
-            observed_steady_state:
-            initial_noise:
+            conditioned_model:
+            noise:
         Returns: Not sure now
         """
 
-        def guide(exogenous_noise):
-            noise_terms = list(exogenous_noise.keys())
-            mu_constraints = constraints.interval(-3., 3)
-            sigma_constraints = constraints.interval(.0001, 3)
-            mu_guide = {
-                k: pyro.param("mu_{}".format(k), torch.tensor(0.), constraint=mu_constraints) for k in noise_terms
-            }
-            sigma_guide = {
-                k: pyro.param("sigma_{}".format(k), torch.tensor(1.), constraint=sigma_constraints) for k in noise_terms
-            }
-            for exogenous_noise in noise_terms:
-                noise_dist = self.config.exogenous_distribution_info[0]
-                pyro.sample(exogenous_noise, noise_dist(mu_guide[exogenous_noise], sigma_guide[exogenous_noise]))
+        exogenous_dist_dict = self.exogenous_dist_dict
 
-        observational_model = self.condition(observed_steady_state)
+        def guide(exogenous_dist_dict):
+            mu_constraints = constraints.interval(0., 1)
+            sigma_constraints = constraints.interval(.0001, 7.)
+
+            for exg_name, exg_dist in exogenous_dist_dict.items():
+                # mu_guide = pyro.param("mu_{}".format(exg_name), torch.tensor(exg_dist.loc), constraint=mu_constraints)
+                # sigma_guide = pyro.param("sigma_{}".format(exg_name), torch.tensor(exg_dist.scale), constraint=sigma_constraints)
+
+                mu_guide = pyro.param("mu_{}".format(exg_name), torch.tensor(0.0), constraint=mu_constraints)
+                sigma_guide = pyro.param("sigma_{}".format(exg_name), torch.tensor(1.0),
+                                         constraint=sigma_constraints)
+
+                # [Todo] support the binary parent
+                noise_dist = pyro.distributions.Normal
+                pyro.sample(exg_name, noise_dist(mu_guide, sigma_guide))
+
         pyro.clear_param_store()
+
         svi = SVI(
-            model=observational_model,
+            model=conditioned_model,
             guide=guide,
-            optim=SGD({"lr": 0.001, "momentum": 0.1}),
-            loss=Trace_ELBO()
+            optim=Adam({"lr": 0.005, "betas": (0.95, 0.999)}),
+            loss=Trace_ELBO(retain_graph=True)
         )
         losses = []
         num_steps = 1000
         samples = defaultdict(list)
         for t in range(num_steps):
-            losses.append(svi.step(initial_noise))
-            for noise in initial_noise.keys():
+            print(t)
+            losses.append(svi.step(exogenous_dist_dict))
+            for noise in exogenous_dist_dict.keys():
                 mu = 'mu_{}'.format(noise)
                 sigma = 'sigma_{}'.format(noise)
                 samples[mu].append(pyro.param(mu).item())
@@ -212,17 +230,65 @@ class SCM:
         means = {k: statistics.mean(v) for k, v in samples.items()}
 
         updated_noise = {}
-        noise_distribution = self.config.exogenous_distribution_info[0]
-        for n in initial_noise.keys():
+
+        # [Todo] support the binary parent
+        noise_distribution = pyro.distributions.Normal
+        for n in exogenous_dist_dict.keys():
             updated_noise[n] = noise_distribution(means["mu_{}".format(n)], means["sigma_{}".format(n)])
 
         return updated_noise, losses
 
-    def _get_prediction(self, trained_network, parent_tensor):
+
+    def _get_prediction(self, trained_network, parent_tensor, current_noise_sample,current_variable_type):
         try:
-            return trained_network.predict(parent_tensor)
+            if current_variable_type == "Continuous":
+                return trained_network.continuous_predict(parent_tensor, current_noise_sample)
+            else:
+                return trained_network.binary_predict(parent_tensor, current_noise_sample)
         except:
             raise Exception("Error getting deterministic prediction.")
+
+    def _get_continuous_reparameterized_sample(self, current_node_name, node_distribution, exogenous_distribution,
+                                               root_parameters):
+        """
+
+        Args:
+            current_node_name:
+            node_distribution:
+            exogenous_distribution:
+            root_parameters:
+
+        Returns: pyro.sample()
+
+        """
+        noise_sample = pyro.sample(current_node_name + "_N", exogenous_distribution)
+
+        # [Todo] We could turn root parameters into a class later.
+        current_mu = root_parameters[0]
+        current_std = root_parameters[1]
+
+        parent_value = current_mu + noise_sample * current_std
+        return pyro.sample(current_node_name, node_distribution(parent_value, 1.0))
+
+    def _get_exogenous_distributions(self):
+        exogenous_dist_dict = {}
+
+        for node_name in self.roots:
+            exogenous_distribution_type = get_variable_type_from_label(self.graph[node_name].node_label)
+            exogenous_distribution = NOISE_TYPE[exogenous_distribution_type]
+            exogenous_dist_dict[node_name] = exogenous_distribution(0.0, 1.0)
+
+        for node_name, trained_network in self.trained_networks.items():
+            exogenous_distribution_type = get_variable_type_from_label(self.graph[node_name].node_label)
+            exogenous_distribution = NOISE_TYPE[exogenous_distribution_type]
+
+            residual_mean = trained_network.residual_mean
+            residual_std = trained_network.residual_std
+
+            # Override the parameters written in the costants.py
+            exogenous_dist_dict[node_name] = exogenous_distribution(0.0, residual_std)
+        return exogenous_dist_dict
+
 
 
 class Config:
@@ -240,7 +306,6 @@ class Config:
         config = self.config_dict
         self.prior_threshold = config["prior_threshold"]
         self.node_label_distribution_info = self._get_pyro_dist_from_text(config["node_label_distribution_info"])
-        self.exogenous_distribution_info = self._get_exogenous_dist_from_text(config["exogenous_distribution_info"])
         self.parent_interaction_type = config["relation_type"]
 
     def _get_pyro_dist_from_text(self, node_label_distribution_info):
@@ -265,15 +330,3 @@ class Config:
     def _check_config(self):
         # [Todo] - Check the syntax of config just like we did in the testcase.
         pass
-
-    def _get_exogenous_dist_from_text(self, exogenous_distribution_info):
-
-        # Get distribution name and its parameters
-        dist_str = list(exogenous_distribution_info.keys())[0]
-        dist_params = exogenous_distribution_info[dist_str]
-
-        # Convert distribution name to pyro distribution
-        if dist_str in PYRO_DISTRIBUTIONS:
-            return (PYRO_DISTRIBUTIONS[dist_str], dist_params)
-        else:
-            raise Exception("Distribution not supported.")

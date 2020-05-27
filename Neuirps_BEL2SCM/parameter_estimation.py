@@ -36,9 +36,10 @@ class LogisticNet(torch.nn.Module):
         x = F.sigmoid(self.predict(x))  # linear output
         return x
 
-
-def residual(observed_value, predicted_value):
-    return observed_value - predicted_value
+    def logit_forward(self, x):
+        x = F.relu(self.hidden(x))  # activation function for hidden layer
+        x = self.predict(x)  # linear output
+        return x
 
 
 class TrainNet():
@@ -53,10 +54,11 @@ class TrainNet():
     test_loss = 0
     test_residual_std = 0
     train_test_split_index = 2000
-    n_epochs = 30
-    batch_size = 128
+    n_epochs = 60
+    batch_size = 1000
 
     def __init__(self, n_feature, n_output, isRegression):
+        self.isRegression = isRegression
         if isRegression:
             self.net = RegressionNet(n_feature, self.n_hidden, n_output)
             self.loss_func = torch.nn.MSELoss()
@@ -85,14 +87,25 @@ class TrainNet():
                 self.optimizer.step()
 
         # calculate train and test loss
-        self.train_loss = self.loss_func(self.predict(train_x), train_y)
-        self.test_loss = self.loss_func(self.predict(test_x), test_y)
+        self.train_loss = self.loss_func(self.net(train_x), train_y)
+        self.test_loss = self.loss_func(self.net(test_x), test_y)
 
-        # calculate std of residual for noise distribution
-        self.test_residual_std = residual(test_y, self.predict(test_x)).std()
+        # calculate mean, std of residual for noise distribution
+        if self.isRegression:
+            residuals = self._residual(y, self.net(x))
+        else:
+            residuals = self._residual(y, self.net.logit_forward(x))
 
-    def predict(self, x):
-        return self.net(x)
+        self.residual_mean = residuals.mean()
+        self.residual_std = residuals.std()
+
+    def binary_predict(self, x, noise):
+        prediction = self.net.logit_forward(x)
+        return F.sigmoid(prediction + noise)
+
+    def continuous_predict(self, x, noise):
+        prediction = self.net(x)
+        return prediction + noise
 
     def _get_train_test_data(self, x, y):
         # train data
@@ -104,6 +117,9 @@ class TrainNet():
         test_y = y[self.train_test_split_index:]
 
         return train_x, train_y, test_x, test_y
+
+    def _residual(self, observed_value, predicted_value):
+        return torch.abs(observed_value - predicted_value)
 
 
 class ParameterEstimation:
@@ -117,7 +133,7 @@ class ParameterEstimation:
         self.trained_networks = dict()
 
         # Dictionary <node_str, pyro.Distribution>
-        self.root_distributions = dict()
+        self.root_parameters = dict()
 
         # Dictionary <node_str, std of residual>
         self.exogenous_std_dict = dict()
@@ -142,13 +158,13 @@ class ParameterEstimation:
 
                 # if the node label belongs to categorical
                 if node_label in VARIABLE_TYPE["Categorical"]:
-                    self.root_distributions[node_str] = self._get_distribution_for_binary_root(
+                    self.root_parameters[node_str] = self._get_distribution_for_binary_root(
                         node_distribution,
                         features_and_target_data)
 
                 # Otherwise we assume that the data is continuous and return a distribution with mean and std from data.
                 else:
-                    self.root_distributions[node_str] = self._get_distribution_for_continuous_root(
+                    self.root_parameters[node_str] = self._get_distribution_for_continuous_root(
                         node_distribution,
                         features_and_target_data)
                 self.exogenous_std_dict[node_str] = torch.tensor(features_and_target_data["target"].std())
@@ -221,7 +237,7 @@ class ParameterEstimation:
         # mean should be a probability that becomes the parameter for Bernoulli
         if 0 <= mean <= 1:
             try:
-                return node_distribution(mean)
+                return (mean)
             except:
                 raise Exception(
                     "The schema from _get_distribution_for_binary_root does not match for the pyro distribution for node ",
@@ -236,7 +252,7 @@ class ParameterEstimation:
         std = torch.tensor(features_and_target_data["target"].std())
 
         try:
-            return node_distribution(mean, std)
+            return (mean, std)
         except:
             raise Exception(
                 "The schema from _get_distribution_for_continuous_root does not match for the pyro distribution for node ",

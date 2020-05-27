@@ -9,6 +9,5 @@
     "pathology": "Bernoulli",
     "Others": "LogNormal"
   },
-  "exogenous_distribution_info": {"Normal": [0.0, 0.05]},
   "relation_type": "AND"
 }

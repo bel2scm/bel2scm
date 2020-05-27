@@ -117,5 +117,27 @@ class TestSCM(unittest.TestCase):
         # [TODO] Compare the mean of each variable with data itself.
         self.assertTrue(True)
 
+    def test_mapk_counterfactual(self):
+        from Neuirps_BEL2SCM.scm import SCM
+        from Neuirps_BEL2SCM.utils import json_load
+        import torch
+
+        bel_file_path = "../Tests/BELSourceFiles/mapk.json"
+        config_file_path = "../Tests/Configs/COVID-19-config.json"
+        data_file_path = "../Tests/Data/mapk3000.csv"
+        output_pickle_object_file = "../../mapk_scm.pkl"
+
+        scm = SCM(bel_file_path, config_file_path, data_file_path)
+
+        exogenous_noise = scm.exogenous_dist_dict
+        condition_data = scm.model(exogenous_noise)
+        target = "a(p(Erk))"
+        intervention_data = {
+            "a(p(Raf))": 40.0
+        }
+
+        erk_causal_effects = scm.counterfactual_inference(condition_data, intervention_data, target, True)
+
+
 if __name__ == '__main__':
     unittest.main()

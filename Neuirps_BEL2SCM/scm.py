@@ -112,6 +112,7 @@ class SCM:
 
                 if len(parent_names[current_node_name]) > 0:
                     parent_tensor = get_parent_tensor(parent_sample_dict, parent_names[current_node_name])
+                    parent_tensor = parent_tensor.t()
                     deterministic_prediction = self._get_prediction(trained_networks[current_node_name],
                                                                     parent_tensor,
                                                                     current_noise_sample,

@@ -53,7 +53,7 @@ class TrainNet():
     train_loss = 0
     test_loss = 0
     test_residual_std = 0
-    train_test_split_index = 2000
+    train_test_split_index = 3000
     n_epochs = 60
     batch_size = 1000
 
@@ -87,6 +87,7 @@ class TrainNet():
                 self.optimizer.step()
 
         # calculate train and test loss
+
         self.train_loss = self.loss_func(self.net(train_x), train_y)
         self.test_loss = self.loss_func(self.net(test_x), test_y)
 
@@ -109,12 +110,17 @@ class TrainNet():
 
     def _get_train_test_data(self, x, y):
         # train data
-        train_x = x[:self.train_test_split_index].flatten().view(-1, 1)
-        train_y = y[:self.train_test_split_index]
+        m = self.train_test_split_index
+        n = x.size()[1]
+        p = x.size()[0] - self.train_test_split_index
+        train_x = x[:self.train_test_split_index].reshape(m, n)
+        # train_x = x[:self.train_test_split_index].flatten().view(-1, 1)
+        train_y = y[:self.train_test_split_index].reshape(m, 1)
 
         # test data
-        test_x = x[self.train_test_split_index:].flatten().view(-1, 1)
-        test_y = y[self.train_test_split_index:]
+        test_x = x[self.train_test_split_index:].reshape(p, n)
+        # test_x = x[self.train_test_split_index:].flatten().view(-1, 1)
+        test_y = y[self.train_test_split_index:].reshape(p, 1)
 
         return train_x, train_y, test_x, test_y
 
@@ -200,8 +206,6 @@ class ParameterEstimation:
 
                 self.trained_networks[node_str] = trained_network
                 self.exogenous_std_dict[node_str] = torch.tensor(trained_network.test_residual_std)
-
-
 
     def _regression(self, features_and_target_data):
         # convert features dataframe to float tensor.

@@ -164,6 +164,14 @@ def get_exogenous_distribution(config, exogenous_std_dict) -> dict():
     return exogenous_dict
 
 
+def get_child_name_list(children_info, node_list):
+    """
+
+    """
+    child_name_list = [value["name"] for (key, value) in children_info.items()]
+    node_list.extend(child_name_list)
+    return node_list
+
 def save_scm_object(pkl_file_path, scm):
     """
     Serialize SCM object to a pickle file

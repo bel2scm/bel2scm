@@ -42,6 +42,9 @@ class BelGraph:
         else:
             raise Exception("Invalid file type!")
 
+        if self.is_cyclic():
+            raise Exception("Graph contains cycles!")
+
     def construct_graph_from_str_list(self, file_name):
         """
         Disc
@@ -247,6 +250,7 @@ class BelGraph:
 
         return parent_data, child_data
 
+
     def is_cyclic(self):
         visited_nodes = list()
         recursion_stack = list()
@@ -261,8 +265,7 @@ class BelGraph:
         recursion_stack.append(node_obj.name)
 
         # Recur for all neighbours
-        # if any neighbour is visited and in
-        # recStack then graph is cyclic
+        # if any neighbour is visited and in recursion_stack then graph is cyclic
 
         for child_name in [value["name"] for (key, value) in node_obj.children_info.items()]:
             if child_name not in visited_nodes:
@@ -271,8 +274,7 @@ class BelGraph:
             elif child_name in recursion_stack:
                 return True
 
-        # The node needs to be popped from
-        # recursion stack before function ends
+        # The node needs to be popped from recursion stack before function ends
         recursion_stack.remove(node_obj.name)
         return False
 

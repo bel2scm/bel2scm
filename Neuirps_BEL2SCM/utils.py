@@ -197,6 +197,18 @@ def load_scm_object(pkl_file_path):
     return pickle.load(pickle_in)
 
 
+def create_bins(lower_bound, width, quantity):
+    """ create_bins returns an equal-width (distance) partitioning.
+        It returns an ascending list of tuples, representing the intervals.
+    """
+
+    bins = []
+    for low in range(lower_bound,
+                     lower_bound + quantity * width + 1, width):
+        bins.append((low, low + width))
+    return bins
+
+
 # def sample_gumbel(shape, eps=1e-20):
 #     unif = torch.rand(*shape).to(device)
 #     g = -torch.log(-torch.log(unif + eps))

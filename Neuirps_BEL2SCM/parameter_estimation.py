@@ -127,6 +127,23 @@ class TrainNet():
     def _residual(self, observed_value, predicted_value):
         return torch.abs(observed_value - predicted_value)
 
+    # def residual_estimation(self, target_data):
+    #     for value in target_data:
+    #       bin_index = utils.find_bin(value, bins)
+    #       print(value, bin_index, bins[bin_index])
+    #       binned_weights.append(bin_index)
+    #
+    # def find_bin(value, bins):
+    #     """ bins is a list of tuples
+
+    #        returns: bin no or -1 if value out of range
+    #     """
+    #
+    #     for i in range(0, len(bins)):
+    #         if bins[i][0] <= value < bins[i][1]:
+    #             return i
+    #     return -1
+
 
 class ParameterEstimation:
     """

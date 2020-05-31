@@ -6,7 +6,7 @@ import torch.distributions.constraints as constraints
 from pyro.optim import Adam
 
 from Neuirps_BEL2SCM.bel_graph import BelGraph
-from Neuirps_BEL2SCM.parameter_estimation import ParameterEstimation
+from Neuirps_BEL2SCM.parameter_estimation import ParameterEstimation, RootParameterEstimation
 from Neuirps_BEL2SCM.utils import get_sample_for_non_roots, get_parent_tensor, all_parents_visited, json_load, \
     get_parent_samples, get_child_name_list
 from Neuirps_BEL2SCM.constants import PYRO_DISTRIBUTIONS, NOISE_TYPE, VARIABLE_TYPE, get_variable_type_from_label
@@ -32,11 +32,14 @@ class SCM:
         self.graph = self.belgraph.nodes
 
         # Learn parameters
+        root_parameter_estimation = RootParameterEstimation(self.belgraph, self.config)
+        # root_parameter_estimation.get_distribution_for_roots_from_data()
+        root_parameter_estimation._get_root_parameters_from_svi()
+        self.root_parameters = root_parameter_estimation.root_parameters
+
         parameter_estimation = ParameterEstimation(self.belgraph, self.config)
-        parameter_estimation.get_distribution_for_roots_from_data()
         parameter_estimation.get_model_for_each_non_root_node()
 
-        self.root_parameters = parameter_estimation.root_parameters
         self.trained_networks = parameter_estimation.trained_networks
 
         self.roots = self.belgraph.get_nodes_with_no_parents()
@@ -179,7 +182,6 @@ class SCM:
         this performs stochastic variational inference for noise
         Args:
             conditioned_model:
-            noise:
         Returns: Not sure now
         """
 

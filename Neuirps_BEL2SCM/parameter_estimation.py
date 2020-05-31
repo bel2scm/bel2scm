@@ -1,7 +1,15 @@
+import statistics
+from collections import defaultdict
+
 import torch
 import torch.nn.functional as F
 import time
 import pyro
+from pyro.distributions import constraints
+from pyro.infer import Trace_ELBO, SVI, TraceEnum_ELBO
+from pyro.infer.autoguide import AutoDelta
+from torch.optim import Adam
+
 from Neuirps_BEL2SCM.constants import VARIABLE_TYPE
 
 
@@ -139,7 +147,7 @@ class ParameterEstimation:
         self.trained_networks = dict()
 
         # Dictionary <node_str, pyro.Distribution>
-        self.root_parameters = dict()
+        # self.root_parameters = dict()
 
         # Dictionary <node_str, std of residual>
         self.exogenous_std_dict = dict()
@@ -150,30 +158,30 @@ class ParameterEstimation:
         self.belgraph = belgraph
         self.config = config
 
-    def get_distribution_for_roots_from_data(self):
-
-        for node_str, features_and_target_data in self.belgraph.node_data.items():
-
-            # if node is a root node, and it has empty feature df
-            if (self.belgraph.nodes[node_str].root) and (features_and_target_data["features"].empty):
-
-                # we need node label to search for the corresponding distribution from config
-                node_label = self.belgraph.nodes[node_str].node_label
-                # Getting corresponding distribution from config
-                node_distribution = self.config.node_label_distribution_info[node_label]
-
-                # if the node label belongs to categorical
-                if node_label in VARIABLE_TYPE["Categorical"]:
-                    self.root_parameters[node_str] = self._get_distribution_for_binary_root(
-                        node_distribution,
-                        features_and_target_data)
-
-                # Otherwise we assume that the data is continuous and return a distribution with mean and std from data.
-                else:
-                    self.root_parameters[node_str] = self._get_distribution_for_continuous_root(
-                        node_distribution,
-                        features_and_target_data)
-                self.exogenous_std_dict[node_str] = torch.tensor(features_and_target_data["target"].std())
+    # def get_distribution_for_roots_from_data(self):
+    #
+    #     for node_str, features_and_target_data in self.belgraph.node_data.items():
+    #
+    #         # if node is a root node, and it has empty feature df
+    #         if (self.belgraph.nodes[node_str].root) and (features_and_target_data["features"].empty):
+    #
+    #             # we need node label to search for the corresponding distribution from config
+    #             node_label = self.belgraph.nodes[node_str].node_label
+    #             # Getting corresponding distribution from config
+    #             node_distribution = self.config.node_label_distribution_info[node_label]
+    #
+    #             # if the node label belongs to categorical
+    #             if node_label in VARIABLE_TYPE["Categorical"]:
+    #                 self.root_parameters[node_str] = self._get_distribution_for_binary_root(
+    #                     node_distribution,
+    #                     features_and_target_data)
+    #
+    #             # Otherwise we assume that the data is continuous and return a distribution with mean and std from data.
+    #             else:
+    #                 self.root_parameters[node_str] = self._get_distribution_for_continuous_root(
+    #                     node_distribution,
+    #                     features_and_target_data)
+    #             self.exogenous_std_dict[node_str] = torch.tensor(features_and_target_data["target"].std())
 
     def get_model_for_each_non_root_node(self):
         """
@@ -233,6 +241,74 @@ class ParameterEstimation:
 
         return train_network
 
+    # def _get_distribution_for_binary_root(self, node_distribution, features_and_target_data):
+    #
+    #     # convert target series to float tensor.
+    #     mean = torch.tensor(features_and_target_data["target"].mean())
+    #
+    #     # mean should be a probability that becomes the parameter for Bernoulli
+    #     if 0 <= mean <= 1:
+    #         try:
+    #             return (mean)
+    #         except:
+    #             raise Exception(
+    #                 "The schema from _get_distribution_for_binary_root does not match for the pyro distribution for node ",
+    #                 features_and_target_data["target"].name)
+    #     else:
+    #         raise Exception("Something wrong with data for ", features_and_target_data["target"].name)
+    #
+    # def _get_distribution_for_continuous_root(self, node_distribution, features_and_target_data):
+    #
+    #     # convert target series to float tensor.
+    #     mean = torch.tensor(features_and_target_data["target"].mean())
+    #     std = torch.tensor(features_and_target_data["target"].std())
+    #
+    #     try:
+    #         return (mean, std)
+    #     except:
+    #         raise Exception(
+    #             "The schema from _get_distribution_for_continuous_root does not match for the pyro distribution for node ",
+    #             features_and_target_data["target"].name)
+
+
+class RootParameterEstimation:
+    """
+
+    """
+
+    def __init__(self, belgraph, config):
+        self.root_parameters = dict()
+        if not belgraph.nodes or not belgraph.node_data:
+            raise Exception("Empty Graph or data not loaded.")
+
+        self.belgraph = belgraph
+        self.config = config
+
+    def get_distribution_for_roots_from_data(self):
+
+        for node_str, features_and_target_data in self.belgraph.node_data.items():
+
+            # if node is a root node, and it has empty feature df
+            if (self.belgraph.nodes[node_str].root) and (features_and_target_data["features"].empty):
+
+                # we need node label to search for the corresponding distribution from config
+                node_label = self.belgraph.nodes[node_str].node_label
+                # Getting corresponding distribution from config
+                node_distribution = self.config.node_label_distribution_info[node_label]
+
+                # if the node label belongs to categorical
+                if node_label in VARIABLE_TYPE["Categorical"]:
+                    self.root_parameters[node_str] = self._get_distribution_for_binary_root(
+                        node_distribution,
+                        features_and_target_data)
+
+                # Otherwise we assume that the data is continuous and return a distribution with mean and std from data.
+                else:
+                    self.root_parameters[node_str] = self._get_distribution_for_continuous_root(
+                        node_distribution,
+                        features_and_target_data)
+                self.exogenous_std_dict[node_str] = torch.tensor(features_and_target_data["target"].std())
+
     def _get_distribution_for_binary_root(self, node_distribution, features_and_target_data):
 
         # convert target series to float tensor.
@@ -261,3 +337,56 @@ class ParameterEstimation:
             raise Exception(
                 "The schema from _get_distribution_for_continuous_root does not match for the pyro distribution for node ",
                 features_and_target_data["target"].name)
+
+    def _get_root_parameters_from_svi(self):
+
+        for node_str, features_and_target_data in self.belgraph.node_data.items():
+
+            # if node is a root node, and it has empty feature df
+            if (self.belgraph.nodes[node_str].root) and (features_and_target_data["features"].empty):
+                data = features_and_target_data['target']
+                root_model = self.root_model(data, node_str)
+                self.root_parameter[node_str] = self.update_root_parameters_svi(root_model, node_str)
+
+    def root_model(self, root_data, node_str):
+        # define the hyper parameters
+        mu0 = torch.tensor(0.0)
+        sigma0 = torch.tensor(1.0)
+        # loop over the observed data
+        for i in range(len(root_data)):
+            # observe data point i
+            pyro.sample(node_str + "obs_{}".format(i), pyro.distributions.Normal(mu0, sigma0), obs=root_data[i])
+
+    def update_root_parameters_svi(self, model, node_name):
+
+        def guide():
+            mu_constraints = constraints.interval(0., 1)
+            sigma_constraints = constraints.interval(.0001, 7.)
+            mu_guide = pyro.param("mu_{}".format(node_name), torch.tensor(0.0), constraint=mu_constraints)
+            sigma_guide = pyro.param("sigma_{}".format(node_name), torch.tensor(1.0),
+                                     constraint=sigma_constraints)
+
+            noise_dist = pyro.distributions.Normal
+            pyro.sample(node_name, noise_dist(mu_guide, sigma_guide))
+
+        pyro.clear_param_store()
+
+        svi = SVI(
+            model=model,
+            guide=guide,
+            optim=Adam({"lr": 0.005, "betas": (0.95, 0.999)}),
+            loss=Trace_ELBO()
+        )
+        # losses = []
+        num_steps = 200
+        samples = defaultdict(list)
+        for t in range(num_steps):
+            print(t)
+            # losses.append(svi.step(self.root_parameters))
+            mu = 'mu_{}'.format(node_name)
+            sigma = 'sigma_{}'.format(node_name)
+            samples[mu].append(pyro.param(mu).item())
+            samples[sigma].append(pyro.param(sigma).item())
+        means = {k: statistics.mean(v) for k, v in samples.items()}
+
+        return means

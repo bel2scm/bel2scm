@@ -185,7 +185,7 @@ class TestSCM(unittest.TestCase):
             for i in range(len(df)):
                 if torch.is_tensor(df[col][i]):
                     df[col][i] = df[col][i].item()
-        df.to_csv("../Tests/Data/intervention_samples_igf.csv")
+        df.to_csv("../../intervention_samples_igf.csv")
         self.assertTrue(True, True)
 
     def test_error_with_sde(self):

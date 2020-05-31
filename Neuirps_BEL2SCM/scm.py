@@ -3,12 +3,6 @@ from collections import defaultdict
 
 from pyro.infer import SVI, Trace_ELBO, Importance, EmpiricalMarginal
 import torch.distributions.constraints as constraints
-from torch.optim import SGD
-
-from pyro import poutine
-from pyro.infer import TraceEnum_ELBO, SVI, Trace_ELBO, Importance, EmpiricalMarginal
-from pyro.infer.autoguide import AutoDelta
-import torch.distributions.constraints as constraints
 from pyro.optim import Adam
 
 from Neuirps_BEL2SCM.bel_graph import BelGraph

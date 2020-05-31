@@ -8,6 +8,7 @@
     "process": "Bernoulli",
     "pathology": "Bernoulli",
     "Others": "LogNormal"
-  },
+    },
+    "continuous_max_abundance": 100,
   "relation_type": "AND"
 }

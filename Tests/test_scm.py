@@ -156,6 +156,7 @@ class TestSCM(unittest.TestCase):
         # exogenous_noise = scm.exogenous_dist_dict
         # samples = [scm.model(exogenous_noise) for i in range(1000)]
         # print(samples)
+        self.assertTrue(True, True)
 
     def test_igf_intervention(self):
         from Neuirps_BEL2SCM.scm import SCM
@@ -185,6 +186,7 @@ class TestSCM(unittest.TestCase):
                 if torch.is_tensor(df[col][i]):
                     df[col][i] = df[col][i].item()
         df.to_csv("../Tests/Data/intervention_samples_igf.csv")
+        self.assertTrue(True, True)
 
     def test_error_with_sde(self):
         import pandas as pd
@@ -194,6 +196,7 @@ class TestSCM(unittest.TestCase):
         for col in range(len(df_sde.columns)):
             errors[df_sde.columns[col]] = df_sde[df_sde.columns[col]].mean() - df_bel[df_bel.columns[col]].mean()
         print(errors)
+        self.assertTrue(True, True)
 
 
 if __name__ == '__main__':

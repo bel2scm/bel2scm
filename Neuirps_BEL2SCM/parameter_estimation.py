@@ -359,8 +359,10 @@ class RootParameterEstimation:
         def guide(data):
             #     mu_constraints = constraints.interval(0., 1)
             #     sigma_constraints = constraints.interval(.0001, 7.)
-            mu_guide = pyro.param("mu_{}".format(node_name), torch.tensor(0.0), constraint=constraints.positive)
-            sigma_guide = pyro.param("sigma_{}".format(node_name), torch.tensor(1.0),
+            mu_val = data.mean()
+            sigma_val = data.std()
+            mu_guide = pyro.param("mu_{}".format(node_name), torch.tensor(mu_val), constraint=constraints.positive)
+            sigma_guide = pyro.param("sigma_{}".format(node_name), torch.tensor(sigma_val),
                                      constraint=constraints.positive)
 
             noise_dist = pyro.distributions.Normal
@@ -385,19 +387,13 @@ class RootParameterEstimation:
         mu_q = pyro.param("mu_{}".format(node_name)).item()
         sigma_q = pyro.param("mu_{}".format(node_name)).item()
 
-        print((mu_q, sigma_q))
-
         return mu_q, sigma_q
 
     def root_model(self, data):
-        # define the hyperparameters that control the beta prior
-        #     alpha0 = torch.tensor(10.0)
-        #     beta0 = torch.tensor(10.0)
         mu0 = torch.tensor(data.mean())
         sigma0 = torch.tensor(data.std())
-        # sample f from the beta prior
+
         f = pyro.sample("latent_dist", pyro.distributions.Normal(mu0, sigma0))
-        # loop over the observed data
         for i in range(len(data)):
             # observe datapoint i using the bernoulli likelihood
-            pyro.sample("obs_{}".format(i), pyro.distributions.Normal(f, 1.0), obs=data[i])
+            pyro.sample("obs_{}".format(i), pyro.distributions.Normal(f, 1.0), obs=data)

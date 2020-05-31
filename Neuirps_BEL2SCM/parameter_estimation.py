@@ -341,52 +341,57 @@ class RootParameterEstimation:
     def _get_root_parameters_from_svi(self):
 
         for node_str, features_and_target_data in self.belgraph.node_data.items():
-
             # if node is a root node, and it has empty feature df
             if (self.belgraph.nodes[node_str].root) and (features_and_target_data["features"].empty):
-                data = features_and_target_data['target']
-                root_model = self.root_model(data, node_str)
-                self.root_parameter[node_str] = self.update_root_parameters_svi(root_model, node_str)
+                   data = features_and_target_data['target']
+                   model = self.model(data)
+                   self.root_parameters[node_str] = self.update_parameters_svi(model, data)
 
-    def root_model(self, root_data, node_str):
-        # define the hyper parameters
-        mu0 = torch.tensor(0.0)
-        sigma0 = torch.tensor(1.0)
-        # loop over the observed data
-        for i in range(len(root_data)):
-            # observe data point i
-            pyro.sample(node_str + "obs_{}".format(i), pyro.distributions.Normal(mu0, sigma0), obs=root_data[i])
 
-    def update_root_parameters_svi(self, model, node_name):
+    def update_parameters_svi(self, model, data):
 
-        def guide():
-            mu_constraints = constraints.interval(0., 1)
-            sigma_constraints = constraints.interval(.0001, 7.)
-            mu_guide = pyro.param("mu_{}".format(node_name), torch.tensor(0.0), constraint=mu_constraints)
-            sigma_guide = pyro.param("sigma_{}".format(node_name), torch.tensor(1.0),
-                                     constraint=sigma_constraints)
+        def guide(data):
+            #     mu_constraints = constraints.interval(0., 1)
+            #     sigma_constraints = constraints.interval(.0001, 7.)
+            mu_guide = pyro.param("mu_{}".format("q"), torch.tensor(0.0), constraint=constraints.positive)
+            sigma_guide = pyro.param("sigma_{}".format("q"), torch.tensor(1.0),
+                                     constraint=constraints.positive)
 
-            noise_dist = pyro.distributions.Normal
-            pyro.sample(node_name, noise_dist(mu_guide, sigma_guide))
+            root_dist = pyro.distributions.Normal
+            pyro.sample("latent_dist", root_dist(mu_guide, sigma_guide))
 
         pyro.clear_param_store()
 
-        svi = SVI(
-            model=model,
-            guide=guide,
-            optim=Adam({"lr": 0.005, "betas": (0.95, 0.999)}),
-            loss=Trace_ELBO()
-        )
-        # losses = []
-        num_steps = 200
-        samples = defaultdict(list)
-        for t in range(num_steps):
-            print(t)
-            # losses.append(svi.step(self.root_parameters))
-            mu = 'mu_{}'.format(node_name)
-            sigma = 'sigma_{}'.format(node_name)
-            samples[mu].append(pyro.param(mu).item())
-            samples[sigma].append(pyro.param(sigma).item())
-        means = {k: statistics.mean(v) for k, v in samples.items()}
+        # setup the optimizer
+        adam_params = {"lr": 0.0005, "betas": (0.90, 0.999)}
+        optimizer = Adam(adam_params)
 
-        return means
+        # setup the inference algorithm
+        n_steps = 5000
+        svi = SVI(model, guide, optimizer, loss=Trace_ELBO())
+
+        # do gradient steps
+        for step in range(n_steps):
+            svi.step(data)
+            # if step % 100 == 0:
+            #     print('.', end='')
+        # grab the learned variational parameters
+        mu_q = pyro.param("mu_q").item()
+        sigma_q = pyro.param("sigma_q").item()
+
+        return mu_q, sigma_q
+        # print("\nbased on the data and our prior belief, the fairness " +
+        #       "of the coin is %.3f +- %.3f" % (mu_q, sigma_q))
+
+    def model(self, data):
+        # define the hyperparameters that control the beta prior
+        #     alpha0 = torch.tensor(10.0)
+        #     beta0 = torch.tensor(10.0)
+        mu0 = torch.tensor(data.mean())
+        sigma0 = torch.tensor(data.std())
+        # sample f from the beta prior
+        f = pyro.sample("latent_dist", pyro.distributions.Normal(mu0, sigma0))
+        # loop over the observed data
+        for i in range(len(data)):
+            # observe datapoint i using the bernoulli likelihood
+            pyro.sample("obs_{}".format(i), pyro.distributions.Normal(f, 1.0), obs=data[i])

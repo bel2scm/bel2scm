@@ -354,7 +354,7 @@ class RootParameterEstimation:
                 self.root_parameters[node_str] = self.update_parameters_svi(data, self.root_model(data), node_str)
 
     def update_parameters_svi(self, data, model, node_name):
-        n_steps = 2
+        n_steps = 5000
 
         def guide(data):
             #     mu_constraints = constraints.interval(0., 1)

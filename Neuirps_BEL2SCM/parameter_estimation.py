@@ -5,10 +5,13 @@ import torch
 import torch.nn.functional as F
 import time
 import pyro
-from pyro.distributions import constraints
-from pyro.infer import Trace_ELBO, SVI, TraceEnum_ELBO
-from pyro.infer.autoguide import AutoDelta
-from torch.optim import Adam
+import math
+import os
+import torch
+import torch.distributions.constraints as constraints
+from pyro.optim import Adam
+from pyro.infer import SVI, Trace_ELBO
+import pyro.distributions as dist
 
 from Neuirps_BEL2SCM.constants import VARIABLE_TYPE
 
@@ -271,6 +274,9 @@ class ParameterEstimation:
     #             features_and_target_data["target"].name)
 
 
+
+
+
 class RootParameterEstimation:
     """
 
@@ -343,22 +349,22 @@ class RootParameterEstimation:
         for node_str, features_and_target_data in self.belgraph.node_data.items():
             # if node is a root node, and it has empty feature df
             if (self.belgraph.nodes[node_str].root) and (features_and_target_data["features"].empty):
-                   data = features_and_target_data['target']
-                   model = self.model(data)
-                   self.root_parameters[node_str] = self.update_parameters_svi(model, data)
+                data = features_and_target_data['target']
+                # model = self.root_model(data)
+                self.root_parameters[node_str] = self.update_parameters_svi(data, self.root_model(data), node_str)
 
-
-    def update_parameters_svi(self, model, data):
+    def update_parameters_svi(self, data, model, node_name):
+        n_steps = 2
 
         def guide(data):
             #     mu_constraints = constraints.interval(0., 1)
             #     sigma_constraints = constraints.interval(.0001, 7.)
-            mu_guide = pyro.param("mu_{}".format("q"), torch.tensor(0.0), constraint=constraints.positive)
-            sigma_guide = pyro.param("sigma_{}".format("q"), torch.tensor(1.0),
+            mu_guide = pyro.param("mu_{}".format(node_name), torch.tensor(0.0), constraint=constraints.positive)
+            sigma_guide = pyro.param("sigma_{}".format(node_name), torch.tensor(1.0),
                                      constraint=constraints.positive)
 
-            root_dist = pyro.distributions.Normal
-            pyro.sample("latent_dist", root_dist(mu_guide, sigma_guide))
+            noise_dist = pyro.distributions.Normal
+            pyro.sample("latent_dist", noise_dist(mu_guide, sigma_guide))
 
         pyro.clear_param_store()
 
@@ -367,23 +373,23 @@ class RootParameterEstimation:
         optimizer = Adam(adam_params)
 
         # setup the inference algorithm
-        n_steps = 5000
         svi = SVI(model, guide, optimizer, loss=Trace_ELBO())
 
         # do gradient steps
         for step in range(n_steps):
             svi.step(data)
-            # if step % 100 == 0:
-            #     print('.', end='')
+            if step % 100 == 0:
+                print('.', end='')
+
         # grab the learned variational parameters
-        mu_q = pyro.param("mu_q").item()
-        sigma_q = pyro.param("sigma_q").item()
+        mu_q = pyro.param("mu_{}".format(node_name)).item()
+        sigma_q = pyro.param("mu_{}".format(node_name)).item()
+
+        print((mu_q, sigma_q))
 
         return mu_q, sigma_q
-        # print("\nbased on the data and our prior belief, the fairness " +
-        #       "of the coin is %.3f +- %.3f" % (mu_q, sigma_q))
 
-    def model(self, data):
+    def root_model(self, data):
         # define the hyperparameters that control the beta prior
         #     alpha0 = torch.tensor(10.0)
         #     beta0 = torch.tensor(10.0)

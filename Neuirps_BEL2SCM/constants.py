@@ -16,6 +16,11 @@ VARIABLE_TYPE = {
     "Categorical": ["process", "activity", "reaction", "pathology"]
 }
 
+NOISE_TYPE = {
+    "Continuous": pyro.distributions.Normal,
+    "Categorical": pyro.distributions.Uniform
+}
+
 LABEL_DICT = {
     'transformation': ['sec', 'surf', 'deg', 'rxn', 'tloc', 'fromLoc',
                        'products', 'reactants', 'toLoc'],
@@ -29,3 +34,11 @@ LABEL_DICT = {
     'pathology': ['pathology', 'path']
 }
 VALID_RELATIONS = ["increases", "decreases", "directlyIncreases", "directlyDecreases"]
+
+def get_variable_type_from_label(label):
+    variable_type = ""
+    for key,value in VARIABLE_TYPE.items():
+        if label in value:
+            variable_type = key
+
+    return variable_type

@@ -8,7 +8,7 @@
     "process": "Bernoulli",
     "pathology": "Bernoulli",
     "Others": "LogNormal"
-  },
-  "exogenous_distribution_info": {"Normal": [0.0, 0.05]},
+    },
+    "continuous_max_abundance": 100,
   "relation_type": "AND"
 }

@@ -17,6 +17,7 @@ class Config:
         self.prior_threshold = config["prior_threshold"]
         self.node_label_distribution_info = self._get_pyro_dist_from_text(config["node_label_distribution_info"])
         self.parent_interaction_type = config["relation_type"]
+        self.continuous_max_abundance = config["continuous_max_abundance"]
 
     def _get_pyro_dist_from_text(self, node_label_distribution_info):
         """

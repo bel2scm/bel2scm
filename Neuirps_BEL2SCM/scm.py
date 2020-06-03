@@ -10,6 +10,7 @@ from Neuirps_BEL2SCM.parameter_estimation import ParameterEstimation
 from Neuirps_BEL2SCM.utils import get_sample_for_non_roots, get_parent_tensor, all_parents_visited, json_load, \
     get_parent_samples, get_child_name_list
 from Neuirps_BEL2SCM.constants import PYRO_DISTRIBUTIONS, NOISE_TYPE, VARIABLE_TYPE, get_variable_type_from_label
+from Neuirps_BEL2SCM.config import Config
 import torch
 import pyro
 
@@ -144,12 +145,13 @@ class SCM:
         cf_posterior = self.infer(intervention_model, updated_noise)
         marginal = EmpiricalMarginal(cf_posterior, target)
 
+        counterfactual_samples = [marginal.sample() for _ in range(1000)]
         # Calculate causal effect
         scm_causal_effect_samples = [
             torch.abs(condition_data[target] - float(marginal.sample()))
             for _ in range(500)
         ]
-        return scm_causal_effect_samples
+        return scm_causal_effect_samples, counterfactual_samples
 
     def condition(self, condition_data: dict):
         """
@@ -171,7 +173,7 @@ class SCM:
 
     # [Todo]
     def infer(self, model, noise):
-        return Importance(model, num_samples=1000).run(noise)
+        return Importance(model, num_samples=2000).run(noise)
 
     def update_noise_svi(self, conditioned_model):
 
@@ -187,7 +189,7 @@ class SCM:
 
         def guide(exogenous_dist_dict):
             mu_constraints = constraints.interval(0., 1)
-            sigma_constraints = constraints.interval(.0001, 7.)
+            sigma_constraints = constraints.interval(.1, 3.)
 
             for exg_name, exg_dist in exogenous_dist_dict.items():
                 # mu_guide = pyro.param("mu_{}".format(exg_name), torch.tensor(exg_dist.loc), constraint=mu_constraints)
@@ -210,7 +212,7 @@ class SCM:
             loss=Trace_ELBO(retain_graph=True)
         )
         losses = []
-        num_steps = 200
+        num_steps = 300
         samples = defaultdict(list)
         for t in range(num_steps):
             print(t)
@@ -233,10 +235,7 @@ class SCM:
 
     def _get_prediction(self, trained_network, parent_tensor, current_noise_sample, current_variable_type):
         try:
-            if current_variable_type == "Continuous":
-                return trained_network.continuous_predict(parent_tensor, current_noise_sample)
-            else:
-                return trained_network.binary_predict(parent_tensor, current_noise_sample)
+            return trained_network.net(parent_tensor) + current_noise_sample
         except:
             raise Exception("Error getting deterministic prediction.")
 
@@ -279,4 +278,5 @@ class SCM:
 
             # Override the parameters written in the constants.py
             exogenous_dist_dict[node_name] = exogenous_distribution(0.0, residual_std)
+            #exogenous_dist_dict[node_name] = exogenous_distribution(0.0, 1.0)
         return exogenous_dist_dict

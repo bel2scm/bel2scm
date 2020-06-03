@@ -86,11 +86,11 @@ class TestSCM(unittest.TestCase):
         from Neuirps_BEL2SCM.scm import SCM
         from Neuirps_BEL2SCM.utils import json_load
         import torch
+        torch.manual_seed(7)
 
         bel_file_path = "../Tests/BELSourceFiles/mapk.json"
         config_file_path = "../Tests/Configs/COVID-19-config.json"
         data_file_path = "../Tests/Data/mapk3000.csv"
-        output_pickle_object_file = "../../mapk_scm.pkl"
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
 
@@ -98,11 +98,11 @@ class TestSCM(unittest.TestCase):
         condition_data = scm.model(exogenous_noise)
         target = "a(p(Erk))"
         intervention_data = {
-            "a(p(Raf))": 40.0
+            "a(p(Mek))": 50.0
         }
 
-        erk_causal_effects = scm.counterfactual_inference(condition_data, intervention_data, target, True)
-        print(erk_causal_effects)
+        erk_causal_effects, counterfactual_samples = scm.counterfactual_inference(condition_data, intervention_data, target, True)
+        print(counterfactual_samples)
 
     def test_igf(self):
         from Neuirps_BEL2SCM.scm import SCM

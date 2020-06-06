@@ -53,9 +53,26 @@ class LogisticNet(torch.nn.Module):
         return x
 
 
+class SigmoigNet(torch.nn.Module):
+    """
+       This class is used to train model for SCM.
+       """
+
+    def __init__(self, n_feature, n_hidden, n_output, max_abundance):
+        super(SigmoigNet, self).__init__()
+        self.max_abundance = max_abundance
+        self.layer0 = torch.nn.Linear(n_feature, n_hidden)  # hidden layer
+        self.layer1 = torch.nn.Linear(n_hidden, n_output)  # hidden layer
+
+    def forward(self, x):
+        x = F.sigmoid(self.layer0(x))
+        x = self.max_abundance * F.sigmoid(self.layer1(x))
+        return x
+
+
 class TrainNet():
     """
-	This class initiates RegressionNet / LogisticNet, sets hyperparameters,
+	This class initiates SigmoidNet, sets hyperparameters,
 	and performs training.
 	"""
     # All hardcoded hyperparameter resides here.
@@ -64,18 +81,20 @@ class TrainNet():
     train_loss = 0
     test_loss = 0
     test_residual_std = 0
-    train_test_split_index = 3000
-    n_epochs = 60
+    train_test_split_index = 2000
+    n_epochs = 50
     batch_size = 1000
 
-    def __init__(self, n_feature, n_output, isRegression):
+    def __init__(self, n_feature, n_output, max_abundance, isRegression):
         self.isRegression = isRegression
-        if isRegression:
-            self.net = RegressionNet(n_feature, self.n_hidden, n_output)
-            self.loss_func = torch.nn.MSELoss()
-        else:
-            self.net = LogisticNet(n_feature, self.n_hidden, n_output)
-            self.loss_func = torch.nn.BCELoss()
+        # if isRegression:
+        #     # self.net = RegressionNet(n_feature, self.n_hidden, n_output)
+        #     self.loss_func = torch.nn.MSELoss()
+        # else:
+        #     #self.net = LogisticNet(n_feature, self.n_hidden, n_output)
+        #     self.loss_func = torch.nn.BCELoss()
+        self.net = SigmoigNet(n_feature, self.n_hidden, n_output, max_abundance)
+        self.loss_func = torch.nn.SmoothL1Loss()
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
 
     def fit(self, x, y):
@@ -102,11 +121,7 @@ class TrainNet():
         self.train_loss = self.loss_func(self.net(train_x), train_y)
         self.test_loss = self.loss_func(self.net(test_x), test_y)
 
-        # calculate mean, std of residual for noise distribution
-        if self.isRegression:
-            residuals = self._residual(y, self.net(x))
-        else:
-            residuals = self._residual(y, self.net.logit_forward(x))
+        residuals = self._residual(y, self.net(x))
 
         self.residual_mean = residuals.mean()
         self.residual_std = residuals.std()
@@ -143,7 +158,7 @@ class ParameterEstimation:
     """
 	This class requires non-empty graph with available node_data.
 	SCM class uses get_model_for_each_node function for each node after loading bel graph and data.
-	"""
+    """
 
     def __init__(self, belgraph, config):
         # Dictionary<node_str, TrainNet obj>
@@ -226,7 +241,10 @@ class ParameterEstimation:
         # convert target series to float tensor.
         target_data = torch.tensor(features_and_target_data["target"].values).float()
 
-        train_network = TrainNet(n_feature=number_of_features, n_output=1, isRegression=True)
+        train_network = TrainNet(n_feature=number_of_features,
+                                 max_abundance=self.config.continuous_max_abundance,
+                                 n_output=1,
+                                 isRegression=True)
 
         train_network.fit(feature_data, target_data)
 
@@ -239,7 +257,10 @@ class ParameterEstimation:
         target_data = torch.tensor(features_and_target_data["target"].values).float()
 
         # new instance of TrainNet with isRegression=false.
-        train_network = TrainNet(n_feature=number_of_features, n_output=1, isRegression=False)
+        train_network = TrainNet(n_feature=number_of_features,
+                                 max_abundance=1.0,
+                                 n_output=1,
+                                 isRegression=False)
         train_network.fit(feature_data, target_data)
 
         return train_network

@@ -136,7 +136,7 @@ class SCM:
 
         # Step 2. Noise abduction
         if svi:
-            updated_noise, _ = self.update_noise_svi(conditioned_model)
+            updated_noise, losses = self.update_noise_svi(conditioned_model)
 
         # Step 3. Intervene
         intervention_model = self.intervention(intervention_data)
@@ -151,7 +151,7 @@ class SCM:
             torch.abs(condition_data[target] - float(marginal.sample()))
             for _ in range(500)
         ]
-        return scm_causal_effect_samples, counterfactual_samples
+        return scm_causal_effect_samples, counterfactual_samples, losses
 
     def condition(self, condition_data: dict):
         """
@@ -188,8 +188,8 @@ class SCM:
         exogenous_dist_dict = self.exogenous_dist_dict
 
         def guide(exogenous_dist_dict):
-            mu_constraints = constraints.interval(0., 1)
-            sigma_constraints = constraints.interval(.1, 3.)
+            mu_constraints = constraints.interval(0., 5.)
+            sigma_constraints = constraints.interval(.1, 1.)
 
             for exg_name, exg_dist in exogenous_dist_dict.items():
                 # mu_guide = pyro.param("mu_{}".format(exg_name), torch.tensor(exg_dist.loc), constraint=mu_constraints)
@@ -208,15 +208,16 @@ class SCM:
         svi = SVI(
             model=conditioned_model,
             guide=guide,
-            optim=Adam({"lr": 0.005, "betas": (0.95, 0.999)}),
+            optim=Adam({"lr": 0.0005, "betas": (0.95, 0.999)}),
             loss=Trace_ELBO(retain_graph=True)
         )
         losses = []
-        num_steps = 300
+        num_steps = 1000
         samples = defaultdict(list)
         for t in range(num_steps):
-            print(t)
-            losses.append(svi.step(exogenous_dist_dict))
+            loss = svi.step(exogenous_dist_dict)
+            print(t, loss)
+            losses.append(loss)
             for noise in exogenous_dist_dict.keys():
                 mu = 'mu_{}'.format(noise)
                 sigma = 'sigma_{}'.format(noise)

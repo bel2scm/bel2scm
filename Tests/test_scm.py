@@ -101,8 +101,8 @@ class TestSCM(unittest.TestCase):
             "a(p(Mek))": 50.0
         }
 
-        erk_causal_effects, counterfactual_samples = scm.counterfactual_inference(condition_data, intervention_data, target, True)
-        print(counterfactual_samples)
+        erk_causal_effects, counterfactual_samples, svi_losses = scm.counterfactual_inference(condition_data, intervention_data, target, True)
+        print(torch.tensor(counterfactual_samples).flatten().numpy()[:50])
 
     def test_igf(self):
         from Neuirps_BEL2SCM.scm import SCM

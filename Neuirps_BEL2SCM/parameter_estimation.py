@@ -55,6 +55,8 @@ class SigmoigNet(torch.nn.Module):
 
     def forward(self, x):
         x = F.sigmoid(self.layer0(x))
+
+        # [TODO] hardcode hill equation
         x = self.max_abundance * F.sigmoid(self.layer1(x))
         return x
 

@@ -1,19 +1,9 @@
-import statistics
-from collections import defaultdict
-
 import torch
 import torch.nn.functional as F
 import time
 import pyro
-import math
-import os
-import torch
-import torch.distributions.constraints as constraints
-from pyro.optim import Adam
-from pyro.infer import SVI, Trace_ELBO
-import pyro.distributions as dist
-
 from Neuirps_BEL2SCM.constants import VARIABLE_TYPE
+import numpy as np
 
 
 class RegressionNet(torch.nn.Module):
@@ -69,6 +59,21 @@ class SigmoigNet(torch.nn.Module):
         x = self.max_abundance * F.sigmoid(self.layer1(x))
         return x
 
+class HillRegressionNet(torch.nn.Module):
+    """
+       This class is used to train model for SCM.
+       """
+
+    def __init__(self, n_feature, n_output, max_abundance):
+        super(HillRegressionNet, self).__init__()
+        self.max_abundance = max_abundance
+        self.predict = torch.nn.Linear(n_feature, n_output)  # hidden layer
+        # self.layer1 = torch.nn.Linear(n_hidden, n_output)  # hidden layer
+
+    def forward(self, x):
+        x = self.predict(x)
+        return x
+
 
 class TrainNet():
     """
@@ -82,23 +87,31 @@ class TrainNet():
     test_loss = 0
     test_residual_std = 0
     train_test_split_index = 2000
-    n_epochs = 50
+    n_epochs = 1
     batch_size = 1000
 
     def __init__(self, n_feature, n_output, max_abundance, isRegression):
         self.isRegression = isRegression
+        self.max_abundance = max_abundance
         # if isRegression:
         #     # self.net = RegressionNet(n_feature, self.n_hidden, n_output)
         #     self.loss_func = torch.nn.MSELoss()
         # else:
         #     #self.net = LogisticNet(n_feature, self.n_hidden, n_output)
         #     self.loss_func = torch.nn.BCELoss()
-        self.net = SigmoigNet(n_feature, self.n_hidden, n_output, max_abundance)
+        # self.net = SigmoigNet(n_feature, self.n_hidden, n_output, max_abundance)
+        self.net = HillRegressionNet(n_feature, n_output, max_abundance)
         self.loss_func = torch.nn.SmoothL1Loss()
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
 
+
     def fit(self, x, y):
-        train_x, train_y, test_x, test_y = self._get_train_test_data(x, y)
+        target_transformed_to_log = self.transform_target_to_log(y, max_abundance=self.max_abundance)
+
+        parent_transformed_to_log = self.transform_parent_to_log(x)
+
+        train_x, train_y, test_x, test_y = self._get_train_test_data(parent_transformed_to_log,
+                                                                     target_transformed_to_log)
 
         for epoch in range(self.n_epochs):
 
@@ -120,7 +133,7 @@ class TrainNet():
 
         self.train_loss = self.loss_func(self.net(train_x), train_y)
         self.test_loss = self.loss_func(self.net(test_x), test_y)
-
+        # weights = self.net.predict.weight
         residuals = self._residual(y, self.net(x))
 
         self.residual_mean = residuals.mean()
@@ -130,9 +143,32 @@ class TrainNet():
         prediction = self.net.logit_forward(x)
         return F.sigmoid(prediction + noise)
 
+    # def continuous_predict(self, x, noise):
+    #     prediction = self.net(x)
+    #     return prediction + noise
+
     def continuous_predict(self, x, noise):
-        prediction = self.net(x)
-        return prediction + noise
+
+        # linear_prediction = self.net(x)
+        [w, b] = self.net.predict.parameters()
+        [m, c] = w.data[0][0], b.data[0]
+        # Define n and k
+        n = m
+        # c = -n log k, then k = exp(-c/n)
+        k = np.exp(-c / n).numpy()
+        print(self.max_abundance)
+        print(x)
+        print(k)
+        print(noise)
+        max_abundance = self.max_abundance
+        # print("denom", 1 + np.power(((x / k) + noise), -n))
+        x = x.numpy()
+        noise = noise.detach().numpy()
+        print("denom numpy", 1 + np.power(((x / k) + noise), -n))
+        hill_prediction = self.max_abundance/(1 + np.power(((x / k) + noise), -n))
+        print(hill_prediction)
+        return hill_prediction
+
 
     def _get_train_test_data(self, x, y):
         # train data
@@ -153,7 +189,11 @@ class TrainNet():
     def _residual(self, observed_value, predicted_value):
         return torch.abs(observed_value - predicted_value)
 
+    def transform_target_to_log(self, target, max_abundance):
+        return np.log(target / (max_abundance - target))
 
+    def transform_parent_to_log(self, parent):
+        return np.log(parent)
 class ParameterEstimation:
     """
 	This class requires non-empty graph with available node_data.
@@ -165,7 +205,7 @@ class ParameterEstimation:
         self.trained_networks = dict()
 
         # Dictionary <node_str, pyro.Distribution>
-        # self.root_parameters = dict()
+        self.root_parameters = dict()
 
         # Dictionary <node_str, std of residual>
         self.exogenous_std_dict = dict()
@@ -176,30 +216,30 @@ class ParameterEstimation:
         self.belgraph = belgraph
         self.config = config
 
-    # def get_distribution_for_roots_from_data(self):
-    #
-    #     for node_str, features_and_target_data in self.belgraph.node_data.items():
-    #
-    #         # if node is a root node, and it has empty feature df
-    #         if (self.belgraph.nodes[node_str].root) and (features_and_target_data["features"].empty):
-    #
-    #             # we need node label to search for the corresponding distribution from config
-    #             node_label = self.belgraph.nodes[node_str].node_label
-    #             # Getting corresponding distribution from config
-    #             node_distribution = self.config.node_label_distribution_info[node_label]
-    #
-    #             # if the node label belongs to categorical
-    #             if node_label in VARIABLE_TYPE["Categorical"]:
-    #                 self.root_parameters[node_str] = self._get_distribution_for_binary_root(
-    #                     node_distribution,
-    #                     features_and_target_data)
-    #
-    #             # Otherwise we assume that the data is continuous and return a distribution with mean and std from data.
-    #             else:
-    #                 self.root_parameters[node_str] = self._get_distribution_for_continuous_root(
-    #                     node_distribution,
-    #                     features_and_target_data)
-    #             self.exogenous_std_dict[node_str] = torch.tensor(features_and_target_data["target"].std())
+    def get_distribution_for_roots_from_data(self):
+
+        for node_str, features_and_target_data in self.belgraph.node_data.items():
+
+            # if node is a root node, and it has empty feature df
+            if (self.belgraph.nodes[node_str].root) and (features_and_target_data["features"].empty):
+
+                # we need node label to search for the corresponding distribution from config
+                node_label = self.belgraph.nodes[node_str].node_label
+                # Getting corresponding distribution from config
+                node_distribution = self.config.node_label_distribution_info[node_label]
+
+                # if the node label belongs to categorical
+                if node_label in VARIABLE_TYPE["Categorical"]:
+                    self.root_parameters[node_str] = self._get_distribution_for_binary_root(
+                        node_distribution,
+                        features_and_target_data)
+
+                # Otherwise we assume that the data is continuous and return a distribution with mean and std from data.
+                else:
+                    self.root_parameters[node_str] = self._get_distribution_for_continuous_root(
+                        node_distribution,
+                        features_and_target_data)
+                self.exogenous_std_dict[node_str] = torch.tensor(features_and_target_data["target"].std())
 
     def get_model_for_each_non_root_node(self):
         """
@@ -265,77 +305,6 @@ class ParameterEstimation:
 
         return train_network
 
-    # def _get_distribution_for_binary_root(self, node_distribution, features_and_target_data):
-    #
-    #     # convert target series to float tensor.
-    #     mean = torch.tensor(features_and_target_data["target"].mean())
-    #
-    #     # mean should be a probability that becomes the parameter for Bernoulli
-    #     if 0 <= mean <= 1:
-    #         try:
-    #             return (mean)
-    #         except:
-    #             raise Exception(
-    #                 "The schema from _get_distribution_for_binary_root does not match for the pyro distribution for node ",
-    #                 features_and_target_data["target"].name)
-    #     else:
-    #         raise Exception("Something wrong with data for ", features_and_target_data["target"].name)
-    #
-    # def _get_distribution_for_continuous_root(self, node_distribution, features_and_target_data):
-    #
-    #     # convert target series to float tensor.
-    #     mean = torch.tensor(features_and_target_data["target"].mean())
-    #     std = torch.tensor(features_and_target_data["target"].std())
-    #
-    #     try:
-    #         return (mean, std)
-    #     except:
-    #         raise Exception(
-    #             "The schema from _get_distribution_for_continuous_root does not match for the pyro distribution for node ",
-    #             features_and_target_data["target"].name)
-
-
-
-
-
-class RootParameterEstimation:
-    """
-
-    """
-
-    def __init__(self, belgraph, config):
-        self.root_parameters = dict()
-        if not belgraph.nodes or not belgraph.node_data:
-            raise Exception("Empty Graph or data not loaded.")
-
-        self.belgraph = belgraph
-        self.config = config
-
-    def get_distribution_for_roots_from_data(self):
-
-        for node_str, features_and_target_data in self.belgraph.node_data.items():
-
-            # if node is a root node, and it has empty feature df
-            if (self.belgraph.nodes[node_str].root) and (features_and_target_data["features"].empty):
-
-                # we need node label to search for the corresponding distribution from config
-                node_label = self.belgraph.nodes[node_str].node_label
-                # Getting corresponding distribution from config
-                node_distribution = self.config.node_label_distribution_info[node_label]
-
-                # if the node label belongs to categorical
-                if node_label in VARIABLE_TYPE["Categorical"]:
-                    self.root_parameters[node_str] = self._get_distribution_for_binary_root(
-                        node_distribution,
-                        features_and_target_data)
-
-                # Otherwise we assume that the data is continuous and return a distribution with mean and std from data.
-                else:
-                    self.root_parameters[node_str] = self._get_distribution_for_continuous_root(
-                        node_distribution,
-                        features_and_target_data)
-                self.exogenous_std_dict[node_str] = torch.tensor(features_and_target_data["target"].std())
-
     def _get_distribution_for_binary_root(self, node_distribution, features_and_target_data):
 
         # convert target series to float tensor.
@@ -364,57 +333,3 @@ class RootParameterEstimation:
             raise Exception(
                 "The schema from _get_distribution_for_continuous_root does not match for the pyro distribution for node ",
                 features_and_target_data["target"].name)
-
-    def _get_root_parameters_from_svi(self):
-
-        for node_str, features_and_target_data in self.belgraph.node_data.items():
-            # if node is a root node, and it has empty feature df
-            if (self.belgraph.nodes[node_str].root) and (features_and_target_data["features"].empty):
-                data = features_and_target_data['target']
-                # model = self.root_model(data)
-                self.root_parameters[node_str] = self.update_parameters_svi(data, self.root_model(data), node_str)
-
-    def update_parameters_svi(self, data, model, node_name):
-        n_steps = 5000
-
-        def guide(data):
-            #     mu_constraints = constraints.interval(0., 1)
-            #     sigma_constraints = constraints.interval(.0001, 7.)
-            mu_val = data.mean()
-            sigma_val = data.std()
-            mu_guide = pyro.param("mu_{}".format(node_name), torch.tensor(mu_val), constraint=constraints.positive)
-            sigma_guide = pyro.param("sigma_{}".format(node_name), torch.tensor(sigma_val),
-                                     constraint=constraints.positive)
-
-            noise_dist = pyro.distributions.Normal
-            pyro.sample("latent_dist", noise_dist(mu_guide, sigma_guide))
-
-        pyro.clear_param_store()
-
-        # setup the optimizer
-        adam_params = {"lr": 0.0005, "betas": (0.90, 0.999)}
-        optimizer = Adam(adam_params)
-
-        # setup the inference algorithm
-        svi = SVI(model, guide, optimizer, loss=Trace_ELBO())
-
-        # do gradient steps
-        for step in range(n_steps):
-            svi.step(data)
-            if step % 100 == 0:
-                print('.', end='')
-
-        # grab the learned variational parameters
-        mu_q = pyro.param("mu_{}".format(node_name)).item()
-        sigma_q = pyro.param("mu_{}".format(node_name)).item()
-
-        return mu_q, sigma_q
-
-    def root_model(self, data):
-        mu0 = torch.tensor(data.mean())
-        sigma0 = torch.tensor(data.std())
-
-        f = pyro.sample("latent_dist", pyro.distributions.Normal(mu0, sigma0))
-        for i in range(len(data)):
-            # observe datapoint i using the bernoulli likelihood
-            pyro.sample("obs_{}".format(i), pyro.distributions.Normal(f, 1.0), obs=data)

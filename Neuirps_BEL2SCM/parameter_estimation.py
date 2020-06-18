@@ -93,15 +93,9 @@ class TrainNet():
     def __init__(self, n_feature, n_output, max_abundance, isRegression):
         self.isRegression = isRegression
         self.max_abundance = max_abundance
-        # if isRegression:
-        #     # self.net = RegressionNet(n_feature, self.n_hidden, n_output)
-        #     self.loss_func = torch.nn.MSELoss()
-        # else:
-        #     #self.net = LogisticNet(n_feature, self.n_hidden, n_output)
-        #     self.loss_func = torch.nn.BCELoss()
-        # self.net = SigmoigNet(n_feature, self.n_hidden, n_output, max_abundance)
+
         self.net = HillRegressionNet(n_feature, n_output, max_abundance)
-        self.loss_func = torch.nn.SmoothL1Loss()
+        self.loss_func = torch.nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
 
 
@@ -112,6 +106,8 @@ class TrainNet():
 
         train_x, train_y, test_x, test_y = self._get_train_test_data(parent_transformed_to_log,
                                                                      target_transformed_to_log)
+        train_x_untransformed, train_y_untransformed, test_x_untransformed, test_y_untransformed = \
+            self._get_train_test_data(x, y)
 
         for epoch in range(self.n_epochs):
 
@@ -130,11 +126,11 @@ class TrainNet():
                 self.optimizer.step()
 
         # calculate train and test loss
-
-        self.train_loss = self.loss_func(self.net(train_x), train_y)
-        self.test_loss = self.loss_func(self.net(test_x), test_y)
+        
+        self.train_loss = self.loss_func(self.hill(train_x_untransformed, 0), train_y_untransformed)
+        self.test_loss = self.loss_func(self.hill(test_x_untransformed, 0), test_y_untransformed)
         # weights = self.net.predict.weight
-        residuals = self._residual(y, self.net(x))
+        residuals = self._residual(y, self.hill(x, 0))
 
         self.residual_mean = residuals.mean()
         self.residual_std = residuals.std()
@@ -143,31 +139,39 @@ class TrainNet():
         prediction = self.net.logit_forward(x)
         return F.sigmoid(prediction + noise)
 
-    # def continuous_predict(self, x, noise):
-    #     prediction = self.net(x)
-    #     return prediction + noise
+
 
     def continuous_predict(self, x, noise):
 
-        # linear_prediction = self.net(x)
+        # [w, b] = self.net.predict.parameters()
+        # [m, c] = w.data[0][0], b.data[0]
+        # # Define n and k
+        # n = m
+        # # c = -n log k, then k = exp(-c/n)
+        # k = np.exp(-c / n).numpy()
+        # print(self.max_abundance)
+        # print("x", x)
+        # print("k", k)
+        # max_abundance = self.max_abundance
+        # print("denom", 1 + np.power(((x / k) + noise), -n))
+        x = x.numpy()
+        noise = noise.detach().numpy()
+        print("noise", noise)
+        # hill_prediction = self.max_abundance/(1 + np.power(((x / k) + noise), -n))
+        hill_prediction = self.hill(x, noise)
+        print("hill prediction", hill_prediction)
+        return hill_prediction
+
+    # Hill equation
+    def hill(self, x, noise):
         [w, b] = self.net.predict.parameters()
         [m, c] = w.data[0][0], b.data[0]
         # Define n and k
         n = m
         # c = -n log k, then k = exp(-c/n)
         k = np.exp(-c / n).numpy()
-        print(self.max_abundance)
-        print(x)
-        print(k)
-        print(noise)
-        max_abundance = self.max_abundance
-        # print("denom", 1 + np.power(((x / k) + noise), -n))
-        x = x.numpy()
-        noise = noise.detach().numpy()
-        print("denom numpy", 1 + np.power(((x / k) + noise), -n))
-        hill_prediction = self.max_abundance/(1 + np.power(((x / k) + noise), -n))
-        print(hill_prediction)
-        return hill_prediction
+        power_part = (x/k) + noise
+        return self.max_abundance/(1 + np.power(power_part, -n))
 
 
     def _get_train_test_data(self, x, y):

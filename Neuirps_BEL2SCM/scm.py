@@ -216,7 +216,6 @@ class SCM:
         num_steps = 300
         samples = defaultdict(list)
         for t in range(num_steps):
-            print(t)
             losses.append(svi.step(exogenous_dist_dict))
             for noise in exogenous_dist_dict.keys():
                 mu = 'mu_{}'.format(noise)

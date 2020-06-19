@@ -87,7 +87,7 @@ class TrainNet():
     test_loss = 0
     test_residual_std = 0
     train_test_split_index = 2000
-    n_epochs = 1
+    n_epochs = 1000
     batch_size = 1000
 
     def __init__(self, n_feature, n_output, max_abundance, isRegression):
@@ -139,27 +139,10 @@ class TrainNet():
         prediction = self.net.logit_forward(x)
         return F.sigmoid(prediction + noise)
 
-
-
     def continuous_predict(self, x, noise):
-
-        # [w, b] = self.net.predict.parameters()
-        # [m, c] = w.data[0][0], b.data[0]
-        # # Define n and k
-        # n = m
-        # # c = -n log k, then k = exp(-c/n)
-        # k = np.exp(-c / n).numpy()
-        # print(self.max_abundance)
-        # print("x", x)
-        # print("k", k)
-        # max_abundance = self.max_abundance
-        # print("denom", 1 + np.power(((x / k) + noise), -n))
         x = x.numpy()
         noise = noise.detach().numpy()
-        print("noise", noise)
-        # hill_prediction = self.max_abundance/(1 + np.power(((x / k) + noise), -n))
         hill_prediction = self.hill(x, noise)
-        print("hill prediction", hill_prediction)
         return hill_prediction
 
     # Hill equation
@@ -171,6 +154,9 @@ class TrainNet():
         # c = -n log k, then k = exp(-c/n)
         k = np.exp(-c / n).numpy()
         power_part = (x/k) + noise
+        power_part = power_part[0]
+        denominator = np.power(power_part, -n)
+
         return self.max_abundance/(1 + np.power(power_part, -n))
 
 
@@ -198,6 +184,7 @@ class TrainNet():
 
     def transform_parent_to_log(self, parent):
         return np.log(parent)
+
 class ParameterEstimation:
     """
 	This class requires non-empty graph with available node_data.

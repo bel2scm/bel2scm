@@ -213,7 +213,7 @@ class SCM:
             loss=Trace_ELBO(retain_graph=True)
         )
         losses = []
-        num_steps = 300
+        num_steps = 1000
         samples = defaultdict(list)
         for t in range(num_steps):
             losses.append(svi.step(exogenous_dist_dict))

@@ -36,14 +36,23 @@ class TestSCM(unittest.TestCase):
         from Neuirps_BEL2SCM.utils import json_load
         import pickle
         from Neuirps_BEL2SCM.utils import save_scm_object
+        import torch
+        import pyro
+        import numpy as np
+        torch.manual_seed(101)
+        pyro.set_rng_seed(42)
+        np.random.seed(19680801)
 
-        bel_file_path = "../Tests/BELSourceFiles/mapk.json"
+        bel_file_path = "../Tests/BELSourceFiles/mapk_single_interaction.json"
         config_file_path = "../Tests/Configs/COVID-19-config.json"
-        data_file_path = "../Tests/Data/mapk3000.csv"
+        data_file_path = "../Tests/Data/single_interaction_data.csv"
         # data_file_path = "../Tests/Data/single_interaction_data.csv"
         output_pickle_object_file = "../../mapk_scm.pkl"
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
+        exogenous_noise = scm.exogenous_dist_dict
+        samples = [scm.model(exogenous_noise) for i in range(1000)]
+        print(samples)
         save_scm_object(output_pickle_object_file, scm)
         # Add loading and saving from pkl to utils
 
@@ -86,13 +95,16 @@ class TestSCM(unittest.TestCase):
     def test_mapk_counterfactual(self):
         from Neuirps_BEL2SCM.scm import SCM
         from Neuirps_BEL2SCM.utils import json_load
+        import pyro
         import torch
         import numpy as np
         torch.manual_seed(101)
+        pyro.set_rng_seed(42)
+        np.random.seed(19680801)
 
-        bel_file_path = "../Tests/BELSourceFiles/mapk.json"
+        bel_file_path = "../Tests/BELSourceFiles/mapk_single_interaction.json"
         config_file_path = "../Tests/Configs/COVID-19-config.json"
-        data_file_path = "../Tests/Data/mapk3000.csv"
+        data_file_path = "../Tests/Data/single_interaction_data.csv"
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
 
@@ -116,10 +128,6 @@ class TestSCM(unittest.TestCase):
         print(counterfactual_samples2)
         new_list2 = [x.cpu().detach().numpy() for x in counterfactual_samples2]
         print("Counterfactual Erk when Mek = 80:: Mean", np.mean(new_list2), np.std(new_list2))
-
-        intervention_data2 = {
-            "a(p(Mek))": 80.0
-        }
 
     def test_igf(self):
         from Neuirps_BEL2SCM.scm import SCM

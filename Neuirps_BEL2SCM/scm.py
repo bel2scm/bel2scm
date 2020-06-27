@@ -136,7 +136,7 @@ class SCM:
 
         # Step 2. Noise abduction
         if svi:
-            updated_noise, losses = self.update_noise_svi(conditioned_model)
+            updated_noise, _ = self.update_noise_svi(conditioned_model)
 
         # Step 3. Intervene
         intervention_model = self.intervention(intervention_data)
@@ -151,7 +151,7 @@ class SCM:
             torch.abs(condition_data[target] - float(marginal.sample()))
             for _ in range(500)
         ]
-        return scm_causal_effect_samples, counterfactual_samples, losses
+        return scm_causal_effect_samples, counterfactual_samples
 
     def condition(self, condition_data: dict):
         """
@@ -188,8 +188,8 @@ class SCM:
         exogenous_dist_dict = self.exogenous_dist_dict
 
         def guide(exogenous_dist_dict):
-            mu_constraints = constraints.interval(0., 5.)
-            sigma_constraints = constraints.interval(.1, 1.)
+            mu_constraints = constraints.interval(0., 1)
+            sigma_constraints = constraints.interval(.1, 3.)
 
             for exg_name, exg_dist in exogenous_dist_dict.items():
                 # mu_guide = pyro.param("mu_{}".format(exg_name), torch.tensor(exg_dist.loc), constraint=mu_constraints)
@@ -208,16 +208,14 @@ class SCM:
         svi = SVI(
             model=conditioned_model,
             guide=guide,
-            optim=Adam({"lr": 0.0005, "betas": (0.95, 0.999)}),
+            optim=Adam({"lr": 0.005, "betas": (0.95, 0.999)}),
             loss=Trace_ELBO(retain_graph=True)
         )
         losses = []
-        num_steps = 1000
+        num_steps = 300
         samples = defaultdict(list)
         for t in range(num_steps):
-            loss = svi.step(exogenous_dist_dict)
-            print(t, loss)
-            losses.append(loss)
+            losses.append(svi.step(exogenous_dist_dict))
             for noise in exogenous_dist_dict.keys():
                 mu = 'mu_{}'.format(noise)
                 sigma = 'sigma_{}'.format(noise)
@@ -236,22 +234,19 @@ class SCM:
 
     def _get_prediction(self, trained_network, parent_tensor, current_noise_sample, current_variable_type):
         try:
-            return trained_network.net(parent_tensor) + current_noise_sample
+            return trained_network.continuous_predict(parent_tensor, current_noise_sample)
         except:
             raise Exception("Error getting deterministic prediction.")
 
     def _get_continuous_reparameterized_sample(self, current_node_name, node_distribution, exogenous_distribution,
                                                root_parameters):
         """
-
         Args:
             current_node_name:
             node_distribution:
             exogenous_distribution:
             root_parameters:
-
         Returns: pyro.sample()
-
         """
         noise_sample = pyro.sample(current_node_name + "_N", exogenous_distribution)
 

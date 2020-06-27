@@ -3,61 +3,21 @@ import torch.nn.functional as F
 import time
 import pyro
 from Neuirps_BEL2SCM.constants import VARIABLE_TYPE
+import numpy as np
 
 
-class RegressionNet(torch.nn.Module):
-    """
-	This class is used to train regression model for continuous nodes.
-	"""
-
-    def __init__(self, n_feature, n_hidden, n_output):
-        super(RegressionNet, self).__init__()
-        self.hidden = torch.nn.Linear(n_feature, n_hidden)  # hidden layer
-        self.predict = torch.nn.Linear(n_hidden, n_output)  # output layer
-
-    def forward(self, x):
-        x = F.relu(self.hidden(x))  # activation function for hidden layer
-        x = self.predict(x)  # linear output
-        return x
-
-
-class LogisticNet(torch.nn.Module):
-    """
-	This class is used to train classification model for binary nodes.
-	"""
-
-    def __init__(self, n_feature, n_hidden, n_output):
-        super(LogisticNet, self).__init__()
-        self.hidden = torch.nn.Linear(n_feature, n_hidden)  # hidden layer
-        self.predict = torch.nn.Linear(n_hidden, n_output)  # output layer
-
-    def forward(self, x):
-        x = F.relu(self.hidden(x))  # activation function for hidden layer
-        x = F.sigmoid(self.predict(x))  # linear output
-        return x
-
-    def logit_forward(self, x):
-        x = F.relu(self.hidden(x))  # activation function for hidden layer
-        x = self.predict(x)  # linear output
-        return x
-
-
-class SigmoigNet(torch.nn.Module):
+class SigmoidNet(torch.nn.Module):
     """
        This class is used to train model for SCM.
        """
 
-    def __init__(self, n_feature, n_hidden, n_output, max_abundance):
-        super(SigmoigNet, self).__init__()
+    def __init__(self, n_feature, n_output, max_abundance):
+        super(SigmoidNet, self).__init__()
         self.max_abundance = max_abundance
-        self.layer0 = torch.nn.Linear(n_feature, n_hidden)  # hidden layer
-        self.layer1 = torch.nn.Linear(n_hidden, n_output)  # hidden layer
+        self.predict = torch.nn.Linear(n_feature, n_output)  # hidden layer
 
     def forward(self, x):
-        x = F.sigmoid(self.layer0(x))
-
-        # [TODO] hardcode hill equation
-        x = self.max_abundance * F.sigmoid(self.layer1(x))
+        x = self.predict(x)
         return x
 
 
@@ -73,23 +33,26 @@ class TrainNet():
     test_loss = 0
     test_residual_std = 0
     train_test_split_index = 2000
-    n_epochs = 50
+    n_epochs = 1000
     batch_size = 1000
 
     def __init__(self, n_feature, n_output, max_abundance, isRegression):
         self.isRegression = isRegression
-        # if isRegression:
-        #     # self.net = RegressionNet(n_feature, self.n_hidden, n_output)
-        #     self.loss_func = torch.nn.MSELoss()
-        # else:
-        #     #self.net = LogisticNet(n_feature, self.n_hidden, n_output)
-        #     self.loss_func = torch.nn.BCELoss()
-        self.net = SigmoigNet(n_feature, self.n_hidden, n_output, max_abundance)
-        self.loss_func = torch.nn.SmoothL1Loss()
+        self.max_abundance = max_abundance
+
+        self.net = SigmoidNet(n_feature, n_output, max_abundance)
+        self.loss_func = torch.nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
 
     def fit(self, x, y):
-        train_x, train_y, test_x, test_y = self._get_train_test_data(x, y)
+        target_transformed_to_log = self.transform_target_to_log(y, max_abundance=self.max_abundance)
+
+        # parent_transformed_to_log = self.transform_parent_to_log(x)
+
+        train_x, train_y, test_x, test_y = self._get_train_test_data(x,
+                                                                     target_transformed_to_log)
+        train_x_untransformed, train_y_untransformed, test_x_untransformed, test_y_untransformed = \
+            self._get_train_test_data(x, y)
 
         for epoch in range(self.n_epochs):
 
@@ -102,17 +65,17 @@ class TrainNet():
                 indices = permutation[i:i + self.batch_size]
                 batch_x, batch_y = train_x[indices], train_y[indices]
 
-                prediction = self.net(batch_x)
+                prediction = self.net(batch_x)        # test_x = x[self.train_test_split_index:].flatten().view(-1, 1)
                 loss = self.loss_func(prediction, batch_y)
                 loss.backward()
                 self.optimizer.step()
 
         # calculate train and test loss
 
-        self.train_loss = self.loss_func(self.net(train_x), train_y)
-        self.test_loss = self.loss_func(self.net(test_x), test_y)
-
-        residuals = self._residual(y, self.net(x))
+        self.train_loss = self.loss_func(self.sigmoid(train_x_untransformed), train_y_untransformed)
+        self.test_loss = self.loss_func(self.sigmoid(test_x_untransformed), test_y_untransformed)
+        # weights = self.net.predict.weight
+        residuals = self._residual(y, self.sigmoid(x))
 
         self.residual_mean = residuals.mean()
         self.residual_std = residuals.std()
@@ -122,8 +85,21 @@ class TrainNet():
         return F.sigmoid(prediction + noise)
 
     def continuous_predict(self, x, noise):
-        prediction = self.net(x)
-        return prediction + noise
+        x = x.numpy()
+        noise = noise.detach().numpy()
+        hill_prediction = self.sigmoid(x) + noise
+        return hill_prediction
+
+    # Hill equation
+    def sigmoid(self, x):
+        betas = self.net.predict.parameters()
+        betas = [w.detach().numpy() for w in betas]
+        weights = [w[0][0] for w in betas[:-1]]
+        c = betas[-1][0]
+        power_part = np.dot(x, weights) + c
+        output = self.max_abundance / (1 + np.exp(-power_part))
+        output = torch.tensor(output.reshape(-1, 1))
+        return output
 
     def _get_train_test_data(self, x, y):
         # train data
@@ -131,18 +107,22 @@ class TrainNet():
         n = x.size()[1]
         p = x.size()[0] - self.train_test_split_index
         train_x = x[:self.train_test_split_index].reshape(m, n)
-        # train_x = x[:self.train_test_split_index].flatten().view(-1, 1)
         train_y = y[:self.train_test_split_index].reshape(m, 1)
 
         # test data
         test_x = x[self.train_test_split_index:].reshape(p, n)
-        # test_x = x[self.train_test_split_index:].flatten().view(-1, 1)
         test_y = y[self.train_test_split_index:].reshape(p, 1)
 
         return train_x, train_y, test_x, test_y
 
     def _residual(self, observed_value, predicted_value):
         return torch.abs(observed_value - predicted_value)
+
+    def transform_target_to_log(self, target, max_abundance):
+        return np.log(target / (max_abundance - target))
+
+    def transform_parent_to_log(self, parent):
+        return np.log(parent)
 
 
 class ParameterEstimation:

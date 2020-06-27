@@ -40,6 +40,7 @@ class TestSCM(unittest.TestCase):
         bel_file_path = "../Tests/BELSourceFiles/mapk.json"
         config_file_path = "../Tests/Configs/COVID-19-config.json"
         data_file_path = "../Tests/Data/mapk3000.csv"
+        # data_file_path = "../Tests/Data/single_interaction_data.csv"
         output_pickle_object_file = "../../mapk_scm.pkl"
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
@@ -86,7 +87,8 @@ class TestSCM(unittest.TestCase):
         from Neuirps_BEL2SCM.scm import SCM
         from Neuirps_BEL2SCM.utils import json_load
         import torch
-        torch.manual_seed(7)
+        import numpy as np
+        torch.manual_seed(101)
 
         bel_file_path = "../Tests/BELSourceFiles/mapk.json"
         config_file_path = "../Tests/Configs/COVID-19-config.json"
@@ -98,11 +100,23 @@ class TestSCM(unittest.TestCase):
         condition_data = scm.model(exogenous_noise)
         target = "a(p(Erk))"
         intervention_data = {
-            "a(p(Mek))": 50.0
+            "a(p(Mek))": 60.0
         }
 
-        erk_causal_effects, counterfactual_samples, svi_losses = scm.counterfactual_inference(condition_data, intervention_data, target, True)
-        print(torch.tensor(counterfactual_samples).flatten().numpy()[:50])
+        erk_causal_effects, counterfactual_samples1 = scm.counterfactual_inference(condition_data, intervention_data, target, True)
+        print(counterfactual_samples1)
+        new_list = [x.cpu().detach().numpy() for x in counterfactual_samples1]
+        print("Counterfactual Erk when Mek = 60:: Mean", np.mean(new_list), np.std(new_list))
+
+        intervention_data2 = {
+            "a(p(Mek))": 80.0
+        }
+        _, counterfactual_samples2 = scm.counterfactual_inference(condition_data, intervention_data2,
+                                                                                   target, True)
+        print(counterfactual_samples2)
+        new_list2 = [x.cpu().detach().numpy() for x in counterfactual_samples2]
+        print("Counterfactual Erk when Mek = 80:: Mean", np.mean(new_list2), np.std(new_list2))
+
 
     def test_igf(self):
         from Neuirps_BEL2SCM.scm import SCM

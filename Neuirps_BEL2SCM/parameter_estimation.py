@@ -94,9 +94,9 @@ class TrainNet():
     def sigmoid(self, x):
         betas = self.net.predict.parameters()
         betas = [w.detach().numpy() for w in betas]
-        weights = [w[0][0] for w in betas[:-1]]
+        weights = np.array([w[0] for w in betas[:-1]])
         c = betas[-1][0]
-        power_part = np.dot(x, weights) + c
+        power_part = np.dot(x, weights.T) + c
         output = self.max_abundance / (1 + np.exp(-power_part))
         output = torch.tensor(output.reshape(-1, 1))
         return output

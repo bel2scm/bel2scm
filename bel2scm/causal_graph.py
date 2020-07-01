@@ -21,12 +21,12 @@ class cg_graph():
         return
     
     
-    def proc_data(self,b_or_mle,type_dict={}):
+    def proc_data(self,graph_type,type_dict={}):
         """ take the list of edges and entities (i.e., nodes) and process that information to produce
         parent -> children and child -> parent mappings
         initialize all of the nodes of the causal graph"""
         
-        self.b_or_mle = b_or_mle
+        self.graph_type = graph_type
         n_nodes = len(self.entity_list)
         self.n_nodes = n_nodes
         adj_mat = np.zeros((self.n_nodes,self.n_nodes),dtype=int)
@@ -120,13 +120,15 @@ class cg_graph():
                         node_type = 'Normal'
                         print('BEL node type ' + str_temp + ' not known -- defaulting to Normal')
 
-            if self.b_or_mle == 'Bayes':
-                node_dict[self.entity_list[i]] = gn.bayes_node(np.sum(adj_mat[:,i]),self.entity_list[i],node_type)
-            elif self.b_or_mle == 'MLE':
-                node_dict[self.entity_list[i]] = gn.mle_node(np.sum(adj_mat[:,i]),self.entity_list[i],node_type)
+            if self.graph_type == 'Bayes':
+                node_dict[self.entity_list[i]] = bayes_node(np.sum(adj_mat[:,i]),self.entity_list[i],node_type)
+            elif self.graph_type == 'MLE':
+                node_dict[self.entity_list[i]] = mle_node(np.sum(adj_mat[:,i]),self.entity_list[i],node_type)
+            elif self.graph_type == 'SCM':
+                node_dict[self.entity_list[i]] = scm_node(np.sum(adj_mat[:,i]),self.entity_list[i],node_type)
             else:
-                print('node type ' + self.b_or_mle + 'not recognized -- defaulting to MLE')
-                node_dict[self.entity_list[i]] =gn.mle_node(np.sum(adj_mat[:,i]),self.entity_list[i],node_type)
+                print('node type ' + self.graph_type + 'not recognized -- defaulting to MLE')
+                node_dict[self.entity_list[i]] = mle_node(np.sum(adj_mat[:,i]),self.entity_list[i],node_type)
         
         self.node_dict = node_dict
         
@@ -186,11 +188,11 @@ class cg_graph():
         """produce a dictionary of samples for all variables in the graph"""
         
         # define exogenous samples
-        
+        eps_dict = {}
         sample_dict = {}
         
         for item in self.exog_list:
-            sample_dict[item] = self.node_dict[item].sample()
+            sample_dict[item],eps_dict[item + '_e'] = self.node_dict[item].sample()
             
         flag = 0
         while flag == 0:
@@ -200,35 +202,66 @@ class cg_graph():
                 if (item not in sample_dict 
                     and np.all([item2 in sample_dict for item2 in self.parent_name_dict[item]])):
                     
-                    sample_dict[item] = self.node_dict[item].sample(
+                    sample_dict[item],eps_dict[item + '_e'] = self.node_dict[item].sample(
                         torch.tensor([sample_dict[item2] for item2 in self.parent_name_dict[item]]))
             
             # if sample dict has all of the nodes in entity list, stop
             if sorted([item for item in sample_dict]) == sorted(self.entity_list):
                 flag = 1
             
+        sample_dict.update(eps_dict)
         
         return sample_dict
+    
+    
+    def scm_rescale(self,name,val_in):
+        """Do the necessary rescaling for doing conditionals, do-statements with SCM model."""
+        
+        node = graph_test.node_dict[name]
+        
+        min_temp = node.y_min
+        max_temp = node.y_max
+        
+        val_temp = (val_in-min_temp)/(max_temp-min_temp)
+               
+        return torch.log(val_temp/(1-val_temp))
+    
     
     def model_cond_sample(self,data_dict):
         """sample the graph given the conditioned variables in data_dict"""
         
         data_in = {}
         for item in data_dict:
-            data_in[item] = data_dict[item]
+            
+            if self.graph_type == 'SCM':
+                val = self.scm_rescale(item,data_dict[item])
+            else:
+                val = data_dict[item]
+            
+            data_in[item + '_y'] = val
         
         cond_model = pyro.condition(self.model_sample,data=data_in)
+        
         return cond_model()
+        
         
     def model_do_sample(self,do_dict):
         """sample the graph given the do-variables in do_dict"""
         
         data_in = {}
         for item in do_dict:
-            data_in[item] = do_dict[item]
+            
+            if self.graph_type == 'SCM':
+                val = self.scm_rescale(item,do_dict[item])
+            else:
+                val = do_dict[item]
+            
+            data_in[item + '_y'] = val
         
         do_model = pyro.do(self.model_sample,data=data_in)
+        
         return do_model()
+    
     
     def model_do_cond_sample(self,do_dict,data_dict):
         """sample the graph given do-variables in do_dict and conditioned variables in data_dict"""
@@ -239,27 +272,66 @@ class cg_graph():
         else:
             do_dict_in = {}
             for item in do_dict:
-                do_dict_in[item] = do_dict[item]
+                if self.graph_type == 'SCM':
+                    val = self.scm_rescale(item,do_dict[item])
+                else:
+                    val = do_dict[item]
+                
+                do_dict_in[item + '_y'] = val
                 
             data_dict_in = {}
             for item in data_dict:
-                data_dict_in[item] = data_dict[item]
+                if self.graph_type == 'SCM':
+                    val = self.scm_rescale(item,data_dict[item])
+                else:
+                    val = data_dict[item]
+                
+                data_dict_in[item + '_y'] = val
             
-            do_model = pyro.do(self.model_sample,data=do_dict_in)
-            cond_model = pyro.condition(do_model,data=data_dict_in)
-            return cond_model()
+            cond_model = pyro.condition(self.model_sample,data=do_dict_in)
+            do_model = pyro.condition(cond_model,data=data_dict_in)
+            
+            return do_model()
+        
     
     def model_counterfact(self,obs_dict,do_dict_counter):
-        """find conditional distribution on exogenous variables given observations in obs_dict 
-        and do variable values in do_dict_counter"""
+        """Find conditional distribution on exogenous variables given observations in obs_dict 
+        and do variable values in do_dict_counter.  This is not currently working for the Bayesian or MLE graphs"""
         
-        cond_dict = self.model_cond_sample(obs_dict)
-        cond_dict_temp = {}
-        for item in self.exog_list:
-            cond_dict_temp[item] = cond_dict[item]
+        #cond_dict = self.model_cond_sample(obs_dict)
+        #cond_dict_temp = {}
+        #for item in self.exog_list:
+            #cond_dict_temp[item] = cond_dict[item]
+            
+            
+        # get epsilon distributions
+        cond_temp = self.model_cond_sample(obs_dict)
         
+        # create conditional distribution
+        eps_temp = {}
+        for item in cond_temp:
+            if item[-2:] == '_e':
+                eps_temp[item] = cond_temp[item]
+        
+        # impose do-statements on the result
+            
+        data_do = {}
+        for item in do_dict_counter:
+            
+            if self.graph_type == 'SCM':
+                val = self.scm_rescale(item,do_dict_counter[item])
+            else:
+                val = do_dict_counter[item]
+            
+            data_do[item + '_y'] = val
+            
+            
         # evaluate observed variables given this condition distribution and do_dict_counter do-variables
-        return self.model_do_cond_sample(do_dict_counter,cond_dict_temp)
+        #return self.model_do_cond_sample(do_dict_counter,cond_dict_temp)
+        
+        counter_model = pyro.do(pyro.condition(self.model_sample,data=eps_temp),data=data_do)
+        
+        return counter_model()
         
         
     def cond_mut_info(self,target,test,cond,data_in):

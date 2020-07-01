@@ -20,6 +20,124 @@ class cg_node():
             
         return
 
+class scm_node(cg_node):
+    """ Define a node that uses a sigmoid regression with additive noise within the sigmoid.
+    Continuous variables are scaled to lie between min and max values.
+    Binary variables use a thresholding function on the sigmoid."""
+    
+    def __init__(self,n_inputs,name,node_type):
+        super().__init__(n_inputs,name,node_type)
+        
+        return
+    
+    def logistic_fcn(self,data_in,alpha):
+        """Evaluate the logistic function with a linear regression in the function's argument."""
+        
+        return torch.sigmoid(torch.matmul(data_in,alpha[1:]) + alpha[0])
+    
+    def logistic_inv(self,data_in):
+        """Evaluate the inverse of the logistic function."""
+        
+        return torch.log(data_in/(1-data_in))
+    
+    def data_bin(self,data_in,data_out):
+        """Use k-means clustering to identify centroids and assign data points to clusters."""
+        
+        # get total number of data points
+        n_data = data_in.shape[0]   
+        n_cents = int(n_data**(1/self.n_inputs)/10)
+        
+        # convert to numpy
+        data_np = np.asarray([[item2.item() for item2 in item] for item in data_in])
+        out_np = np.asarray([item.item() for item in data_out])
+        
+        kmeans = KMeans(n_clusters=n_cents, random_state=0).fit(data_np)
+        
+        m_vals = torch.tensor([np.sum(kmeans.labels_ == i) for i in range(0,n_cents)])
+        
+        p_vals = torch.tensor([np.sum(out_np[kmeans.labels_ == i]) for i in range(0,n_cents)])/m_vals
+        
+        # make sure that p is never 0 or 1
+        p_vals = p_vals*(1-2e-3) + 1e-3
+        
+        # calculate p_j*m_j
+        pm_vals = m_vals*self.logistic_inv(p_vals)/n_data
+        
+        # calculate centroids * m_j
+        centroids_m = torch.tensor([kmeans.cluster_centers_[i,:]*m_vals[i].item() for i in range(0,n_cents)])
+        
+        return pm_vals,centroids_m
+    
+    
+    def prob_init(self,input_data,var_data,lr):
+        """Initialize node parameters associated with its distribution."""
+        
+        if self.node_type == 'continuous':
+        
+            n_data = input_data.shape[0]
+
+            # normalize with respect to y_max and y_min
+
+            self.y_max = torch.max(var_data) + 1e-3*torch.abs(torch.max(var_data))
+            self.y_min = torch.min(var_data) - 1e-3*torch.abs(torch.min(var_data))
+
+            out_data = (var_data-self.y_min)/(self.y_max-self.y_min)
+            x_temp = input_data
+
+            big_y = self.logistic_inv(out_data)
+                
+        elif self.node_type == 'binary':
+            
+            self.y_max = 1.
+            self.y_min = 0.
+            
+            # bin the data
+            big_y,x_temp = self.data_bin(input_data,var_data)
+            n_data = x_temp.shape[0]
+            
+        else:
+            print('node type not recognized')
+            
+        # add vector of ones to input data
+        if self.n_inputs > 0:
+
+            big_x = torch.cat([torch.ones((n_data,1)),x_temp],dim=1)
+            self.alpha = torch.matmul(torch.matmul(
+                torch.inverse(torch.matmul(torch.t(big_x)/n_data,big_x/n_data)),
+                torch.t(big_x)),big_y)/n_data**2
+
+            self.std = torch.sqrt(torch.mean((big_y - torch.matmul(big_x,self.alpha))**2))
+
+        else:
+            self.alpha = torch.mean(big_y)
+            self.std = torch.sqrt(torch.mean((big_y-self.alpha)**2))
+
+        
+        return
+    
+    def sample(self,data_in=[]):
+        
+        eps = pyro.sample(self.name + '_eps',pyro.distributions.Normal(0,self.std))
+        
+        if self.n_inputs > 0:
+            y_mean = torch.sum(data_in*self.alpha[1:]) + self.alpha[0] 
+            
+        else:
+            y_mean = self.alpha
+
+            
+        y_arg = pyro.sample(self.name + '_y',pyro.distributions.Normal(y_mean + eps,0))
+
+        
+        if self.node_type == 'continuous':
+            return (self.y_max-self.y_min)*torch.sigmoid(y_arg) + self.y_min,eps
+        elif self.node_type == 'binary':
+            return torch.round(torch.sigmoid(y_arg)),eps
+        else:
+            print('node type not recognized')
+            return
+        
+
 class bayes_node(cg_node):
     """ Define a node that uses a Bayesian approach to learn the node's conditional distribution from data"""
     
@@ -361,7 +479,7 @@ class bayes_node(cg_node):
             else:
                 print('node type ' + self.node_type + ' not supported for node ' + self.name)
                 
-        return y
+        return y,[]
     
 class mle_node(cg_node):
     """ Define a node that uses a Maximum-Likelihood Estimation approach to learn the 
@@ -693,7 +811,7 @@ class mle_node(cg_node):
             else:
                 p_temp = self.reg_calc_bin(data_in,self.p_j,self.p_jk)
             
-            return torch.squeeze(pyro.sample(self.name,pyro.distributions.Bernoulli(probs=p_temp)).int())
+            return torch.squeeze(pyro.sample(self.name,pyro.distributions.Bernoulli(probs=p_temp)).int()),[]
         
         elif self.node_type == 'Gamma':
             if self.n_inputs == 0:
@@ -703,7 +821,7 @@ class mle_node(cg_node):
                 alpha_temp = self.reg_calc_abs(data_in,self.alpha_j,self.alpha_jk)
                 beta_temp = self.reg_calc_abs(data_in,self.beta_j,self.beta_jk)
             
-            return torch.squeeze(pyro.sample(self.name,pyro.distributions.Gamma(alpha_temp,beta_temp)))
+            return torch.squeeze(pyro.sample(self.name,pyro.distributions.Gamma(alpha_temp,beta_temp))),[]
         
         elif self.node_type == 'Normal':
             if self.n_inputs == 0:
@@ -714,7 +832,7 @@ class mle_node(cg_node):
                 sig_sq_temp = self.reg_calc_abs(data_in,self.sig_sq_j,self.sig_sq_jk)
             
             return torch.squeeze(pyro.sample(
-                self.name,pyro.distributions.Normal(mu_temp,torch.sqrt(sig_sq_temp))))
+                self.name,pyro.distributions.Normal(mu_temp,torch.sqrt(sig_sq_temp)))),[]
         
         elif self.node_type == 'Log-Normal':
             if self.n_inputs == 0:
@@ -725,7 +843,7 @@ class mle_node(cg_node):
                 sig_sq_temp = self.reg_calc_abs(data_in,self.sig_sq_j,self.sig_sq_jk)
             
             return torch.squeeze(pyro.sample(
-                self.name,pyro.distributions.LogNormal(mu_temp,torch.sqrt(sig_sq_temp))))
+                self.name,pyro.distributions.LogNormal(mu_temp,torch.sqrt(sig_sq_temp)))),[]
         
         elif self.node_type == 'Exponential':
             if self.n_inputs == 0:
@@ -733,7 +851,7 @@ class mle_node(cg_node):
             else:
                 lamb_temp = self.reg_calc_abs(data_in,self.lamb_j,self.lamb_jk)
             
-            return torch.squeeze(pyro.sample(self.name,pyro.distributions.Exponential(lamb_temp)))
+            return torch.squeeze(pyro.sample(self.name,pyro.distributions.Exponential(lamb_temp))),[]
             
         else:
             print('node type not supported')

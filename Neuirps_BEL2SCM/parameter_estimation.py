@@ -116,7 +116,7 @@ class TrainNet():
         return train_x, train_y, test_x, test_y
 
     def _residual(self, observed_value, predicted_value):
-        return torch.abs(observed_value - predicted_value)
+        return (observed_value - predicted_value)
 
     def transform_target_to_log(self, target, max_abundance):
         return np.log(target / (max_abundance - target))

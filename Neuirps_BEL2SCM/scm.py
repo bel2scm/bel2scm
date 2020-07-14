@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from pyro.infer import SVI, Trace_ELBO, Importance, EmpiricalMarginal
 import torch.distributions.constraints as constraints
-from pyro.optim import Adam
+from pyro.optim import Adam, SGD
 
 from Neuirps_BEL2SCM.bel_graph import BelGraph
 from Neuirps_BEL2SCM.parameter_estimation import ParameterEstimation
@@ -148,8 +148,8 @@ class SCM:
         counterfactual_samples = [marginal.sample() for _ in range(1000)]
         # Calculate causal effect
         scm_causal_effect_samples = [
-            torch.abs(condition_data[target] - float(marginal.sample()))
-            for _ in range(500)
+            condition_data[target] - float(marginal.sample())
+            for _ in range(5000)
         ]
         return scm_causal_effect_samples, counterfactual_samples
 
@@ -188,8 +188,8 @@ class SCM:
         exogenous_dist_dict = self.exogenous_dist_dict
 
         def guide(exogenous_dist_dict):
-            mu_constraints = constraints.interval(0., 1)
-            sigma_constraints = constraints.interval(.1, 3.)
+            mu_constraints = constraints.interval(-3., 3.)
+            sigma_constraints = constraints.interval(.0001, 3)
 
             for exg_name, exg_dist in exogenous_dist_dict.items():
                 # mu_guide = pyro.param("mu_{}".format(exg_name), torch.tensor(exg_dist.loc), constraint=mu_constraints)
@@ -208,11 +208,13 @@ class SCM:
         svi = SVI(
             model=conditioned_model,
             guide=guide,
-            optim=Adam({"lr": 0.005, "betas": (0.95, 0.999)}),
-            loss=Trace_ELBO(retain_graph=True)
+            optim=SGD({"lr": 0.001, "momentum": 0.1}),
+            loss=Trace_ELBO()
+            # optim=Adam({"lr": 0.005, "betas": (0.95, 0.999)}),
+            # loss=Trace_ELBO(retain_graph=True)
         )
         losses = []
-        num_steps = 300
+        num_steps = 1000
         samples = defaultdict(list)
         for t in range(num_steps):
             losses.append(svi.step(exogenous_dist_dict))
@@ -255,7 +257,7 @@ class SCM:
         current_std = root_parameters[1]
 
         parent_value = current_mu + noise_sample * current_std
-        return pyro.sample(current_node_name, node_distribution(parent_value, 1.0))
+        return pyro.sample(current_node_name, node_distribution(parent_value, 0.5))
 
     def _get_exogenous_distributions(self):
         exogenous_dist_dict = {}

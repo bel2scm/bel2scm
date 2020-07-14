@@ -27,21 +27,21 @@ class TrainNet():
 	and performs training.
 	"""
     # All hardcoded hyperparameter resides here.
-    learning_rate = 0.01
+    learning_rate = 0.005
     n_hidden = 10
     train_loss = 0
     test_loss = 0
     test_residual_std = 0
     train_test_split_index = 2000
     n_epochs = 1000
-    batch_size = 1000
+    batch_size = 500
 
     def __init__(self, n_feature, n_output, max_abundance, isRegression):
         self.isRegression = isRegression
         self.max_abundance = max_abundance
 
         self.net = SigmoidNet(n_feature, n_output, max_abundance)
-        self.loss_func = torch.nn.MSELoss()
+        self.loss_func = torch.nn.SmoothL1Loss()
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
 
     def fit(self, x, y):
@@ -64,8 +64,7 @@ class TrainNet():
                 # get batch_x, batch_y
                 indices = permutation[i:i + self.batch_size]
                 batch_x, batch_y = train_x[indices], train_y[indices]
-
-                prediction = self.net(batch_x)        # test_x = x[self.train_test_split_index:].flatten().view(-1, 1)
+                prediction = self.net(batch_x)  # test_x = x[self.train_test_split_index:].flatten().view(-1, 1)
                 loss = self.loss_func(prediction, batch_y)
                 loss.backward()
                 self.optimizer.step()
@@ -87,8 +86,8 @@ class TrainNet():
     def continuous_predict(self, x, noise):
         x = x.numpy()
         noise = noise.detach().numpy()
-        hill_prediction = self.sigmoid(x) + noise
-        return hill_prediction
+        prediction = self.sigmoid(x) + noise
+        return prediction
 
     # Hill equation
     def sigmoid(self, x):
@@ -119,6 +118,10 @@ class TrainNet():
         return (observed_value - predicted_value)
 
     def transform_target_to_log(self, target, max_abundance):
+        try:
+            output = np.log(target / (max_abundance - target))
+        except:
+            raise Exception("error caused by", target)
         return np.log(target / (max_abundance - target))
 
     def transform_parent_to_log(self, parent):

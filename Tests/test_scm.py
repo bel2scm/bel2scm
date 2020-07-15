@@ -186,7 +186,7 @@ class TestSCM(unittest.TestCase):
 
         bel_file_path = "../Tests/BELSourceFiles/covid_input.json"
         config_file_path = "../Tests/Configs/COVID-19-config.json"
-        data_file_path = "../Tests/Data/covid_data.csv"
+        data_file_path = "../Tests/Data/covid_noisy_reparameterized_data.csv"
         output_pickle_object_file = "../../mapk_scm.pkl"
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
@@ -250,7 +250,6 @@ class TestSCM(unittest.TestCase):
 
         ards_causal_effects, counterfactual_samples1 = scm.counterfactual_inference(condition_data, intervention_data,
                                                                                     target, True)
-        # print(counterfactual_samples1)
         new_list = [x.cpu().detach().numpy() for x in counterfactual_samples1]
         print("Counterfactual cytokine when sIL_6_alpha = 80.0:: Mean", np.mean(new_list), np.std(new_list))
 
@@ -264,7 +263,7 @@ class TestSCM(unittest.TestCase):
         print("Counterfactual cytokine when sIL_6_alpha = 16.0:: Mean", np.mean(new_list2), np.std(new_list2))
         print("total time taken to run this experiment is ", time.time() - time1)
 
-    def test_covid_toci_counterfactual(self):
+    def test_covid_noisy_model_samples(self):
         from Neuirps_BEL2SCM.scm import SCM
         import torch
         import numpy as np
@@ -274,123 +273,106 @@ class TestSCM(unittest.TestCase):
         time1 = time.time()
         bel_file_path = "../Tests/BELSourceFiles/covid_input.json"
         config_file_path = "../Tests/Configs/COVID-19-config.json"
+        data_file_path = "../Tests/Data/covid_noisy_reparameterized_data.csv"
+
+        scm = SCM(bel_file_path, config_file_path, data_file_path)
+
+        exogenous_noise = scm.exogenous_dist_dict
+        samples = torch.tensor([list(scm.model(exogenous_noise).values()) for _ in range(5000)]).detach().numpy()
+        np.savetxt("../Tests/Data/covid_bel2scm_noisy_reparameterized_samples.csv", samples, delimiter=',')
+
+    def test_covid_model_samples(self):
+        from Neuirps_BEL2SCM.scm import SCM
+        import torch
+        import numpy as np
+        import pandas as pd
+        torch.manual_seed(42)
+        import time
+        time1 = time.time()
+        bel_file_path = "../Tests/BELSourceFiles/covid_input.json"
+        config_file_path = "../Tests/Configs/COVID-19-config.json"
         data_file_path = "../Tests/Data/covid_data.csv"
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
 
         exogenous_noise = scm.exogenous_dist_dict
-        condition_data = scm.model(exogenous_noise)
-        target = "a(cytokine)"
-        intervention_data = {
-            "a(TOCI)": 80.0
-        }
-
-        causal_effects1, counterfactual_samples1 = scm.counterfactual_inference(condition_data, intervention_data,
-                                                                                target, True)
-        # print(counterfactual_samples1)
-        new_list = [x.cpu().detach().numpy() for x in counterfactual_samples1]
-        print("Causal effect on cytokine when TOCI = 80.0:: Mean", causal_effects1)
-        samples_df = pd.DataFrame(causal_effects1)
-        samples_df.to_csv("/home/somya/bel2scm/Tests/Data/causal_effects_toci1.csv", index=False)
-        print("Counterfactual cytokine when TOCI = 80.0:: Mean", np.mean(new_list), np.std(new_list))
-
-        intervention_data2 = {
-            "a(TOCI)": 16.0
-        }
-        causal_effects2, counterfactual_samples2 = scm.counterfactual_inference(condition_data, intervention_data2,
-                                                                                target, True)
-        # print(counterfactual_samples2)
-        new_list2 = [x.cpu().detach().numpy() for x in counterfactual_samples2]
-        print("Counterfactual cytokine when TOCI = 16.0:: Mean", np.mean(new_list2), np.std(new_list2))
-        print("total time taken to run this experiment is ", time.time() - time1)
-        samples_df2 = pd.DataFrame(causal_effects2)
-        samples_df2.to_csv("/home/somya/bel2scm/Tests/Data/causal_effects_toci0.csv", index=False)
+        samples = torch.tensor([list(scm.model(exogenous_noise).values()) for _ in range(5000)]).detach().numpy()
+        np.savetxt("../Tests/Data/covid_bel2scm_samples.csv", samples, delimiter=',')
 
     def test_covid_toci_eq17_causal_effect(self):
         from Neuirps_BEL2SCM.scm import SCM
         import torch
-        import numpy as np
+        from torch import tensor
         import pandas as pd
-        torch.manual_seed(23)
-        import time
-        time1 = time.time()
+        torch.manual_seed(5)
         bel_file_path = "../Tests/BELSourceFiles/covid_input.json"
         config_file_path = "../Tests/Configs/COVID-19-config.json"
-        data_file_path = "../Tests/Data/covid_data.csv"
+        data_file_path = "../Tests/Data/covid_noisy_reparameterized_data.csv"
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
-
-        exogenous_noise = scm.exogenous_dist_dict
         condition_data = {
-            'a(SARS_COV2)': torch.tensor(94.1013),
-            'a(PRR)': torch.tensor(83.71568),
-            'a(ACE2)': torch.tensor(65.19312),
-            'a(AngII)': torch.tensor(46.015774),
-            'a(AGTR1)': torch.tensor(81.344444),
-            'a(ADAM17)': torch.tensor(39.398296),
-            'a(TOCI)': torch.tensor(49.86449),
-            'a(IL_6Ralpha)': torch.tensor(31.568716),
-            'a(TNF)': torch.tensor(60.439766000000006),
-            'a(sIL_6_alpha)': torch.tensor(41.084896),
-            'a(EGF)': torch.tensor(53.93261),
-            'a(EGFR)': torch.tensor(63.03896999999999),
-            'a(STAT3)': torch.tensor(39.057747),
-            'a(IL6_STAT3)': torch.tensor(60.946580000000004),
-            'a(NF_xB)': torch.tensor(69.66587),
-            'a(IL6_AMP)': torch.tensor(77.81179),
-            'a(cytokine)': torch.tensor(82.01133)
+            'a(SARS_COV2)': tensor(38.875343),
+            'a(PRR)': tensor(76.03623),
+            'a(ACE2)': tensor(29.578688),
+            'a(AngII)': tensor(22.061018),
+            'a(AGTR1)': tensor(77.65523),
+            'a(ADAM17)': tensor(56.975002),
+            'a(TOCI)': tensor(31.197278999999998),
+            'a(TNF)': tensor(83.151764),
+            'a(sIL_6_alpha)': tensor(21.572751999999998),
+            'a(EGF)': tensor(59.84185),
+            'a(EGFR)': tensor(59.106148),
+            'a(IL6_STAT3)': tensor(30.252989000000003),
+            'a(NF_xB)': tensor(82.60543),
+            'a(IL6_AMP)': tensor(57.98129),
+            'a(cytokine)': tensor(68.87068000000001)
         }
         target = "a(cytokine)"
         intervention_data = {
-            "a(TOCI)": 80.0
+            "a(TOCI)": 0.0,
+            # "a(SARS_COV2)": 65.889496
         }
 
         causal_effects1, counterfactual_samples1 = scm.counterfactual_inference(condition_data, intervention_data,
                                                                                 target, True)
-
-        # # print(counterfactual_samples1)
-        # new_list = [x.cpu().detach().numpy() for x in counterfactual_samples1]
-        print("Causal effect on cytokine when TOCI = 80.0:: Mean", causal_effects1)
         samples_df = pd.DataFrame(causal_effects1)
-        samples_df.to_csv("../Tests/Data/covid_data_eq17_bel2scm.csv", index=False)
+        samples_df.to_csv("../Tests/Data/covid_data_toci0_noisy_reparameterized_bel2scm.csv", index=False)
 
     def test_covid_sIL6R_eq16_causal_effect(self):
         from Neuirps_BEL2SCM.scm import SCM
         import torch
         import numpy as np
         import pandas as pd
-        torch.manual_seed(23)
+        torch.manual_seed(5)
         import time
         time1 = time.time()
         bel_file_path = "../Tests/BELSourceFiles/covid_input.json"
         config_file_path = "../Tests/Configs/COVID-19-config.json"
-        data_file_path = "../Tests/Data/covid_data.csv"
+        data_file_path = "../Tests/Data/covid_noisy_data.csv"
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
 
         exogenous_noise = scm.exogenous_dist_dict
         condition_data = {
-            'a(SARS_COV2)': torch.tensor(94.1013),
-            'a(PRR)': torch.tensor(83.71568),
-            'a(ACE2)': torch.tensor(65.19312),
-            'a(AngII)': torch.tensor(46.015774),
-            'a(AGTR1)': torch.tensor(81.344444),
-            'a(ADAM17)': torch.tensor(39.398296),
-            'a(TOCI)': torch.tensor(49.86449),
-            'a(IL_6Ralpha)': torch.tensor(31.568716),
-            'a(TNF)': torch.tensor(60.439766000000006),
-            'a(sIL_6_alpha)': torch.tensor(41.084896),
-            'a(EGF)': torch.tensor(53.93261),
-            'a(EGFR)': torch.tensor(63.03896999999999),
-            'a(STAT3)': torch.tensor(39.057747),
-            'a(IL6_STAT3)': torch.tensor(60.946580000000004),
-            'a(NF_xB)': torch.tensor(69.66587),
-            'a(IL6_AMP)': torch.tensor(77.81179),
-            'a(cytokine)': torch.tensor(82.01133)
+            'a(SARS_COV2)': torch.tensor(66.29791),
+            'a(PRR)': torch.tensor(82.59397),
+            'a(ACE2)': torch.tensor(49.372935999999996),
+            'a(AngII)': torch.tensor(36.845825),
+            'a(AGTR1)': torch.tensor(79.62148),
+            'a(ADAM17)': torch.tensor(37.830593),
+            'a(TOCI)': torch.tensor(46.12809),
+            'a(TNF)': torch.tensor(63.815290000000005),
+            'a(sIL_6_alpha)': torch.tensor(39.975414),
+            'a(EGF)': torch.tensor(48.7199),
+            'a(EGFR)': torch.tensor(56.71599200000001),
+            'a(IL6_STAT3)': torch.tensor(69.25169),
+            'a(NF_xB)': torch.tensor(70.1458),
+            'a(IL6_AMP)': torch.tensor(70.24296600000001),
+            'a(cytokine)': torch.tensor(87.00359)
         }
         target = "a(cytokine)"
         intervention_data = {
-            "a(sIL_6_alpha)": 3.
+            "a(sIL_6_alpha)": 12.0
         }
 
         causal_effects1, counterfactual_samples1 = scm.counterfactual_inference(condition_data, intervention_data,
@@ -398,9 +380,9 @@ class TestSCM(unittest.TestCase):
 
         # # print(counterfactual_samples1)
         # new_list = [x.cpu().detach().numpy() for x in counterfactual_samples1]
-        print("Causal effect on cytokine when TOCI = 80.0:: Mean", causal_effects1)
+        print("Causal effect on cytokine when sIL_6_alpha = 12.0:: Mean", causal_effects1)
         samples_df = pd.DataFrame(causal_effects1)
-        samples_df.to_csv("../Tests/Data/covid_data_eq16_bel2scm.csv", index = False)
+        samples_df.to_csv("../Tests/Data/covid_data_sil6R0_noisy_bel2scm.csv", index=False)
 
 
 if __name__ == '__main__':

@@ -257,7 +257,7 @@ class SCM:
         current_std = root_parameters[1]
 
         parent_value = current_mu + noise_sample * current_std
-        return pyro.sample(current_node_name, node_distribution(parent_value, 0.5))
+        return pyro.sample(current_node_name, node_distribution(parent_value, 1.0))
 
     def _get_exogenous_distributions(self):
         exogenous_dist_dict = {}

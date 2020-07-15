@@ -163,6 +163,10 @@ class COVID_SCM():
             return NF_xB
 
         def f_IL_6_AMP(NF_xB, IL6_STAT3, N):
+            if NF_xB < 50.0:
+                NF_xB = 0.0
+            if IL6_STAT3 < 50.0:
+                IL6_STAT3 = 0.0
             p = g(
                 rates['IL_6_AMP_activation_by_NF_xB'] * NF_xB +
                 rates['IL_6_AMP_activation_by_IL6_STAT3'] * IL6_STAT3,
@@ -286,8 +290,6 @@ class COVID_SCM():
             IL_6_AMP = sample('IL_6_AMP', Spike(f_IL_6_AMP(NF_xB, IL6_STAT3, N_IL_6_AMP)))
             cytokine = sample('cytokine', Spike(f_cytokine(IL_6_AMP, N_cytokine)))
 
-            noise_samples = N_SARS_COV2, N_PRR, N_ACE2, N_AngII, N_AGTR1, N_ADAM17, N_TOCI, N_TNF, N_sIL_6_alpha, N_EGF, \
-                            N_EGFR, N_NF_xB, N_IL6_STAT3, N_IL_6_AMP, N_cytokine
             samples = SARS_COV2, PRR, ACE2, AngII, AGTR1, ADAM17, TOCI, TNF, sIL_6_alpha, EGF, EGFR, NF_xB, \
                       IL6_STAT3, IL_6_AMP, cytokine
             # samples = {'a(SARS_COV2)': SARS_COV2.numpy(), 'a(PRR)': PRR.numpy(), 'a(ACE2)': ACE2.numpy(),
@@ -295,7 +297,7 @@ class COVID_SCM():
             #            'a(TOCI)': TOCI.numpy(), 'a(TNF)': TNF.numpy(), 'a(sIL_6_alpha)': sIL_6_alpha.numpy(),
             #            'a(EGF)': EGF.numpy(), 'a(EGFR)': EGFR.numpy(), 'a(IL6_STAT3)': IL6_STAT3.numpy(),
             #            'a(NF_xB)': NF_xB.numpy(), 'a(IL6_AMP)': IL_6_AMP.numpy(), 'a(cytokine)': cytokine.numpy()}
-            return samples, noise_samples
+            return samples
 
         def direct_simulation_model(noise, toci_intervention):
             N_SARS_COV2 = sample('N_SARS_COV2', Normal(noise['N_SARS_COV2'][0], noise['N_SARS_COV2'][1]))
@@ -314,47 +316,47 @@ class COVID_SCM():
             N_IL_6_AMP = sample('N_IL_6_AMP', Normal(noise['N_IL_6_AMP'][0], noise['N_IL_6_AMP'][1]))
             N_cytokine = sample('N_cytokine', Normal(noise['N_cytokine'][0], noise['N_cytokine'][1]))
 
-            # SARS_COV2 = sample('SARS_COV2', Normal(f_SARS_COV2(50, 10, N_SARS_COV2), 1.0))
-            # TOCI = sample('TOCI', Normal(f_TOCI(50, 10, N_TOCI), 1.0))
-            # TOCI_prime = sample("TOCI_prime", Delta(toci_intervention))
-            # PRR = sample('PRR', Spike(f_PRR(SARS_COV2, N_PRR)))
-            # ACE2 = sample('ACE2', Spike(f_ACE2(SARS_COV2, N_ACE2)))
-            # AngII = sample('AngII', Spike(f_AngII(ACE2, N_AngII)))
-            # AGTR1 = sample('AGTR1', Spike(f_AGTR1(AngII, N_AGTR1)))
-            # ADAM17 = sample('ADAM17', Spike(f_ADAM17(AGTR1, N_ADAM17)))
-            # TNF = sample('TNF', Spike(f_TNF(ADAM17, N_TNF)))
-            # EGF = sample('EGF', Spike(f_EGF(ADAM17, N_EGF)))
-            # EGFR = sample('EGFR', Spike(f_EGFR(EGF, N_EGFR)))
-            # NF_xB = sample('NF_xB', Spike(f_NF_xB(PRR, EGFR, TNF, N_NF_xB)))
-            # sIL_6_alpha = sample('sIL_6_alpha', Spike(f_sIL_6_alpha(ADAM17, TOCI, N_sIL_6_alpha)))
-            # sIL_6_alpha_prime = sample('sIL_6_alpha_prime', Spike(f_sIL_6_alpha(ADAM17, TOCI_prime, N_sIL_6_alpha)))
-            # IL6_STAT3 = sample('IL6_STAT3', Spike(f_IL6_STAT3(sIL_6_alpha, N_IL6_STAT3)))
-            # IL6_STAT3_prime = sample('IL6_STAT3_prime', Spike(f_IL6_STAT3(sIL_6_alpha_prime, N_IL6_STAT3)))
-            # IL_6_AMP = sample('IL_6_AMP', Spike(f_IL_6_AMP(NF_xB, IL6_STAT3, N_IL_6_AMP)))
-            # IL_6_AMP_prime = sample('IL_6_AMP_prime', Spike(f_IL_6_AMP(NF_xB, IL6_STAT3_prime, N_IL_6_AMP)))
-            # cytokine = sample('cytokine', Spike(f_cytokine(IL_6_AMP, N_cytokine)))
-            # cytokine_prime = sample('cytokine_prime', Spike(f_cytokine(IL_6_AMP_prime, N_cytokine)))
-
             SARS_COV2 = sample('SARS_COV2', Normal(f_SARS_COV2(50, 10, N_SARS_COV2), 1.0))
             TOCI = sample('TOCI', Normal(f_TOCI(50, 10, N_TOCI), 1.0))
             TOCI_prime = sample("TOCI_prime", Delta(toci_intervention))
-            PRR = sample('PRR', Delta(f_PRR(SARS_COV2, N_PRR)))
-            ACE2 = sample('ACE2', Delta(f_ACE2(SARS_COV2, N_ACE2)))
-            AngII = sample('AngII', Delta(f_AngII(ACE2, N_AngII)))
-            AGTR1 = sample('AGTR1', Delta(f_AGTR1(AngII, N_AGTR1)))
-            ADAM17 = sample('ADAM17', Delta(f_ADAM17(AGTR1, N_ADAM17)))
-            TNF = sample('TNF', Delta(f_TNF(ADAM17, N_TNF)))
-            EGF = sample('EGF', Delta(f_EGF(ADAM17, N_EGF)))
-            EGFR = sample('EGFR', Delta(f_EGFR(EGF, N_EGFR)))
-            NF_xB = sample('NF_xB', Delta(f_NF_xB(PRR, EGFR, TNF, N_NF_xB)))
-            sIL_6_alpha = sample('sIL_6_alpha', Delta(f_sIL_6_alpha(ADAM17, TOCI, N_sIL_6_alpha)))
+            PRR = sample('PRR', Spike(f_PRR(SARS_COV2, N_PRR)))
+            ACE2 = sample('ACE2', Spike(f_ACE2(SARS_COV2, N_ACE2)))
+            AngII = sample('AngII', Spike(f_AngII(ACE2, N_AngII)))
+            AGTR1 = sample('AGTR1', Spike(f_AGTR1(AngII, N_AGTR1)))
+            ADAM17 = sample('ADAM17', Spike(f_ADAM17(AGTR1, N_ADAM17)))
+            TNF = sample('TNF', Spike(f_TNF(ADAM17, N_TNF)))
+            EGF = sample('EGF', Spike(f_EGF(ADAM17, N_EGF)))
+            EGFR = sample('EGFR', Spike(f_EGFR(EGF, N_EGFR)))
+            NF_xB = sample('NF_xB', Spike(f_NF_xB(PRR, EGFR, TNF, N_NF_xB)))
+            sIL_6_alpha = sample('sIL_6_alpha', Spike(f_sIL_6_alpha(ADAM17, TOCI, N_sIL_6_alpha)))
             sIL_6_alpha_prime = sample('sIL_6_alpha_prime', Delta(f_sIL_6_alpha(ADAM17, TOCI_prime, N_sIL_6_alpha)))
-            IL6_STAT3 = sample('IL6_STAT3', Delta(f_IL6_STAT3(sIL_6_alpha, N_IL6_STAT3)))
+            IL6_STAT3 = sample('IL6_STAT3', Spike(f_IL6_STAT3(sIL_6_alpha, N_IL6_STAT3)))
             IL6_STAT3_prime = sample('IL6_STAT3_prime', Delta(f_IL6_STAT3(sIL_6_alpha_prime, N_IL6_STAT3)))
-            IL_6_AMP = sample('IL_6_AMP', Delta(f_IL_6_AMP(NF_xB, IL6_STAT3, N_IL_6_AMP)))
+            IL_6_AMP = sample('IL_6_AMP', Spike(f_IL_6_AMP(NF_xB, IL6_STAT3, N_IL_6_AMP)))
             IL_6_AMP_prime = sample('IL_6_AMP_prime', Delta(f_IL_6_AMP(NF_xB, IL6_STAT3_prime, N_IL_6_AMP)))
-            cytokine = sample('cytokine', Delta(f_cytokine(IL_6_AMP, N_cytokine)))
+            cytokine = sample('cytokine', Spike(f_cytokine(IL_6_AMP, N_cytokine)))
             cytokine_prime = sample('cytokine_prime', Delta(f_cytokine(IL_6_AMP_prime, N_cytokine)))
+
+            # SARS_COV2 = sample('SARS_COV2', Normal(f_SARS_COV2(50, 10, N_SARS_COV2), 1.0))
+            # TOCI = sample('TOCI', Normal(f_TOCI(50, 10, N_TOCI), 1.0))
+            # TOCI_prime = sample("TOCI_prime", Delta(toci_intervention))
+            # PRR = sample('PRR', Delta(f_PRR(SARS_COV2, N_PRR)))
+            # ACE2 = sample('ACE2', Delta(f_ACE2(SARS_COV2, N_ACE2)))
+            # AngII = sample('AngII', Delta(f_AngII(ACE2, N_AngII)))
+            # AGTR1 = sample('AGTR1', Delta(f_AGTR1(AngII, N_AGTR1)))
+            # ADAM17 = sample('ADAM17', Delta(f_ADAM17(AGTR1, N_ADAM17)))
+            # TNF = sample('TNF', Delta(f_TNF(ADAM17, N_TNF)))
+            # EGF = sample('EGF', Delta(f_EGF(ADAM17, N_EGF)))
+            # EGFR = sample('EGFR', Delta(f_EGFR(EGF, N_EGFR)))
+            # NF_xB = sample('NF_xB', Delta(f_NF_xB(PRR, EGFR, TNF, N_NF_xB)))
+            # sIL_6_alpha = sample('sIL_6_alpha', Delta(f_sIL_6_alpha(ADAM17, TOCI, N_sIL_6_alpha)))
+            # sIL_6_alpha_prime = sample('sIL_6_alpha_prime', Delta(f_sIL_6_alpha(ADAM17, TOCI_prime, N_sIL_6_alpha)))
+            # IL6_STAT3 = sample('IL6_STAT3', Delta(f_IL6_STAT3(sIL_6_alpha, N_IL6_STAT3)))
+            # IL6_STAT3_prime = sample('IL6_STAT3_prime', Delta(f_IL6_STAT3(sIL_6_alpha_prime, N_IL6_STAT3)))
+            # IL_6_AMP = sample('IL_6_AMP', Delta(f_IL_6_AMP(NF_xB, IL6_STAT3, N_IL_6_AMP)))
+            # IL_6_AMP_prime = sample('IL_6_AMP_prime', Delta(f_IL_6_AMP(NF_xB, IL6_STAT3_prime, N_IL_6_AMP)))
+            # cytokine = sample('cytokine', Delta(f_cytokine(IL_6_AMP, N_cytokine)))
+            # cytokine_prime = sample('cytokine_prime', Delta(f_cytokine(IL_6_AMP_prime, N_cytokine)))
             causal_effect_on_cytokine = cytokine - cytokine_prime
             return causal_effect_on_cytokine
 
@@ -474,9 +476,14 @@ def scm_covid_counterfactual(
     counterfactual_model = do(gf_scm.model, ras_intervention)
     cf_posterior = gf_scm.infer(counterfactual_model, updated_noise)
     cf_cytokine_marginal = EmpiricalMarginal(cf_posterior, sites='cytokine')
-
+    cf_il6amp_marginal = EmpiricalMarginal(cf_posterior, sites='IL_6_AMP')
+    cf_nfxb_marginal = EmpiricalMarginal(cf_posterior, sites='NF_xB')
+    cf_il6stat3_marginal = EmpiricalMarginal(cf_posterior, sites='IL6_STAT3')
     scm_causal_effect_samples = [
         observation['cytokine'] - float(cf_cytokine_marginal.sample())
         for _ in range(5000)
     ]
-    return scm_causal_effect_samples
+    il6amp_samples = cf_il6amp_marginal.sample((5000,)).tolist()
+    nfxb_samples = cf_nfxb_marginal.sample((5000,)).tolist()
+    il6stat3_samples = cf_il6stat3_marginal.sample((5000,)).tolist()
+    return il6amp_samples, nfxb_samples, il6stat3_samples, scm_causal_effect_samples

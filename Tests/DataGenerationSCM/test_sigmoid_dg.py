@@ -2,13 +2,14 @@ from covid_sigmoid_scm_cf import SigmoidSCM
 from covid_sigmoid_scm_cf import scm_covid_counterfactual
 import pandas as pd
 import torch
+from torch import tensor
 from pyro.distributions import Normal
 
 torch.manual_seed(23)
 
 def main():
     betas = {
-        'PRR_SARS_2_w' : 1.0,
+        'PRR_SARS_2_w': 1.0,
         'PRR_b': 0.0,
         'ACE2_SARS_2_w': -1.0,
         'ACE2_b': 0.0,
@@ -80,15 +81,19 @@ def main():
     }
 
     observation = {
-
+        'SARS_COV2': tensor(6.7529), 'PRR': tensor(98.2984), 'ACE2': tensor(-8.2392),
+         'AngII': tensor(6.7828), 'AGTR1': tensor(98.0617), 'ADAM17': tensor(100.0508),
+         'TOCI': tensor(71.8924), 'TNF': tensor(100.1662), 'sIL_6_alpha': tensor(101.9344),
+         'EGF': tensor(96.9312), 'EGFR': tensor(100.5038), 'IL6_STAT3': tensor(100.9363),
+         'NF_xB': tensor(98.2443), 'IL6_AMP': tensor(99.7950), 'cytokine': tensor(99.7681)
     }
 
     intervention_data = {
-
+        "TOCI": 0.0
     }
 
-    covid_scm = SigmoidSCM(betas, max_abundance, 1.0)
-    print(covid_scm.noisy_model(noise=noise))
+    # covid_scm = SigmoidSCM(betas, max_abundance, 1.0)
+    # print(covid_scm.noisy_model(noise=noise))
 
     out = scm_covid_counterfactual(
         betas,

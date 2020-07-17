@@ -202,7 +202,7 @@ class SigmoidSCM():
             #            'a(NF_xB)': NF_xB.numpy(), 'a(IL6_AMP)': IL_6_AMP.numpy(), 'a(cytokine)': cytokine.numpy()}
             return samples
 
-        def direct_simulation_model(noise, toci_intervention):
+        def noisy_mutilated_model(noise):
             N_SARS_COV2 = sample('N_SARS_COV2', Normal(noise['N_SARS_COV2'][0], noise['N_SARS_COV2'][1]))
             N_TOCI = sample('N_TOCI', Normal(noise['N_TOCI'][0], noise['N_TOCI'][1]))
             N_ACE2 = sample('N_ACE2', Normal(noise['N_ACE2'][0], noise['N_ACE2'][1]))
@@ -219,32 +219,36 @@ class SigmoidSCM():
             N_IL_6_AMP = sample('N_IL_6_AMP', Normal(noise['N_IL_6_AMP'][0], noise['N_IL_6_AMP'][1]))
             N_cytokine = sample('N_cytokine', Normal(noise['N_cytokine'][0], noise['N_cytokine'][1]))
 
+
             SARS_COV2 = sample('SARS_COV2', Normal(f_SARS_COV2(50, 10, N_SARS_COV2), 1.0))
-            TOCI = sample('TOCI', Normal(f_TOCI(50, 10, N_TOCI), 1.0))
-            TOCI_prime = sample("TOCI_prime", Delta(toci_intervention))
+            TOCI = sample('TOCI', Delta(tensor(0.0)))
             PRR = sample('PRR', Spike(f_PRR(SARS_COV2, N_PRR)))
             ACE2 = sample('ACE2', Spike(f_ACE2(SARS_COV2, N_ACE2)))
             AngII = sample('AngII', Spike(f_AngII(ACE2, N_AngII)))
             AGTR1 = sample('AGTR1', Spike(f_AGTR1(AngII, N_AGTR1)))
             ADAM17 = sample('ADAM17', Spike(f_ADAM17(AGTR1, N_ADAM17)))
             TNF = sample('TNF', Spike(f_TNF(ADAM17, N_TNF)))
+            sIL_6_alpha = sample('sIL_6_alpha', Spike(f_sIL_6_alpha(ADAM17, TOCI, N_sIL_6_alpha)))
             EGF = sample('EGF', Spike(f_EGF(ADAM17, N_EGF)))
             EGFR = sample('EGFR', Spike(f_EGFR(EGF, N_EGFR)))
             NF_xB = sample('NF_xB', Spike(f_NF_xB(PRR, EGFR, TNF, N_NF_xB)))
-            sIL_6_alpha = sample('sIL_6_alpha', Spike(f_sIL_6_alpha(ADAM17, TOCI, N_sIL_6_alpha)))
-            sIL_6_alpha_prime = sample('sIL_6_alpha_prime', Delta(f_sIL_6_alpha(ADAM17, TOCI_prime, N_sIL_6_alpha)))
             IL6_STAT3 = sample('IL6_STAT3', Spike(f_IL6_STAT3(sIL_6_alpha, N_IL6_STAT3)))
-            IL6_STAT3_prime = sample('IL6_STAT3_prime', Delta(f_IL6_STAT3(sIL_6_alpha_prime, N_IL6_STAT3)))
             IL_6_AMP = sample('IL_6_AMP', Spike(f_IL_6_AMP(NF_xB, IL6_STAT3, N_IL_6_AMP)))
-            IL_6_AMP_prime = sample('IL_6_AMP_prime', Delta(f_IL_6_AMP(NF_xB, IL6_STAT3_prime, N_IL_6_AMP)))
             cytokine = sample('cytokine', Spike(f_cytokine(IL_6_AMP, N_cytokine)))
-            cytokine_prime = sample('cytokine_prime', Delta(f_cytokine(IL_6_AMP_prime, N_cytokine)))
-            causal_effect_on_cytokine = cytokine - cytokine_prime
-            return causal_effect_on_cytokine
+
+            samples = SARS_COV2, PRR, ACE2, AngII, AGTR1, ADAM17, TOCI, TNF, sIL_6_alpha, EGF, EGFR, NF_xB, \
+                      IL6_STAT3, IL_6_AMP, cytokine
+            samples = {'a(SARS_COV2)': SARS_COV2.numpy(), 'a(PRR)': PRR.numpy(), 'a(ACE2)': ACE2.numpy(),
+                       'a(AngII)': AngII.numpy(), 'a(AGTR1)': AGTR1.numpy(), 'a(ADAM17)': ADAM17.numpy(),
+                       'a(TOCI)': TOCI.numpy(), 'a(TNF)': TNF.numpy(), 'a(sIL_6_alpha)': sIL_6_alpha.numpy(),
+                       'a(EGF)': EGF.numpy(), 'a(EGFR)': EGFR.numpy(), 'a(IL6_STAT3)': IL6_STAT3.numpy(),
+                       'a(NF_xB)': NF_xB.numpy(), 'a(IL6_AMP)': IL_6_AMP.numpy(), 'a(cytokine)': cytokine.numpy()}
+            return samples
+
 
         self.model = model
         self.noisy_model = noisy_model
-        self.direct_simulation_model = direct_simulation_model
+        self.noisy_mutilated_model = noisy_mutilated_model
 
     def infer(self, model, noise):
         return Importance(model, num_samples=1000).run(noise)

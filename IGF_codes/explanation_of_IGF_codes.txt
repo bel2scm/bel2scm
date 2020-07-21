@@ -1,0 +1,1 @@
+# IGF.R produces observational and interventional data for ODE and SDE of IGF case study. If you have any questions about the code, please contact Sara Mohammad-Taheri at mohammadtaheri.s@northeastern.edu

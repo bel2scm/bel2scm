@@ -162,24 +162,372 @@ class cg_graph():
                 self.entity_list[item] for item in self.child_ind_list[i]]
         return
     
+    def add_confound(self,confound_pairs):
+        """ add a list of pairs of nodes that share unobserved confounders"""
+        
+        adj_mat = np.zeros((self.n_nodes,self.n_nodes),dtype=int)
+        
+        for item in confound_pairs:
+            i = self.entity_list.index(item[0])
+            j = self.entity_list.index(item[1])
+            adj_mat[i,j] = 1
+            adj_mat[j,i] = 1
+            
+        self.adj_mat_c = adj_mat
+        self.graph_c = nx.Graph(adj_mat)
+        
+        return
+    
+    def str_list(self,node_list):
+        """ return a string listing the nodes in node_list - this is used in the ID and IDC algorithms """
+        str_out = ''
+        
+        for item in node_list:
+            str_out += item + ','
+
+        return str_out[:-1]
+    
+    def d_sep(self,x,y,z,graph_in):
+        """ determine if all paths from x to y are d-separated by z in graph_in """
+        
+        
+        # convert digraph to undirected graph for d-separation
+        
+        if graph_in:
+            graph_temp = graph_in            
+        else:
+            graph_temp = self.graph.to_undirected()
+            graph_temp.add_edges_from(self.graph_c.edges)
+        
+        # ensure that x, y, and z are disjoint
+        if np.any([[item1 == item2 for item1 in x] for item2 in y]):
+            print('x and y not disjoint')
+            return
+        
+        if np.any([[item1 == item2 for item1 in x] for item2 in z]):
+            print('x and z not disjoint')
+            return
+        
+        if np.any([[item1 == item2 for item1 in z] for item2 in y]):
+            print('y and z not disjoint')
+            return        
+        
+        x_list = [self.entity_list.index(item) for item in x]
+        y_list = [self.entity_list.index(item) for item in y]
+        z_list = [self.entity_list.index(item) for item in z]
+        
+        
+        # identify all paths from x to y
+        path_list = []
+        
+        for item in x_list:      
+            for path in nx.all_simple_paths(graph_temp, source=item, target=y_list):
+                path_list.append(path)
+                
+        print(str(len(path_list)) + ' total paths')
+        
+        # iterate through paths
+        for item in path_list:
+            # if an element of z is in the path, path is d-separated
+            # else, path is not d-separated, return False
+            
+            if not np.any([ind in item for ind in z_list]):
+                return False
+        
+        # if all paths d-separated, return True
+        
+        return True
+    
+    def id_alg(self,y,x,p_in=[],graph_in=[]):
+        """ calculate P(y | do(x)) or return failure if this is not possible """
+        
+        if np.any([item in y for item in x]):
+            print('Error -- overlap between x and y')
+            print(x)
+            print(y)
+            print(p_in)
+            print(graph_in.nodes)
+        
+        if graph_in:
+            graph_temp = graph_in
+        else:
+            graph_temp = self.graph
+            
+        if p_in:
+            p_expr = p_in
+        else:
+            node_list = [graph_temp.nodes[ind]['name'] for ind in graph_temp.nodes]
+            p_expr = 'P(' + self.str_list(node_list) + ')'
+            
+            
+        y_inds = [ind for ind in graph_temp.nodes if graph_temp.nodes[ind]['name'] in y]
+        
+        # identify ancestors of y
+        y_anc = y_inds
+        for item in y_inds:
+            set_temp = nx.algorithms.dag.ancestors(graph_temp,item)
+            for item2 in set_temp:
+                if item2 not in y_anc:
+                    y_anc.append(item2)
+                    
+        # identify all nodes in the graph
+        v_set = graph_temp.nodes
+        
+        v_not_anc_y = []
+        for item in v_set:
+            if item not in y_anc:
+                v_not_anc_y.append(item)
+                
+        # remove edges to x
+        
+        # identify edges to x
+        x_inds = [ind for ind in graph_temp.nodes if graph_temp.nodes[ind]['name'] in x]
+        x_edges = [list(graph_temp.in_edges(item)) for item in x_inds]
+        
+        graph_xbar = nx.DiGraph(graph_temp)
+        #print(nx.is_frozen(graph_temp2))
+        for item in x_edges:
+            graph_xbar.remove_edges_from(item)
+            
+        y_anc_x_bar = y_inds
+        
+        for item in y_inds:
+            set_temp = nx.algorithms.dag.ancestors(graph_xbar,item)
+            for item2 in set_temp:
+                if item2 not in y_anc:
+                    y_anc_x_bar.append(item2)
+                
+        w_set = []
+        for item in v_set:
+            if item not in x_inds and item not in y_anc_x_bar:
+                w_set.append(item)
+        
+        # line 1
+        if not x:
+            # return sum over all non-y variables
+            
+            node_list = [graph_temp.nodes[ind]['name'] for ind in graph_temp.nodes 
+                if graph_temp.nodes[ind]['name'] not in y]
+            node_list2 = [graph_temp.nodes[ind]['name'] for ind in graph_temp.nodes]  
+            str_out = '[sum_{' + self.str_list(node_list) + '} ' + p_expr + ']'
+            #print('Step 1')
+            
+            return str_out
+            
+        # line 2
+        elif v_not_anc_y:
+            
+            x_temp = [graph_temp.nodes[ind]['name'] for ind in y_anc if graph_temp.nodes[ind]['name'] in x]
+            node_list = [graph_temp.nodes[ind]['name'] for ind in v_not_anc_y]
+            str_out = '[sum_{' + self.str_list(node_list) + '} ' + p_expr + ']'
+            graph_anc = graph_temp.subgraph(y_anc)
+            
+            #print('Begin Step 2')
+            expr_out = self.id_alg(y,x_temp,str_out,graph_anc)
+            #print('End Step 2')
+            
+            return expr_out
+        
+        # line 3
+        elif w_set:
+            #print('Begin Step 3')
+            expr_out = self.id_alg(y,x+w_set,p_expr,graph_temp)
+            #print('End Step 3')
+            
+            return expr_out
+        
+        else:            
+            # calculate graph C-components
+            graph_temp_c = nx.Graph(self.graph_c.subgraph(graph_temp.nodes))
+            graph_temp_c.remove_nodes_from(x_inds)
+            s_sets = [list(item) for item in nx.connected_components(graph_temp_c)]
+            
+            # line 4
+            if len(s_sets) > 1:
+                #print('Begin Step 4')
+                node_list = [graph_temp.nodes[item]['name'] for item in v_set 
+                    if graph_temp.nodes[item]['name'] not in y and graph_temp.nodes[item]['name'] not in x]
+                str_out = '[sum_{' + self.str_list(node_list) + '} '
+                
+                for item in s_sets:
+                    v_s_set = [graph_temp.nodes[item2]['name'] for item2 in v_set if item2 not in item]
+                    s_in = [graph_temp.nodes[item2]['name'] for item2 in item]
+                    
+                    if np.any([item2 in v_s_set for item2 in s_in]):
+                        print('Error -- x/y overlap')
+                        print(v_s_set)
+                        print(s_in)
+                    
+                    str_out += self.id_alg(s_in,v_s_set,p_expr,graph_temp)
+                        
+                #print('End Step 4')
+                str_out += ']'
+                
+                return str_out
+            
+            else:
+                graph_temp_c2 = self.graph_c.subgraph(graph_temp.nodes)
+                
+                s_sets2 = [list(item) for item in nx.connected_components(graph_temp_c2)]
+                
+                # line 5
+                if sorted(s_sets2[0]) == sorted(graph_temp.nodes):
+                    
+                    node_list = [graph_temp.nodes[ind]['name'] for ind in s_sets2[0]]
+                    node_list2 = [graph_temp.nodes[ind]['name'] for ind in graph_temp.nodes if ind in s_sets2[0]]
+                    
+                    str_out = 'FAIL(' + self.str_list(node_list) + ',' + self.str_list(node_list2) + ')'
+                    
+                    #print('Step 5')
+                    return str_out
+                
+                # line 6
+                elif np.any([sorted(s_sets[0]) == sorted(item) for item in s_sets2]):
+                            
+                    node_list = [graph_temp.nodes[item]['name'] for item in s_sets[0] 
+                        if graph_temp.nodes[item]['name'] not in y]
+                    str_out = '[sum_{' + self.str_list(node_list) + '}'
+                    
+                    for item in s_sets[0]:
+                        # identify parents of node i
+                        parents = [graph_temp.nodes[ind]['name'] for ind in graph_temp.predecessors(item)]
+                        
+                        str_out += 'P(' + graph_temp.nodes[item]['name'] + '|' + self.str_list(parents) + ')'
+                    #print('Step 6')
+                    return str_out + ']'
+                
+                # line 7
+                elif np.any([np.all([item in item2 for item in s_sets[0]]) for item2 in s_sets2]):
+                    ind = np.where([np.all([item in item2 for item in s_sets[0]]) for item2 in s_sets2])[0][0]
+                    graph_prime = graph_temp.subgraph(s_sets2[ind])
+                    x_prime = [graph_temp.nodes[item]['name'] for item in s_sets2[ind] 
+                        if graph_temp.nodes[item]['name'] in x]
+                    str_out = ''
+                    
+                    for item in s_sets2[ind]:
+                        pred = list(graph_temp.predecessors(item))
+                        par_set = [item2 for item2 in pred if item2 in s_sets2[ind]]
+                        par_set += [item2 for item2 in pred if item2 not in s_sets2[ind]]
+                        node_list = [graph_temp.nodes[ind]['name'] for ind in par_set]
+                        str_out += 'P(' + graph_temp.nodes[item]['name'] + '|' + self.str_list(node_list) + ')'
+                        
+                    #print('Begin Step 7')
+                    
+                    if np.any([item2 in x_prime for item2 in y]):
+                        print('Error -- x/y overlap')
+                        print(x_prime)
+                        print(y)
+                    
+                    expr_out = self.id_alg(y,x_prime,str_out,graph_prime)
+                    #print('End Step 7')
+                    
+                    return expr_out
+                
+                else:
+                    
+                    print('error')
+                    return ''
+    
+    
+    def idc_alg(self,y,x,z,p_in=[],graph_in=[]):
+        """ calculate P(y | do(x), z) or return failure if this is not possible"""
+        
+        if np.any([item in y for item in x]):
+            print('Error -- overlap between x and y')
+            print(x)
+            print(y)
+            print(p_in)
+            print(graph_in.nodes)
+            
+        if np.any([item in y for item in z]):
+            print('Error -- overlap between z and y')
+            print(z)
+            print(y)
+            print(p_in)
+            print(graph_in.nodes)
+            
+        if np.any([item in z for item in x]):
+            print('Error -- overlap between x and z')
+            print(x)
+            print(z)
+            print(p_in)
+            print(graph_in.nodes)
+        
+        if graph_in:
+            graph_temp = graph_in
+        else:
+            graph_temp = self.graph
+            
+        if p_in:
+            p_expr = p_in
+        else:
+            node_list = [graph_temp.nodes[ind]['name'] for ind in graph_temp.nodes]
+            p_expr = 'P(' + self.str_list(node_list) + ')'
+        
+        
+        # identify edges to x
+        x_inds = [ind for ind in graph_temp.nodes if graph_temp.nodes[ind]['name'] in x]
+        x_edges = [list(graph_temp.in_edges(item)) for item in x_inds]
+
+        digraph_xbar = nx.DiGraph(graph_temp)
+        for item in x_edges:
+            digraph_xbar.remove_edges_from(item) 
+            
+        # identify edges from z
+        z_inds = [ind for ind in graph_temp.nodes if graph_temp.nodes[ind]['name'] in z]
+        z_edges = [list(graph_temp.out_edges(item2)) for item2 in z_inds]
+        
+        # check for d-separation
+        for i in range(0,len(z)):
+            digraph_xbar_zbar = nx.DiGraph(digraph_xbar)
+            digraph_xbar_zbar.remove_edges_from(z_edges[i])
+            graph_xbar_zbar = digraph_xbar_zbar.to_undirected()
+            
+            graph_xbar_zbar.add_edges_from(self.graph_c.subgraph(graph_temp.nodes).edges)
+                
+            # calculate d-separation
+            d_sep = self.d_sep(y,[z[i]],[item for item in x+z if item != z[i]],graph_xbar_zbar)
+            
+            if d_sep:
+                
+                return self.idc_alg(y,x+[z[i]],[item2 for item2 in z if item2 != z[i]],p_expr,graph_temp)
+            
+        p_prime = self.id_alg(y+z,x,p_expr,graph_temp)
+        
+        str_out = '[' + p_prime + ']/[ sum_{' + self.str_list(y) + '}' + p_prime + ']'
+        
+        return str_out
+    
+    
     def prob_init(self,data_in,lr=1e-3):
         """initialize all of the nodes' probability distributions given data_in; lr is the learning rate"""
         
         exog_list = []
         prob_dict = {}
+        init_list = []
+        non_init_list = []
         
         for name in self.node_dict:
-            i = self.entity_list.index(name)
-            data_in_temp = data_in[:,self.parent_ind_list[i]]
-            data_out_temp = data_in[:,i]
-            print(name)
-            self.node_dict[name].prob_init(data_in_temp,data_out_temp,lr)
+            
+            if name in data_in and (np.all([item in data_in for item in self.parent_name_dict[name]])
+                or self.node_dict[name].n_inputs == 0):
+
+                data_out_temp = torch.tensor([data_in[name]]).T
+                data_in_temp = torch.tensor([data_in[item] for item in self.parent_name_dict[name]]).T
+                self.node_dict[name].prob_init(data_in_temp,data_out_temp,lr)
+
+                init_list.append(name)
+            
+            else:
+                non_init_list.append(name)
             
             if self.node_dict[name].n_inputs == 0:
                 exog_list.append(name)
             #prob_dict[name] = self.node_dict[name].prob_dist
         
         self.exog_list = exog_list
+        self.init_list = init_list
+        self.non_init_list = non_init_list
         #self.prob_dict = prob_dict
 
         return

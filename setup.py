@@ -19,7 +19,6 @@ setuptools.setup(
     	'pyro-ppl',
     	'networkx',
     	'scipy',
-    	'json',
     	'pybel'
     ],
     classifiers=[

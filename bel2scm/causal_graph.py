@@ -585,7 +585,8 @@ class cg_graph():
                 
                 
                 # if the parents all match up, merge the nodes
-                # elif the node being checked has all of the nodes in par_diff as do-variables, do the merge
+                # elif the node being checked has all of the nodes in par_diff as do-variables and
+                # they're also observed, do the merge
                 # identify cases where the parents don't match exactly but the values line up
                 # B_{} -> A_{} => B -> A if B_{} and A_{} are both observed
                 
@@ -606,7 +607,6 @@ class cg_graph():
                     
                 elif np.all([item2 in item[1] and item2 in obs_in for item2 in par_diff]) and conf_pars:
                     #print('Merge ' + node_temp + ' and ' + node_temp2 + ': Parents Match with Do-Variables')
-                    
                     # remove edges from the duplicate parents
                     graph_out.remove_edges_from([item2 for item2 in graph_out.edges 
                         if item2[0] in par_diff and item2[1] == node_temp2])
@@ -665,10 +665,25 @@ class cg_graph():
         conf_out.remove_nodes_from(rem_nodes)
         
         # remove disconnected nodes
-        rem_nodes = [item for item in graph_out.nodes if item in list(nx.isolates(graph_out))
-            and item in list(nx.isolates(conf_out)) and item not in gamma_list]
-        graph_out.remove_nodes_from(rem_nodes)
-        conf_out.remove_nodes_from(rem_nodes)
+        
+        node_list = list(graph_out.nodes)
+        for item in node_list:
+            list_temp1 = list(nx.isolates(graph_out))
+            list_temp2 = list(nx.isolates(conf_out))
+            
+            if item in list_temp1 and item in list_temp2:
+                if item in gamma_list:
+                    if '*' in item and item.replace('*','') in gamma_list:
+                        print('duplicate observables')
+                        print(item)
+                        print(gamma_list)
+                    elif item.replace('*','') in list_temp1 + list_temp2:
+                        gamma_list = [item2 if item2!=item else item.replace('*','') for item2 in gamma_list]
+                    else:
+                        gamma_list = [item2 for item2 in gamma_list if item2 != item]
+
+                    graph_out.remove_node(item)
+                    conf_out.remove_node(item)
         
         return graph_out,conf_out,gamma_list
             
@@ -705,9 +720,11 @@ class cg_graph():
         return do_in,obs_in
     
     def id_star_alg(self,do_in,obs_in=[],graph_in=[]):
-        """ implement ID* algorithm """       
+        """ implement ID* algorithm 
+        Denote interventions with asterisks (e.g., 'X*') and observations without asterisks (e.g., 'X') """       
         
         gamma_list = self.conv_to_gamma(do_in,obs_in)
+        print(gamma_list)
         
         do_vars = []
         for item in do_in:
@@ -721,30 +738,37 @@ class cg_graph():
             conf_temp = nx.Graph(self.graph_c)        
         
         if not gamma_list:
-            #print('Step 1')
-            #print()
+            print('Step 1')
+            print()
             return '1'
         
         elif np.any([item[0] + '*' in item[1] for item in do_in]):
-            #print('Step 2')
-            #print()
+            print('Step 2')
+            print()
             return '0'
         
         elif np.any([item[0] in item[1] for item in do_in]):
             
             temp_inds = [ind for ind in range(0,len(do_in)) if do_in[ind][0] not in do_in[ind][1]]
             
-            #print('Step 3')
-            #print(do_in)
-            #print(do_in[ind])
-            #print()
+            print('Step 3')
+            print(do_in)
+            print(do_in[ind])
+            print()
             
             return self.id_star_alg(do_in[ind],obs_in,graph_in)
         
         else:
             graph_out,conf_out,gamma_list = self.make_cf_graph(do_in,obs_in,graph_in)
-            #print(gamma_list)
-            #print('Step 4')
+            
+            do_temp,obs_temp = self.conv_from_gamma(gamma_list)
+            
+            do_vars_temp = []
+            for item in do_temp:
+                do_vars_temp += [item2 for item2 in item[1] if item2 not in do_vars_temp]
+            
+            print(gamma_list)
+            print('Step 4')
             
             # calculate graph C-components           
             s_sets = [list(item) for item in nx.connected_components(conf_out.to_undirected())]
@@ -752,28 +776,40 @@ class cg_graph():
             # nodes in graph_out/conf_out fixed by interventions aren't included in any C-component
             # enforce this manually
             
-            s_sets = [item for item in s_sets if item[0] not in do_vars]
+            s_sets = [item for item in s_sets if item[0] not in do_vars_temp]
             
-            #print(s_sets)
+            print('C sets')
+            print(do_vars_temp)
+            print(s_sets)
             
             if 'INCONSISTENT' in gamma_list:
-                #print('Step 5')
+                print('Step 5')
                 return '0'
             
             elif len(s_sets) > 1:
-                #print('Start Step 6')
+                print('Start Step 6')
                 
                 sum_list = []
                 
+                # get all variables contained in gamma_list
                 d_temp,o_temp = self.conv_from_gamma(gamma_list)
-                v_temp = []
+                g_temp = []
                 for item in d_temp:
-                    v_temp += [item2.replace('*','') for item2 in item[1] if item2 not in v_temp]
+                    g_temp += [item[0]]
+                    g_temp += [item2.replace('*','') for item2 in item[1] if item2.replace('*','') not in g_temp]
+                g_temp += [item.replace('*','') for item in o_temp if item.replace('*','') not in g_temp]
                     
-                #print(o_temp + v_temp + [item2[0] for item2 in d_temp])
-                sum_list = [item for item in graph_temp.nodes if
-                    item not in [item2.replace('*','') for item2 in o_temp] + v_temp 
-                        + [item2[0] for item2 in d_temp]]                        
+                # get all node variables contained in graph_out
+                node_list_temp = [item for item in graph_out.nodes if item[:3] != 'U^{']
+                
+                d_temp2,o_temp2 = self.conv_from_gamma(node_list_temp)
+                v_temp = []
+                for item in d_temp2:
+                    v_temp += [item[0]]
+                    v_temp += [item2.replace('*','') for item2 in item[1] if item2.replace('*','') not in v_temp]
+                v_temp += [item.replace('*','') for item in o_temp2 if item.replace('*','') not in v_temp]
+                
+                sum_list = [item for item in v_temp if item not in g_temp]
                 
                 str_out = 'sum_{' + self.str_list(sum_list) + '}'
                 for item in s_sets:
@@ -795,32 +831,44 @@ class cg_graph():
                             # add variables to do_list_temp
                             for item3 in graph_out.nodes:
                                 if (item3 not in item and 'U^{' not in item3 and item3.replace('*','') 
-                                    not in [item4.replace('*','') for item4 in do_vars]):
+                                    not in [item4.replace('*','') for item4 in do_vars_temp]):
                                         
                                     if item3.find('_') > 0:
                                         do_list_temp.append(item3[:item3.find('_')] + '*')
                                     else:
-                                        do_list_temp.append(item3)
+                                        do_list_temp.append(item3 + '*')
                                         
                             # only consider interventions on ancestors of the target node
+                            #do_list_temp = [item3 for item3 in do_list_temp 
+                                #if item3 in nx.algorithms.dag.ancestors(graph_out,item2)]
                             do_in_temp += [[item_temp[0],do_list_temp]]
                     
-                    str_out += self.id_star_alg(do_in_temp,[],graph_temp)
-                    #print()
                     
-                #print('End Step 6')
-                #print()
+                    print(do_in_temp)
+                    
+                    str_temp = self.id_star_alg(do_in_temp,[],graph_temp)
+                    # make sure that all the variables being summed over don't have asterisks
+                    for item2 in sum_list:
+                        str_temp = str_temp.replace(item2 + '*',item2)
+                    
+                    str_out += str_temp
+                    print()
+                    
+                print('End Step 6')
+                print()
                 
                 return str_out
                     
             else:
-                #print('Step 7')
+                print('Step 7')
                 
                 if s_sets == []:
                     print('s_sets is empty')
                 
+                gamma_temp = [item for item in s_sets[0] if 'U^{' not in item]
+                
                 # separate nodes into nodes with and without do-statements as part of them
-                do_temp,obs_temp = self.conv_from_gamma([item for item in s_sets[0] if 'U^{' not in item])
+                do_temp,obs_temp = self.conv_from_gamma(gamma_temp)
                 
                 # simplify do-statements to get rid of extraneous interventions
                 do_temp2 = []
@@ -833,6 +881,10 @@ class cg_graph():
                     gamma_subs += [item2 for item2 in item[1] if item2 not in gamma_subs]
                 do_vars = [item[0] for item in do_temp2]
                 
+                print(do_temp2)
+                print(obs_temp)
+                print(gamma_subs)
+                
                 # step 8 - basically make sure that you don't have y_x and observed x' != x in graph_out
                 # for my code, look for x_{x...} and x in graph_out
                 
@@ -842,30 +894,20 @@ class cg_graph():
                 do_obs_diff = np.any([item + '*' in gamma_subs for item in obs_temp])
                 
                 if do_diff:
-                    #print('Step 8')
-                    #print()
+                    print('Step 8')
+                    print()
                     return ' FAIL '
                 else:
                     
-                    str_temp = []
-                    for item in s_sets[0]:
-                        if item.find('_') > 0:
-                            str_temp.append(item[:item.find('_')])
-                        elif item[:3] != 'U^{':
-                            str_temp.append(item)
-                        
-                    
-                    #str_temp = self.str_list([item for item in s_sets[0] if item[:3] != 'U^{'])                    
-                    str_temp2 = self.str_list(gamma_subs)
-                    
-                    #print('Step 9')
-                    #print('P_{' + str_temp2 + '}' + '(' + self.str_list(str_temp) + ')')
-                    #print()
-                    return 'P_{' + str_temp2 + '}' + '(' + self.str_list(str_temp) + ')'
+                    print('Step 9')
+                    print('P(' + self.str_list(gamma_temp) + ')')
+                    print()
+                    return 'P(' + self.str_list(gamma_temp) + ')'
         return
         
     def idc_star_alg(self,do_in,do_delta,obs_in=[],obs_delta=[],graph_in=[]):
-        """ Implement IDC* algorithm """
+        """ Implement IDC* algorithm  
+        Denote interventions with asterisks (e.g., 'X*') and observations without asterisks (e.g., 'X') """
         
         
         if graph_in:
@@ -877,14 +919,14 @@ class cg_graph():
         
         
         if self.id_star_alg(do_delta,obs_delta,graph_in) == '0':
-            #print('IDC* Step 1')
+            print('IDC* Step 1')
             return 'UNDEFINED'
         else:
             graph_out,conf_out,gamma_list = self.make_cf_graph(do_in+do_delta,obs_in+obs_delta,graph_in)
-            #print('IDC* Step 2')
+            print('IDC* Step 2')
             
             if 'INCONSISTENT' in gamma_list:
-                #print('IDC* Step 3')
+                print('IDC* Step 3')
                 return '0'
             else:
                 n_gam = len(do_in) + len(obs_in)
@@ -903,7 +945,7 @@ class cg_graph():
                         d_sep_list += [item]
                     
                 if d_sep_list:
-                    #print(d_sep_list)
+                    print(d_sep_list)
                     
                     gamma_list_gamma = gamma_list[:n_gam]
                     gamma_list_delta = [item for item in gamma_list[n_gam:] if item not in d_sep_list]
@@ -917,21 +959,27 @@ class cg_graph():
                     # simplify do-statements to get rid of extraneous interventions
                     gam_temp = []
                     for item in do_gam_temp:
-                        gam_temp.append([item[0],[item2 for item2 in item[1]+d_sep_list if item2 in 
-                            nx.algorithms.dag.ancestors(
+                        gam_temp.append([item[0],[item2.replace('*','',1) + '*' 
+                            for item2 in item[1] + d_sep_list if item2 in nx.algorithms.dag.ancestors(
                                 graph_out,item[0] + '_{' + self.str_list(item[1]) + '}')]])
                         
                     for item in obs_gam_temp:
-                        gam_temp.append([item,[item2 for item2 in d_sep_list if item2 in 
-                            nx.algorithms.dag.ancestors(graph_out,item)]])    
+                        gam_temp.append([item,[item2.replace('*','',1) + '*' 
+                            for item2 in d_sep_list if item2 in nx.algorithms.dag.ancestors(graph_out,item)]])    
+                    
+                    print(gamma_list_gamma)
+                    print(gamma_list_delta)
 
-                    #print('IDC* Step 4')
+                    print('IDC* Step 4')
+                    print(gam_temp)
+                    print(do_del_temp)
+                    print(obs_del_temp)
                     return self.idc_star_alg(gam_temp,do_del_temp,[],obs_del_temp,graph_temp)
                 
                 else:
                     do_temp,obs_temp = self.conv_from_gamma(gamma_list)
                     
-                    #print('IDC* Step 5')
+                    print('IDC* Step 5')
                     
                     P_prime = self.id_star_alg(do_temp,obs_temp,graph_temp)
                     
@@ -1417,7 +1465,7 @@ class cg_graph():
 class str_graph(cg_graph):
     """define class of causal graphs initialized using a list of BEL-statements represented as strings"""
     
-    def __init__(self,str_list,b_or_mle,type_dict={}):
+    def __init__(self,str_list,graph_type,type_dict={}):
         
         super().__init__()
         
@@ -1451,7 +1499,7 @@ class str_graph(cg_graph):
         self.entity_list = entity_list
         self.edge_list = edge_list
         
-        self.proc_data(b_or_mle,type_dict)
+        self.proc_data(graph_type,type_dict)
         
         return
 

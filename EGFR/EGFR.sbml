@@ -1,0 +1,1650 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" level="3" version="1">
+  <model>
+    <listOfCompartments>
+      <compartment id="Cell" size="1" constant="true"/>
+    </listOfCompartments>
+    <listOfSpecies>
+      <species id="IGF" name="IGF" compartment="Cell" initialAmount="1.35e-09" hasOnlySubstanceUnits="true" boundaryCondition="true" constant="false"/>
+      <species id="IGFR" name="IGFR" compartment="Cell" initialAmount="40000" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IGFR_p" name="IGFR_p" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IGF__IGFR" name="IGF__IGFR" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IGF__IGFR_p" name="IGF__IGFR_p" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="PTB1B" name="PTB1B" compartment="Cell" initialAmount="60000" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IGF__IGFR_p__PTB1B" name="IGF__IGFR_p__PTB1B" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IGFR_p__PTB1B" name="IGFR_p__PTB1B" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IRS" name="IRS" compartment="Cell" initialAmount="123000" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IRS_p" name="IRS_p" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IRS__IGF__IGFR_p" name="IRS__IGF__IGFR_p" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IRS_p__IGF__IGFR_p" name="IRS_p__IGF__IGFR_p" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IRS__IGFR_p" name="IRS__IGFR_p" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IRS_p__IGFR_p" name="IRS_p__IGFR_p" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="PI3K" name="PI3K" compartment="Cell" initialAmount="200000" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IRS_p__PI3K" name="IRS_p__PI3K" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="AKT" name="AKT" compartment="Cell" initialAmount="5200000" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IRS_p__PI3K__AKT" name="IRS_p__PI3K__AKT" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IRS_p__PI3K__AKT_p" name="IRS_p__PI3K__AKT_p" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="AKT_p" name="AKT_p" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="mTor_p__IRS_p" name="mTor_p__IRS_p" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="mTor_p__IRS_p__PI3K" name="mTor_p__IRS_p__PI3K" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="Pase" name="Pase" compartment="Cell" initialAmount="25000" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="Pase__AKT_p" name="Pase__AKT_p" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="mTor_p__IRS" name="mTor_p__IRS" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="Grb2SOS" name="Grb2SOS" compartment="Cell" initialAmount="53000" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IRS_p__PI3K__Grb2SOS" name="IRS_p__PI3K__Grb2SOS" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IRS_p__Grb2SOS" name="IRS_p__Grb2SOS" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="RasGDP" name="RasGDP" compartment="Cell" initialAmount="122000" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="RasGTP" name="RasGTP" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IRS_p__PI3K__Grb2SOS__RasGDP" name="IRS_p__PI3K__Grb2SOS__RasGDP" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IRS_p__PI3K__Grb2SOS__RasGTP" name="IRS_p__PI3K__Grb2SOS__RasGTP" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IRS_p__Grb2SOS__RasGDP" name="IRS_p__Grb2SOS__RasGDP" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IRS_p__Grb2SOS__RasGTP" name="IRS_p__Grb2SOS__RasGTP" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="mTor_p__IRS_p__Grb2SOS" name="mTor_p__IRS_p__Grb2SOS" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="mTor_p__IRS_p__PI3K__Grb2SOS" name="mTor_p__IRS_p__PI3K__Grb2SOS" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="AKT_p__RasGTP" name="AKT_p__RasGTP" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="MEK" name="MEK" compartment="Cell" initialAmount="2000000" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="MEK_p" name="MEK_p" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="RasGTP__MEK" name="RasGTP__MEK" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="RasGTP__MEK_p" name="RasGTP__MEK_p" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="P1" name="P1" compartment="Cell" initialAmount="200000" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="P1__MEK_p" name="P1__MEK_p" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="GTPase" name="GTPase" compartment="Cell" initialAmount="50000" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="RasGTP__GTPase" name="RasGTP__GTPase" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="AKT_p__RasGDP" name="AKT_p__RasGDP" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="ERK" name="ERK" compartment="Cell" initialAmount="3670000" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="MEK_p__ERK" name="MEK_p__ERK" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="MKP" name="MKP" compartment="Cell" initialAmount="50000" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="MKP__ERK_p" name="MKP__ERK_p" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="ERK_p" name="ERK_p" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="MEK_p__ERK_p" name="MEK_p__ERK_p" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="ERK_p_p" name="ERK_p_p" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="MKP__ERK_p_p" name="MKP__ERK_p_p" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="mTor_p__IRS_p__PI3K__AKT" name="mTor_p__IRS_p__PI3K__AKT" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="mTor" name="mTor" compartment="Cell" initialAmount="200000" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="mTor_p" name="mTor_p" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="AKT_p__mTor" name="AKT_p__mTor" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="ERK_p_p__IRS_p__Grb2SOS" name="ERK_p_p__IRS_p__Grb2SOS" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="ERK_p_p__IRS_p__PI3K__Grb2SOS" name="ERK_p_p__IRS_p__PI3K__Grb2SOS" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="PI3Kinh" name="PI3Kinh" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="PI3K__PI3Kinh" name="PI3K__PI3Kinh" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IRS_p__PI3K__PI3Kinh" name="IRS_p__PI3K__PI3Kinh" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="mTor_p__IRS_p__PI3K__PI3Kinh" name="mTor_p__IRS_p__PI3K__PI3Kinh" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="AKTinh" name="AKTinh" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="true" constant="false"/>
+      <species id="AKT__AKTinh" name="AKT__AKTinh" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IRS_p__PI3K__AKT__AKTinh" name="IRS_p__PI3K__AKT__AKTinh" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="mTor_p__IRS_p__PI3K__AKT__AKTinh" name="mTor_p__IRS_p__PI3K__AKT__AKTinh" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="IGFRinh" name="IGFRinh" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="true" constant="false"/>
+      <species id="IGFR__IGFRinh" name="IGFR__IGFRinh" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="mTor_p__IRS_p__Grb2SOS__RasGDP" name="mTor_p__IRS_p__Grb2SOS__RasGDP" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="mTor_p__IRS_p__PI3K__Grb2SOS__RasGDP" name="mTor_p__IRS_p__PI3K__Grb2SOS__RasGDP" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+      <species id="mTorinh" name="mTorinh" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="true" constant="false"/>
+      <species id="mTor__mTorinh" name="mTor__mTorinh" compartment="Cell" initialAmount="0" hasOnlySubstanceUnits="true" boundaryCondition="false" constant="false"/>
+    </listOfSpecies>
+    <listOfParameters>
+      <parameter id="lig_time" value="0" constant="false"/>
+      <parameter id="inh0" value="0" constant="false"/>
+      <parameter id="inh1" value="0" constant="false"/>
+      <parameter id="k1" value="400000" constant="false"/>
+      <parameter id="k1a" value="400000" constant="false"/>
+      <parameter id="kd1" value="0.002" constant="true"/>
+      <parameter id="kd1a" value="0.002" constant="true"/>
+      <parameter id="inh2" value="0" constant="false"/>
+      <parameter id="k2" value="1" constant="true"/>
+      <parameter id="inh3" value="0" constant="false"/>
+      <parameter id="k3" value="1e-07" constant="true"/>
+      <parameter id="k3a" value="1e-07" constant="true"/>
+      <parameter id="kd3" value="0.001" constant="true"/>
+      <parameter id="kd3a" value="0.001" constant="true"/>
+      <parameter id="inh4" value="0" constant="false"/>
+      <parameter id="k4" value="0" constant="true"/>
+      <parameter id="k4a" value="0" constant="true"/>
+      <parameter id="kd4" value="1" constant="true"/>
+      <parameter id="kd4a" value="1" constant="true"/>
+      <parameter id="k5" value="1e-06" constant="true"/>
+      <parameter id="k5a" value="1e-06" constant="true"/>
+      <parameter id="kd5" value="0.001" constant="true"/>
+      <parameter id="kd5a" value="0.001" constant="true"/>
+      <parameter id="k6" value="1" constant="true"/>
+      <parameter id="k6a" value="1" constant="true"/>
+      <parameter id="k7" value="1e-07" constant="true"/>
+      <parameter id="k7a" value="1e-07" constant="true"/>
+      <parameter id="kd7" value="0.005" constant="true"/>
+      <parameter id="kd7a" value="0.005" constant="true"/>
+      <parameter id="k100" value="1e-06" constant="true"/>
+      <parameter id="k100a" value="1e-06" constant="true"/>
+      <parameter id="kd100" value="0.001" constant="true"/>
+      <parameter id="kd100a" value="0.001" constant="true"/>
+      <parameter id="k101" value="1e-05" constant="false"/>
+      <parameter id="k101a" value="1e-05" constant="true"/>
+      <parameter id="kd101" value="0.001" constant="true"/>
+      <parameter id="kd101a" value="0.001" constant="true"/>
+      <parameter id="k102" value="1" constant="true"/>
+      <parameter id="k103" value="1" constant="true"/>
+      <parameter id="k104" value="5e-09" constant="true"/>
+      <parameter id="kd104" value="0.001" constant="true"/>
+      <parameter id="k105" value="0" constant="true"/>
+      <parameter id="kd105" value="0.01" constant="true"/>
+      <parameter id="k106" value="5e-08" constant="false"/>
+      <parameter id="kd106" value="0.001" constant="true"/>
+      <parameter id="k107" value="1" constant="true"/>
+      <parameter id="k108" value="1e-07" constant="false"/>
+      <parameter id="k200" value="1e-07" constant="true"/>
+      <parameter id="k200a" value="1e-07" constant="false"/>
+      <parameter id="kd200" value="0.001" constant="true"/>
+      <parameter id="kd200a" value="0.001" constant="true"/>
+      <parameter id="k201" value="1e-05" constant="true"/>
+      <parameter id="k201a" value="1e-05" constant="true"/>
+      <parameter id="kd201" value="0.001" constant="true"/>
+      <parameter id="kd201a" value="0.001" constant="true"/>
+      <parameter id="k202" value="1" constant="true"/>
+      <parameter id="k202a" value="1" constant="true"/>
+      <parameter id="k203" value="1e-07" constant="false"/>
+      <parameter id="k203a" value="1e-08" constant="false"/>
+      <parameter id="k204" value="5e-08" constant="true"/>
+      <parameter id="kd204" value="0.001" constant="true"/>
+      <parameter id="k205" value="1" constant="true"/>
+      <parameter id="k206" value="1e-07" constant="true"/>
+      <parameter id="kd206" value="0.001" constant="true"/>
+      <parameter id="k207" value="1" constant="true"/>
+      <parameter id="k207a" value="1" constant="true"/>
+      <parameter id="k208" value="2e-06" constant="true"/>
+      <parameter id="kd208" value="0.001" constant="true"/>
+      <parameter id="k209" value="1" constant="true"/>
+      <parameter id="k210" value="1.5e-05" constant="false"/>
+      <parameter id="k210a" value="1e-05" constant="true"/>
+      <parameter id="kd210" value="0.001" constant="true"/>
+      <parameter id="kd210a" value="0.001" constant="true"/>
+      <parameter id="k211" value="1" constant="true"/>
+      <parameter id="k211a" value="1" constant="true"/>
+      <parameter id="k212" value="5e-07" constant="true"/>
+      <parameter id="k212a" value="5e-07" constant="true"/>
+      <parameter id="kd212" value="0.001" constant="true"/>
+      <parameter id="kd212a" value="1" constant="true"/>
+      <parameter id="k213" value="1" constant="true"/>
+      <parameter id="k213a" value="1" constant="true"/>
+      <parameter id="k214" value="2e-06" constant="true"/>
+      <parameter id="k214a" value="2e-06" constant="true"/>
+      <parameter id="k300" value="1e-07" constant="true"/>
+      <parameter id="k300a" value="1e-07" constant="true"/>
+      <parameter id="kd300" value="0.001" constant="true"/>
+      <parameter id="kd300a" value="0.001" constant="true"/>
+      <parameter id="k301" value="500000000" constant="true"/>
+      <parameter id="k301a" value="500000000" constant="true"/>
+      <parameter id="kd301" value="0.5" constant="true"/>
+      <parameter id="kd301a" value="0.5" constant="true"/>
+      <parameter id="k302" value="500000000" constant="true"/>
+      <parameter id="kd302" value="0.5" constant="true"/>
+      <parameter id="k303" value="500000000" constant="true"/>
+      <parameter id="kd303" value="0.5" constant="true"/>
+    </listOfParameters>
+    <listOfReactions>
+      <reaction id="rxn_0" name="1. IGF binding" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="IGF" constant="false"/>
+          <speciesReference species="IGFR" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IGF__IGFR" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k1 </ci>
+                <ci> IGF </ci>
+                <ci> IGFR </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd1 </ci>
+                <ci> IGF__IGFR </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_1" name="1. IGF phospho" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="IGF__IGFR" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IGF__IGFR_p" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k2 </ci>
+              <ci> IGF__IGFR </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_2" name="1. IGF binding_1" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="IGF" constant="false"/>
+          <speciesReference species="IGFR_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IGF__IGFR_p" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k1a </ci>
+                <ci> IGF </ci>
+                <ci> IGFR_p </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd1a </ci>
+                <ci> IGF__IGFR_p </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_3" name="2. PTB1B" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="IGF__IGFR_p" constant="false"/>
+          <speciesReference species="PTB1B" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IGF__IGFR_p__PTB1B" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k3 </ci>
+                <ci> IGF__IGFR_p </ci>
+                <ci> PTB1B </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd3 </ci>
+                <ci> IGF__IGFR_p__PTB1B </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_4" name="2. PTB1B_1" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="IGFR_p" constant="false"/>
+          <speciesReference species="PTB1B" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IGFR_p__PTB1B" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k3a </ci>
+                <ci> IGFR_p </ci>
+                <ci> PTB1B </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd3a </ci>
+                <ci> IGFR_p__PTB1B </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_5" name="2. PTB1B_2" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="IGF__IGFR" constant="false"/>
+          <speciesReference species="PTB1B" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IGF__IGFR_p__PTB1B" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k4 </ci>
+                <ci> IGF__IGFR </ci>
+                <ci> PTB1B </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd4 </ci>
+                <ci> IGF__IGFR_p__PTB1B </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_6" name="2. PTB1B_3" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="IGFR" constant="false"/>
+          <speciesReference species="PTB1B" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IGFR_p__PTB1B" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k4a </ci>
+                <ci> IGFR </ci>
+                <ci> PTB1B </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd4a </ci>
+                <ci> IGFR_p__PTB1B </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_7" name="3. IRS" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS" constant="false"/>
+          <speciesReference species="IGF__IGFR_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IRS__IGF__IGFR_p" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k5 </ci>
+                <ci> IRS </ci>
+                <ci> IGF__IGFR_p </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd5 </ci>
+                <ci> IRS__IGF__IGFR_p </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_8" name="3. IRS_1" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS__IGF__IGFR_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IRS_p__IGF__IGFR_p" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k6 </ci>
+              <ci> IRS__IGF__IGFR_p </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_9" name="3. IRS_2" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS" constant="false"/>
+          <speciesReference species="IGFR_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IRS__IGFR_p" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k5a </ci>
+                <ci> IRS </ci>
+                <ci> IGFR_p </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd5a </ci>
+                <ci> IRS__IGFR_p </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_10" name="3. IRS_3" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS__IGFR_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IRS_p__IGFR_p" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k6a </ci>
+              <ci> IRS__IGFR_p </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_11" name="3. IRS_4" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS_p" constant="false"/>
+          <speciesReference species="IGFR_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IRS_p__IGFR_p" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k7 </ci>
+                <ci> IRS_p </ci>
+                <ci> IGFR_p </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd7 </ci>
+                <ci> IRS_p__IGFR_p </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_12" name="3. IRS_5" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS_p" constant="false"/>
+          <speciesReference species="IGF__IGFR_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IRS_p__IGF__IGFR_p" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k7a </ci>
+                <ci> IRS_p </ci>
+                <ci> IGF__IGFR_p </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd7a </ci>
+                <ci> IRS_p__IGF__IGFR_p </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_13" name="4. PI3K" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS_p" constant="false"/>
+          <speciesReference species="PI3K" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IRS_p__PI3K" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k100 </ci>
+                <ci> IRS_p </ci>
+                <ci> PI3K </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd100 </ci>
+                <ci> IRS_p__PI3K </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_14" name="5. AKT pathway" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS_p__PI3K" constant="false"/>
+          <speciesReference species="AKT" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IRS_p__PI3K__AKT" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k101 </ci>
+                <ci> IRS_p__PI3K </ci>
+                <ci> AKT </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd101 </ci>
+                <ci> IRS_p__PI3K__AKT </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_15" name="5. AKT pathway INACTIVE" reversible="false" fast="false">
+        <listOfReactants>
+          <speciesReference species="IRS_p__PI3K__AKT" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IRS_p__PI3K__AKT_p" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k102 </ci>
+              <ci> IRS_p__PI3K__AKT </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_16" name="5. AKT pathway_1" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS_p__PI3K__AKT" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="AKT_p" constant="false"/>
+          <speciesReference species="IRS_p__PI3K" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k103 </ci>
+              <ci> IRS_p__PI3K__AKT </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_17" name="5. AKT pathway_2" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="Pase" constant="false"/>
+          <speciesReference species="AKT_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="Pase__AKT_p" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k104 </ci>
+                <ci> Pase </ci>
+                <ci> AKT_p </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd104 </ci>
+                <ci> Pase__AKT_p </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_18" name="5. AKT pathway_3" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="Pase" constant="false"/>
+          <speciesReference species="AKT" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="Pase__AKT_p" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k105 </ci>
+                <ci> Pase </ci>
+                <ci> AKT </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd105 </ci>
+                <ci> Pase__AKT_p </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_19" name="5. AKT pathway_4" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="mTor" constant="false"/>
+          <speciesReference species="AKT_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="AKT_p__mTor" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k106 </ci>
+                <ci> mTor </ci>
+                <ci> AKT_p </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd106 </ci>
+                <ci> AKT_p__mTor </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_20" name="5. AKT pathway_5" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="AKT_p__mTor" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="mTor_p" constant="false"/>
+          <speciesReference species="AKT_p" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k107 </ci>
+              <ci> AKT_p__mTor </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_21" name="6. IRS inhibition" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS_p__PI3K__AKT" constant="false"/>
+          <speciesReference species="mTor_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="mTor_p__IRS_p__PI3K__AKT" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k108 </ci>
+              <ci> IRS_p__PI3K__AKT </ci>
+              <ci> mTor_p </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_22" name="6. IRS inhibition_1" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS_p" constant="false"/>
+          <speciesReference species="mTor_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="mTor_p__IRS_p" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k108 </ci>
+              <ci> IRS_p </ci>
+              <ci> mTor_p </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_23" name="6. IRS inhibition_2" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS_p__PI3K" constant="false"/>
+          <speciesReference species="mTor_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="mTor_p__IRS_p__PI3K" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k108 </ci>
+              <ci> IRS_p__PI3K </ci>
+              <ci> mTor_p </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_24" name="6. IRS inhibition_3" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS" constant="false"/>
+          <speciesReference species="mTor_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="mTor_p__IRS" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k108 </ci>
+              <ci> IRS </ci>
+              <ci> mTor_p </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_25" name="6. IRS inhibition_4" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS_p__Grb2SOS" constant="false"/>
+          <speciesReference species="mTor_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="mTor_p__IRS_p__Grb2SOS" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k108 </ci>
+              <ci> IRS_p__Grb2SOS </ci>
+              <ci> mTor_p </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_26" name="6. IRS inhibition_5" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS_p__PI3K__Grb2SOS" constant="false"/>
+          <speciesReference species="mTor_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="mTor_p__IRS_p__PI3K__Grb2SOS" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k108 </ci>
+              <ci> IRS_p__PI3K__Grb2SOS </ci>
+              <ci> mTor_p </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_27" name="6. IRS inhibition_6" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS_p__PI3K__PI3Kinh" constant="false"/>
+          <speciesReference species="mTor_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="mTor_p__IRS_p__PI3K__PI3Kinh" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k108 </ci>
+              <ci> IRS_p__PI3K__PI3Kinh </ci>
+              <ci> mTor_p </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_28" name="6. IRS inhibition_7" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS_p__PI3K__AKT__AKTinh" constant="false"/>
+          <speciesReference species="mTor_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="mTor_p__IRS_p__PI3K__AKT__AKTinh" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k108 </ci>
+              <ci> IRS_p__PI3K__AKT__AKTinh </ci>
+              <ci> mTor_p </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_29" name="6. IRS inhibition_8" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS_p__Grb2SOS__RasGDP" constant="false"/>
+          <speciesReference species="mTor_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="mTor_p__IRS_p__Grb2SOS__RasGDP" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k108 </ci>
+              <ci> IRS_p__Grb2SOS__RasGDP </ci>
+              <ci> mTor_p </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_30" name="6. IRS inhibition_9" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS_p__PI3K__Grb2SOS__RasGDP" constant="false"/>
+          <speciesReference species="mTor_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="mTor_p__IRS_p__PI3K__Grb2SOS__RasGDP" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k108 </ci>
+              <ci> IRS_p__PI3K__Grb2SOS__RasGDP </ci>
+              <ci> mTor_p </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_31" name="7. Grb2SOS" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="Grb2SOS" constant="false"/>
+          <speciesReference species="IRS_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IRS_p__Grb2SOS" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k200 </ci>
+                <ci> Grb2SOS </ci>
+                <ci> IRS_p </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd200 </ci>
+                <ci> IRS_p__Grb2SOS </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_32" name="7. Grb2SOS_1" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="Grb2SOS" constant="false"/>
+          <speciesReference species="IRS_p__PI3K" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IRS_p__PI3K__Grb2SOS" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k200a </ci>
+                <ci> Grb2SOS </ci>
+                <ci> IRS_p__PI3K </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd200a </ci>
+                <ci> IRS_p__PI3K__Grb2SOS </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_33" name="7. Grb2SOS_2" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS_p__Grb2SOS" constant="false"/>
+          <speciesReference species="RasGDP" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IRS_p__Grb2SOS__RasGDP" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k201 </ci>
+                <ci> IRS_p__Grb2SOS </ci>
+                <ci> RasGDP </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd201 </ci>
+                <ci> IRS_p__Grb2SOS__RasGDP </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_34" name="7. Grb2SOS_3" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS_p__PI3K__Grb2SOS" constant="false"/>
+          <speciesReference species="RasGDP" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IRS_p__PI3K__Grb2SOS__RasGDP" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k201a </ci>
+                <ci> IRS_p__PI3K__Grb2SOS </ci>
+                <ci> RasGDP </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd201a </ci>
+                <ci> IRS_p__PI3K__Grb2SOS__RasGDP </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_35" name="7. Grb2SOS_4" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS_p__Grb2SOS__RasGDP" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="RasGTP" constant="false"/>
+          <speciesReference species="IRS_p__Grb2SOS" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k202 </ci>
+              <ci> IRS_p__Grb2SOS__RasGDP </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_36" name="7. Grb2SOS_5" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="IRS_p__PI3K__Grb2SOS__RasGDP" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="RasGTP" constant="false"/>
+          <speciesReference species="IRS_p__PI3K__Grb2SOS" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k202a </ci>
+              <ci> IRS_p__PI3K__Grb2SOS__RasGDP </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_37" name="8. RasGDP inhibition" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="AKT_p" constant="false"/>
+          <speciesReference species="RasGDP" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="AKT_p__RasGDP" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k203 </ci>
+              <ci> AKT_p </ci>
+              <ci> RasGDP </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_38" name="8. RasGTP inhibition INACTIVE" reversible="false" fast="false">
+        <listOfReactants>
+          <speciesReference species="AKT_p" constant="false"/>
+          <speciesReference species="RasGTP" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="AKT_p__RasGTP" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k203a </ci>
+              <ci> AKT_p </ci>
+              <ci> RasGTP </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_39" name="9. MAPK cascade" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="RasGTP" constant="false"/>
+          <speciesReference species="GTPase" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="RasGTP__GTPase" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k204 </ci>
+                <ci> RasGTP </ci>
+                <ci> GTPase </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd204 </ci>
+                <ci> RasGTP__GTPase </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_40" name="9. MAPK cascade_1" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="RasGTP__GTPase" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="GTPase" constant="false"/>
+          <speciesReference species="RasGDP" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k205 </ci>
+              <ci> RasGTP__GTPase </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_41" name="9. MAPK cascade_2" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="RasGTP" constant="false"/>
+          <speciesReference species="MEK" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="RasGTP__MEK" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k206 </ci>
+                <ci> RasGTP </ci>
+                <ci> MEK </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd206 </ci>
+                <ci> RasGTP__MEK </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_42" name="9. MAPK cascade_3" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="RasGTP__MEK" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="RasGTP__MEK_p" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k207 </ci>
+              <ci> RasGTP__MEK </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_43" name="9. MAPK cascade_4" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="RasGTP__MEK_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="MEK_p" constant="false"/>
+          <speciesReference species="RasGTP" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k207a </ci>
+              <ci> RasGTP__MEK_p </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_44" name="9. MAPK cascade_5" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="P1" constant="false"/>
+          <speciesReference species="MEK_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="P1__MEK_p" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k208 </ci>
+                <ci> P1 </ci>
+                <ci> MEK_p </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd208 </ci>
+                <ci> P1__MEK_p </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_45" name="9. MAPK cascade_6" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="P1__MEK_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="P1" constant="false"/>
+          <speciesReference species="MEK" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k209 </ci>
+              <ci> P1__MEK_p </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_46" name="9. MAPK cascade_7" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="ERK" constant="false"/>
+          <speciesReference species="MEK_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="MEK_p__ERK" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k210 </ci>
+                <ci> ERK </ci>
+                <ci> MEK_p </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd210 </ci>
+                <ci> MEK_p__ERK </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_47" name="9. MAPK cascade_8" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="MEK_p__ERK" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="MEK_p" constant="false"/>
+          <speciesReference species="ERK_p" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k211 </ci>
+              <ci> MEK_p__ERK </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_48" name="9. MAPK cascade_9" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="MKP" constant="false"/>
+          <speciesReference species="ERK_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="MKP__ERK_p" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k212 </ci>
+                <ci> MKP </ci>
+                <ci> ERK_p </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd212 </ci>
+                <ci> MKP__ERK_p </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_49" name="9. MAPK cascade_10" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="MKP__ERK_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="MKP" constant="false"/>
+          <speciesReference species="ERK" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k213 </ci>
+              <ci> MKP__ERK_p </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_50" name="9. MAPK cascade_11" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="ERK_p" constant="false"/>
+          <speciesReference species="MEK_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="MEK_p__ERK_p" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k210a </ci>
+                <ci> ERK_p </ci>
+                <ci> MEK_p </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd210a </ci>
+                <ci> MEK_p__ERK_p </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_51" name="9. MAPK cascade_12" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="MEK_p__ERK_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="ERK_p_p" constant="false"/>
+          <speciesReference species="MEK_p" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k211a </ci>
+              <ci> MEK_p__ERK_p </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_52" name="9. MAPK cascade_13" reversible="true" fast="true">
+        <listOfReactants>
+          <speciesReference species="ERK_p_p" constant="false"/>
+          <speciesReference species="MKP" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="MKP__ERK_p_p" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k212a </ci>
+                <ci> ERK_p_p </ci>
+                <ci> MKP </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd212a </ci>
+                <ci> MKP__ERK_p_p </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_53" name="9. MAPK cascade_14" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="MKP__ERK_p_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="ERK_p" constant="false"/>
+          <speciesReference species="MKP" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k213a </ci>
+              <ci> MKP__ERK_p_p </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_54" name="10. ERK feedback" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="ERK_p_p" constant="false"/>
+          <speciesReference species="IRS_p__Grb2SOS" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="ERK_p_p__IRS_p__Grb2SOS" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k214 </ci>
+              <ci> ERK_p_p </ci>
+              <ci> IRS_p__Grb2SOS </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_55" name="10. ERK feedback_1" reversible="false" fast="true">
+        <listOfReactants>
+          <speciesReference species="ERK_p_p" constant="false"/>
+          <speciesReference species="IRS_p__PI3K__Grb2SOS" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="ERK_p_p__IRS_p__PI3K__Grb2SOS" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k214a </ci>
+              <ci> ERK_p_p </ci>
+              <ci> IRS_p__PI3K__Grb2SOS </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_56" name="20. PI3K inhibition (INACTIVE)" reversible="true" fast="false">
+        <listOfReactants>
+          <speciesReference species="PI3Kinh" constant="false"/>
+          <speciesReference species="PI3K" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="PI3K__PI3Kinh" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k300 </ci>
+                <ci> PI3Kinh </ci>
+                <ci> PI3K </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd300 </ci>
+                <ci> PI3K__PI3Kinh </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_57" name="20. PI3K inhibition_1  (INACTIVE)" reversible="true" fast="false">
+        <listOfReactants>
+          <speciesReference species="PI3Kinh" constant="false"/>
+          <speciesReference species="IRS_p__PI3K" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IRS_p__PI3K__PI3Kinh" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k300a </ci>
+                <ci> PI3Kinh </ci>
+                <ci> IRS_p__PI3K </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd300a </ci>
+                <ci> IRS_p__PI3K__PI3Kinh </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_58" name="20. PI3K inhibition_2  (INACTIVE)" reversible="true" fast="false">
+        <listOfReactants>
+          <speciesReference species="PI3K__PI3Kinh" constant="false"/>
+          <speciesReference species="IRS_p" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IRS_p__PI3K__PI3Kinh" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k100a </ci>
+                <ci> PI3K__PI3Kinh </ci>
+                <ci> IRS_p </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd100a </ci>
+                <ci> IRS_p__PI3K__PI3Kinh </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_59" name="21. AKT inhibition  (INACTIVE)" reversible="true" fast="false">
+        <listOfReactants>
+          <speciesReference species="AKTinh" constant="false"/>
+          <speciesReference species="AKT" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="AKT__AKTinh" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k301 </ci>
+                <ci> AKTinh </ci>
+                <ci> AKT </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd301 </ci>
+                <ci> AKT__AKTinh </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_60" name="21. AKT inhibition_1  (INACTIVE)" reversible="true" fast="false">
+        <listOfReactants>
+          <speciesReference species="AKTinh" constant="false"/>
+          <speciesReference species="IRS_p__PI3K__AKT" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IRS_p__PI3K__AKT__AKTinh" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k301a </ci>
+                <ci> AKTinh </ci>
+                <ci> IRS_p__PI3K__AKT </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd301a </ci>
+                <ci> IRS_p__PI3K__AKT__AKTinh </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_61" name="21. AKT inhibition_2  (INACTIVE)" reversible="true" fast="false">
+        <listOfReactants>
+          <speciesReference species="AKT__AKTinh" constant="false"/>
+          <speciesReference species="IRS_p__PI3K" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IRS_p__PI3K__AKT__AKTinh" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k101a </ci>
+                <ci> AKT__AKTinh </ci>
+                <ci> IRS_p__PI3K </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd101a </ci>
+                <ci> IRS_p__PI3K__AKT__AKTinh </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_62" name="22. IGFR inhibitor  (INACTIVE)" reversible="true" fast="false">
+        <listOfReactants>
+          <speciesReference species="IGFR" constant="false"/>
+          <speciesReference species="IGFRinh" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IGFR__IGFRinh" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k302 </ci>
+                <ci> IGFR </ci>
+                <ci> IGFRinh </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd302 </ci>
+                <ci> IGFR__IGFRinh </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rxn_63" name="21. mTor inhibition  (INACTIVE)" reversible="true" fast="false">
+        <listOfReactants>
+          <speciesReference species="mTorinh" constant="false"/>
+          <speciesReference species="mTor" constant="false"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="mTor__mTorinh" constant="false"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> k303 </ci>
+                <ci> mTorinh </ci>
+                <ci> mTor </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> kd303 </ci>
+                <ci> mTor__mTorinh </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+    </listOfReactions>
+  </model>
+</sbml>

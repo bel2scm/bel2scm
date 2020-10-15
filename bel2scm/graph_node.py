@@ -40,6 +40,20 @@ class scm_node(cg_node):
         
         return torch.log(data_in/(1-data_in))
     
+    def dup_check(self,data_np,n_max):
+        # identify how many distinct points are present in the input data
+        
+        n_pts = 0
+        distinct_pts = [data_np[0]]
+        for item in data_np[1:]:
+            if np.min([np.sqrt((item - item2)**2) for item2 in distinct_pts]) > 1e-3:
+                distinct_pts.append(item)
+                n_pts += 1
+                if n_pts == n_max:
+                    return n_max
+        
+        return n_pts
+    
     def data_bin(self,data_in,data_out):
         """Use k-means clustering to identify centroids and assign data points to clusters."""
         
@@ -50,6 +64,9 @@ class scm_node(cg_node):
         # convert to numpy
         data_np = np.asarray([[item2.item() for item2 in item] for item in data_in])
         out_np = np.asarray([item.item() for item in data_out])
+        
+        # check for duplicate points
+        n_cents = self.dup_check(data_np,n_cents)
         
         kmeans = KMeans(n_clusters=n_cents, random_state=0).fit(data_np)
         
@@ -86,7 +103,7 @@ class scm_node(cg_node):
 
             big_y = self.logistic_inv(out_data)
                 
-        elif self.node_type == 'binary':
+        elif self.node_type == 'binary' or self.node_type == 'ternary':
             
             self.y_max = 1.
             self.y_min = 0.

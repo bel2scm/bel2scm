@@ -163,7 +163,7 @@ def main():
     covid_scm = SigmoidSCM(betas, max_abundance, 1.0)
     noisy_samples = [covid_scm.noisy_mutilated_model(noise) for _ in range(5000)]
     samples_df = pd.DataFrame(noisy_samples)
-    samples_df.to_csv("/home/somya/bel2scm/Tests/Data/hardcoded_sigmoid_intervened_data.csv", index=False)
+    samples_df.to_csv("hardcoded_sigmoid_intervened_data.csv", index=False)
 
 
     ### calculate causal effect from direct simulation

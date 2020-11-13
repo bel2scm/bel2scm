@@ -193,13 +193,13 @@ class SigmoidSCM():
             IL_6_AMP = sample('IL_6_AMP', Spike(f_IL_6_AMP(NF_xB, IL6_STAT3, N_IL_6_AMP)))
             cytokine = sample('cytokine', Spike(f_cytokine(IL_6_AMP, N_cytokine)))
 
-            samples = SARS_COV2, PRR, ACE2, AngII, AGTR1, ADAM17, TOCI, TNF, sIL_6_alpha, EGF, EGFR, NF_xB, \
-                      IL6_STAT3, IL_6_AMP, cytokine
-            # samples = {'a(SARS_COV2)': SARS_COV2.numpy(), 'a(PRR)': PRR.numpy(), 'a(ACE2)': ACE2.numpy(),
-            #            'a(AngII)': AngII.numpy(), 'a(AGTR1)': AGTR1.numpy(), 'a(ADAM17)': ADAM17.numpy(),
-            #            'a(TOCI)': TOCI.numpy(), 'a(TNF)': TNF.numpy(), 'a(sIL_6_alpha)': sIL_6_alpha.numpy(),
-            #            'a(EGF)': EGF.numpy(), 'a(EGFR)': EGFR.numpy(), 'a(IL6_STAT3)': IL6_STAT3.numpy(),
-            #            'a(NF_xB)': NF_xB.numpy(), 'a(IL6_AMP)': IL_6_AMP.numpy(), 'a(cytokine)': cytokine.numpy()}
+            # samples = SARS_COV2, PRR, ACE2, AngII, AGTR1, ADAM17, TOCI, TNF, sIL_6_alpha, EGF, EGFR, NF_xB, \
+            #           IL6_STAT3, IL_6_AMP, cytokine
+            samples = {'a(SARS_COV2)': SARS_COV2.numpy(), 'a(PRR)': PRR.numpy(), 'a(ACE2)': ACE2.numpy(),
+                       'a(AngII)': AngII.numpy(), 'a(AGTR1)': AGTR1.numpy(), 'a(ADAM17)': ADAM17.numpy(),
+                       'a(TOCI)': TOCI.numpy(), 'a(TNF)': TNF.numpy(), 'a(sIL_6_alpha)': sIL_6_alpha.numpy(),
+                       'a(EGF)': EGF.numpy(), 'a(EGFR)': EGFR.numpy(), 'a(IL6_STAT3)': IL6_STAT3.numpy(),
+                       'a(NF_xB)': NF_xB.numpy(), 'a(IL6_AMP)': IL_6_AMP.numpy(), 'a(cytokine)': cytokine.numpy()}
             return samples
 
         def noisy_mutilated_model(noise):

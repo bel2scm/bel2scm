@@ -44,6 +44,7 @@ class TestSCM(unittest.TestCase):
         scm = SCM(bel_file_path, config_file_path, data_file_path)
         save_scm_object(output_pickle_object_file, scm)
         # Add loading and saving from pkl to utils
+
     def test_mapk_erk_samples(self):
         from Neuirps_BEL2SCM.scm import SCM
         from Neuirps_BEL2SCM.utils import save_scm_object
@@ -240,7 +241,7 @@ class TestSCM(unittest.TestCase):
 
         bel_file_path = "../Tests/BELSourceFiles/covid_input.json"
         config_file_path = "../Tests/Configs/COVID-19-config.json"
-        data_file_path = "../Tests/Data/hardcoded_sigmoid_data.csv"
+        data_file_path = "../Tests/Data/observational_samples_from_sigmoid_known_parameters.csv"
         output_pickle_object_file = "../../covid_scm.pkl"
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
@@ -265,7 +266,7 @@ class TestSCM(unittest.TestCase):
         time1 = time.time()
         bel_file_path = "../Tests/BELSourceFiles/covid_input.json"
         config_file_path = "../Tests/Configs/COVID-19-config.json"
-        data_file_path = "../Tests/Data/hardcoded_sigmoid_data.csv"
+        data_file_path = "../Tests/Data/observational_samples_from_sigmoid_known_parameters.csv"
         scm = SCM(bel_file_path, config_file_path, data_file_path)
 
         exogenous_noise = scm.exogenous_dist_dict
@@ -283,10 +284,9 @@ class TestSCM(unittest.TestCase):
                     df[col][i] = df[col][i].item()
         df2 = pd.read_csv("../Tests/Data/bel2scm_samples_covid.csv")
         cytokine_diff = df["a(cytokine)"] - df2["a(cytokine)"]
-        cytokine_diff.to_csv("../Tests/Data/c ytokine_do_toci_0_minus_cytokine.csv")
+        cytokine_diff.to_csv("../Tests/Data/cytokine_do_toci_0_minus_cytokine.csv")
         df.to_csv("../Tests/Data/intervention_toci_0_samples_covid.csv")
         self.assertTrue(True, True)
-
 
     def test_covid_noisy_model_samples(self):
         from Neuirps_BEL2SCM.scm import SCM
@@ -316,7 +316,7 @@ class TestSCM(unittest.TestCase):
         time1 = time.time()
         bel_file_path = "../Tests/BELSourceFiles/covid_input.json"
         config_file_path = "../Tests/Configs/COVID-19-config.json"
-        data_file_path = "../Tests/Data/hardcoded_sigmoid_data.csv"
+        data_file_path = "../Tests/Data/observational_samples_from_sigmoid_known_parameters.csv"
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
         condition_data = {
@@ -360,7 +360,7 @@ class TestSCM(unittest.TestCase):
 
         causal_effects1, counterfactual_samples1 = scm.counterfactual_inference(condition_data, intervention_data,
                                                                                 target, True)
-        print("time required for causal effects", time.time()- time1)
+        print("time required for causal effects", time.time() - time1)
         samples_df = pd.DataFrame(causal_effects1)
         samples_df.to_csv("../Tests/Data/causal_effect_MM_bel2scm.csv", index=False)
 
@@ -372,7 +372,7 @@ class TestSCM(unittest.TestCase):
         torch.manual_seed(23)
         bel_file_path = "../Tests/BELSourceFiles/covid_input.json"
         config_file_path = "../Tests/Configs/COVID-19-config.json"
-        data_file_path = "../Tests/Data/hardcoded_sigmoid_data.csv"
+        data_file_path = "../Tests/Data/observational_samples_from_sigmoid_known_parameters.csv"
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
         condition_data = {

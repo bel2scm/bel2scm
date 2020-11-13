@@ -154,37 +154,26 @@ def main():
     }
     ### get observational samples
 
-    # covid_scm = SigmoidSCM(betas, max_abundance, 1.0)
-    # noisy_samples = [covid_scm.noisy_model(noise) for _ in range(5000)]
-    # samples_df = pd.DataFrame(noisy_samples)
-    # samples_df.to_csv("/home/somya/bel2scm/Tests/Data/hardcoded_sigmoid_data.csv", index=False)
+    covid_scm = SigmoidSCM(betas, max_abundance, 1.0)
+    noisy_samples = [covid_scm.noisy_model(noise) for _ in range(5000)]
+    samples_df = pd.DataFrame(noisy_samples)
+    samples_df.to_csv("C:/Users/somya/Documents/GitHub/bel2scm/Tests/Data/observational_samples_from_sigmoid_known_parameters.csv", index=False)
 
     ### get observational samples from mutilated graph by intervening on TOCI
-    covid_scm = SigmoidSCM(betas, max_abundance, 1.0)
-    noisy_samples = [covid_scm.noisy_mutilated_model(noise) for _ in range(5000)]
-    samples_df = pd.DataFrame(noisy_samples)
-    samples_df.to_csv("hardcoded_sigmoid_intervened_data.csv", index=False)
+    # covid_scm_mutilated = SigmoidSCM(betas, max_abundance, 1.0)
+    # noisy_samples_mutilated = [covid_scm.noisy_mutilated_model(noise) for _ in range(5000)]
+    # samples_df_mutilated = pd.DataFrame(noisy_samples)
+    # samples_df_mutilated.to_csv("C:/Users/somya/Documents/GitHub/bel2scm/Tests/Data/observational_samples_from_intervened_sigmoid_with_known_parameters.csv", index=False)
 
-
-    ### calculate causal effect from direct simulation
-    data = pd.read_csv("/home/somya/bel2scm/Tests/Data/observational_samples_from_sigmoid_known_parameters.csv")
-    mutilated_scm = pd.read_csv("/home/somya/bel2scm/Tests/Data/observational_samples_from_intervened_sigmoid_with_known_parameters.csv")
-    direct_causal_effect = pd.DataFrame()
-    direct_causal_effect['causal_effect'] = data['a(cytokine)'] - mutilated_scm['a(cytokine)']
-    direct_causal_effect.to_csv("/home/somya/bel2scm/Tests/Data/causal_effect_from_direct_simulation", index=False)
-
-
-    ### perform causal effect
-    # out = scm_covid_counterfactual(
-    #     betas,
-    #     max_abundance,
-    #     observation,
-    #     intervention_data,
-    #     spike_width=1.0,
-    #     svi=True
-    # )
-    # out_df = pd.DataFrame(out)
-    # out_df.to_csv("/home/somya/bel2scm/Tests/Data/causal_effect_sigmoid_moderately_ill.csv", index=False)
+    #
+    # ### calculate causal effect from direct simulation
+    # data = pd.read_csv("C:/Users/somya/Documents/GitHub/bel2scm/Tests/Data/observational_samples_from_sigmoid_known_parameters.csv")
+    # mutilated_scm = pd.read_csv("C:/Users/somya/Documents/GitHub/bel2scm/Tests/Data/observational_samples_from_intervened_sigmoid_with_known_parameters.csv")
+    # print(mutilated_scm.columns)
+    # print(data.columns)
+    # direct_causal_effect = pd.DataFrame()
+    # direct_causal_effect['causal_effect'] = data['a(cytokine)'] - mutilated_scm['a(cytokine)']
+    # direct_causal_effect.to_csv("/home/somya/bel2scm/Tests/Data/causal_effect_from_direct_simulation", index=False)
 
 
 main()

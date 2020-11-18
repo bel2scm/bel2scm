@@ -87,5 +87,90 @@ class TestBEL2SCM(unittest.TestCase):
         df.to_csv("../Tests/Data/intervention_mek_40_samples_igf.csv")
         self.assertTrue(True, True)
 
+    def test_covid_causal_effect_with_estimated_parameters_datapoint1(self):
+        from Neuirps_BEL2SCM.scm import SCM
+        import torch
+        from torch import tensor
+        import pandas as pd
+        import time
+        torch.manual_seed(23)
+        time1 = time.time()
+        bel_file_path = "../Tests/BELSourceFiles/covid_input.json"
+        config_file_path = "../Tests/Configs/COVID-19-config.json"
+        data_file_path = "../Tests/Data/observational_samples_from_sigmoid_known_parameters.csv"
+
+        scm = SCM(bel_file_path, config_file_path, data_file_path)
+        condition_data = {
+            'a(SARS_COV2)': tensor(67.35032),
+            'a(PRR)': tensor(89.7037),
+            'a(ACE2)': tensor(29.747593),
+            'a(AngII)': tensor(68.251114),
+            'a(AGTR1)': tensor(90.96106999999999),
+            'a(ADAM17)': tensor(86.84893000000001),
+            'a(TOCI)': tensor(40.76684),
+            'a(TNF)': tensor(76.85005),
+            'a(sIL_6_alpha)': tensor(87.99491),
+            'a(EGF)': tensor(84.55391),
+            'a(EGFR)': tensor(79.94534),
+            'a(IL6_STAT3)': tensor(83.39896),
+            'a(NF_xB)': tensor(82.79433399999999),
+            'a(IL6_AMP)': tensor(81.38015),
+            'a(cytokine)': tensor(80.21895)
+
+        }
+        target = "a(cytokine)"
+        intervention_data = {
+            "a(TOCI)": 0.0
+        }
+
+        causal_effects1, counterfactual_samples1 = scm.counterfactual_inference(condition_data, intervention_data,
+                                                                                target, True)
+        print("time required for causal effects", time.time() - time1)
+        samples_df = pd.DataFrame(causal_effects1)
+        samples_df.to_csv("../Tests/Data/causal_effect_sigmoid_with_estimated_parameters_datapoint1.csv", index=False)
+
+    def test_covid_causal_effect_with_estimated_parameters_datapoint2(self):
+        from Neuirps_BEL2SCM.scm import SCM
+        import torch
+        from torch import tensor
+        import pandas as pd
+        import time
+        torch.manual_seed(23)
+        time1 = time.time()
+        bel_file_path = "../Tests/BELSourceFiles/covid_input.json"
+        config_file_path = "../Tests/Configs/COVID-19-config.json"
+        data_file_path = "../Tests/Data/observational_samples_from_sigmoid_known_parameters.csv"
+
+        scm = SCM(bel_file_path, config_file_path, data_file_path)
+        condition_data = {
+            'a(SARS_COV2)': 61.631156999999995,
+            'a(PRR)': 87.76389,
+            'a(ACE2)': 39.719845,
+            'a(AngII)': 59.212959999999995,
+            'a(AGTR1)': 84.39899399999999,
+            'a(ADAM17)': 85.84442,
+            'a(TOCI)': 67.33063,
+            'a(TNF)': 77.83915,
+            'a(sIL_6_alpha)': 57.584044999999996,
+            'a(EGF)': 86.26822,
+            'a(EGFR)': 81.4849,
+            'a(IL6_STAT3)': 69.57323000000001,
+            'a(NF_xB)': 83.75941,
+            'a(IL6_AMP)': 77.52906,
+            'a(cytokine)': 79.07555
+
+        }
+        target = "a(cytokine)"
+        intervention_data = {
+            "a(TOCI)": 0.0
+        }
+
+        causal_effects1, counterfactual_samples1 = scm.counterfactual_inference(condition_data, intervention_data,
+                                                                                target, True)
+        print("time required for causal effects", time.time() - time1)
+        samples_df = pd.DataFrame(causal_effects1)
+        samples_df.to_csv("../Tests/Data/causal_effect_sigmoid_with_estimated_parameters_datapoint2.csv", index=False)
+
+
 if __name__ == '__main__':
     unittest.main()

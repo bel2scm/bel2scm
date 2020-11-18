@@ -122,7 +122,6 @@ class SigmoidSCM():
             N_EGF = sample('N_EGF', Normal(noise['N_EGF'][0], noise['N_EGF'][1]))
             N_EGFR = sample('N_EGFR', Normal(noise['N_EGFR'][0], noise['N_EGFR'][1]))
             N_IL6_STAT3 = sample('N_IL6_STAT3', Normal(noise['N_IL6_STAT3'][0], noise['N_IL6_STAT3'][1]))
-            # N_STAT3 = sample('N_STAT3', noise['N_STAT3'])
             N_NF_xB = sample('N_NF_xB', Normal(noise['N_NF_xB'][0], noise['N_NF_xB'][1]))
             N_IL_6_AMP = sample('N_IL_6_AMP', Normal(noise['N_IL_6_AMP'][0], noise['N_IL_6_AMP'][1]))
             N_cytokine = sample('N_cytokine', Normal(noise['N_cytokine'][0], noise['N_cytokine'][1]))
@@ -135,23 +134,26 @@ class SigmoidSCM():
             AngII = sample('AngII', Delta(f_AngII(ACE2, N_AngII)))
             AGTR1 = sample('AGTR1', Delta(f_AGTR1(AngII, N_AGTR1)))
             ADAM17 = sample('ADAM1Spike7', Delta(f_ADAM17(AGTR1, N_ADAM17)))
-            # IL_6Ralpha = sample("IL_6Ralpha", Delta(f_IL_6Ralpha(TOCI, N_IL_6Ralpha)))
             TNF = sample('TNF', Delta(f_TNF(ADAM17, N_TNF)))
             sIL_6_alpha = sample('sIL_6_alpha', Delta(f_sIL_6_alpha(ADAM17, TOCI, N_sIL_6_alpha)))
             EGF = sample('EGF', Delta(f_EGF(ADAM17, N_EGF)))
             EGFR = sample('EGFR', Delta(f_EGFR(EGF, N_EGFR)))
-            # STAT3 = sample('STAT3', Delta(f_STAT3(sIL_6_alpha, N_STAT3)))
             NF_xB = sample('NF_xB', Delta(f_NF_xB(PRR, EGFR, TNF, N_NF_xB)))
             IL6_STAT3 = sample('IL6_STAT3', Delta(f_IL6_STAT3(sIL_6_alpha, N_IL6_STAT3)))
             IL_6_AMP = sample('IL_6_AMP', Delta(f_IL_6_AMP(NF_xB, IL6_STAT3, N_IL_6_AMP)))
             cytokine = sample('cytokine', Delta(f_cytokine(IL_6_AMP, N_cytokine)))
             noise_samples = N_PRR, N_ACE2, N_AngII, N_AGTR1, N_ADAM17, N_TNF, N_sIL_6_alpha, \
                             N_EGF, N_EGFR, N_NF_xB, N_IL6_STAT3, N_IL_6_AMP, N_cytokine
+            ## Use the dictionary structure for generating observational dataset
+            ## comment the variable list for that
             # samples = {'a(SARS_COV2)': SARS_COV2.numpy(), 'a(PRR)': PRR.numpy(), 'a(ACE2)': ACE2.numpy(),
             #            'a(AngII)': AngII.numpy(), 'a(AGTR1)': AGTR1.numpy(), 'a(ADAM17)': ADAM17.numpy(),
             #            'a(TOCI)': TOCI.numpy(), 'a(TNF)': TNF.numpy(), 'a(sIL_6_alpha)': sIL_6_alpha.numpy(),
             #            'a(EGF)': EGF.numpy(), 'a(EGFR)': EGFR.numpy(), 'a(IL6_STAT3)': IL6_STAT3.numpy(),
             #            'a(NF_xB)': NF_xB.numpy(), 'a(IL6_AMP)': IL_6_AMP.numpy(), 'a(cytokine)': cytokine.numpy()}
+
+            ## Use the variable list for generating samples for causal effect
+            ## comment the dictionary for that
             samples = SARS_COV2, PRR, ACE2, AngII, AGTR1, ADAM17, TOCI, TNF, sIL_6_alpha, EGF, EGFR, NF_xB, \
                     IL6_STAT3, IL_6_AMP, cytokine
             return samples, noise_samples
@@ -193,13 +195,18 @@ class SigmoidSCM():
             IL_6_AMP = sample('IL_6_AMP', Spike(f_IL_6_AMP(NF_xB, IL6_STAT3, N_IL_6_AMP)))
             cytokine = sample('cytokine', Spike(f_cytokine(IL_6_AMP, N_cytokine)))
 
-            # samples = SARS_COV2, PRR, ACE2, AngII, AGTR1, ADAM17, TOCI, TNF, sIL_6_alpha, EGF, EGFR, NF_xB, \
-            #           IL6_STAT3, IL_6_AMP, cytokine
-            samples = {'a(SARS_COV2)': SARS_COV2.numpy(), 'a(PRR)': PRR.numpy(), 'a(ACE2)': ACE2.numpy(),
-                       'a(AngII)': AngII.numpy(), 'a(AGTR1)': AGTR1.numpy(), 'a(ADAM17)': ADAM17.numpy(),
-                       'a(TOCI)': TOCI.numpy(), 'a(TNF)': TNF.numpy(), 'a(sIL_6_alpha)': sIL_6_alpha.numpy(),
-                       'a(EGF)': EGF.numpy(), 'a(EGFR)': EGFR.numpy(), 'a(IL6_STAT3)': IL6_STAT3.numpy(),
-                       'a(NF_xB)': NF_xB.numpy(), 'a(IL6_AMP)': IL_6_AMP.numpy(), 'a(cytokine)': cytokine.numpy()}
+            ## Use the dictionary structure for generating observational dataset
+            ## comment the variable list for that
+            # samples = {'a(SARS_COV2)': SARS_COV2.numpy(), 'a(PRR)': PRR.numpy(), 'a(ACE2)': ACE2.numpy(),
+            #            'a(AngII)': AngII.numpy(), 'a(AGTR1)': AGTR1.numpy(), 'a(ADAM17)': ADAM17.numpy(),
+            #            'a(TOCI)': TOCI.numpy(), 'a(TNF)': TNF.numpy(), 'a(sIL_6_alpha)': sIL_6_alpha.numpy(),
+            #            'a(EGF)': EGF.numpy(), 'a(EGFR)': EGFR.numpy(), 'a(IL6_STAT3)': IL6_STAT3.numpy(),
+            #            'a(NF_xB)': NF_xB.numpy(), 'a(IL6_AMP)': IL_6_AMP.numpy(), 'a(cytokine)': cytokine.numpy()}
+
+            ## Use the variable list for generating samples for causal effect
+            ## comment the dictionary for that
+            samples = SARS_COV2, PRR, ACE2, AngII, AGTR1, ADAM17, TOCI, TNF, sIL_6_alpha, EGF, EGFR, NF_xB, \
+                    IL6_STAT3, IL_6_AMP, cytokine
             return samples
 
         def noisy_mutilated_model(noise):
@@ -236,8 +243,6 @@ class SigmoidSCM():
             IL_6_AMP = sample('IL_6_AMP', Spike(f_IL_6_AMP(NF_xB, IL6_STAT3, N_IL_6_AMP)))
             cytokine = sample('cytokine', Spike(f_cytokine(IL_6_AMP, N_cytokine)))
 
-            samples = SARS_COV2, PRR, ACE2, AngII, AGTR1, ADAM17, TOCI, TNF, sIL_6_alpha, EGF, EGFR, NF_xB, \
-                      IL6_STAT3, IL_6_AMP, cytokine
             samples = {'a(SARS_COV2)': SARS_COV2.numpy(), 'a(PRR)': PRR.numpy(), 'a(ACE2)': ACE2.numpy(),
                        'a(AngII)': AngII.numpy(), 'a(AGTR1)': AGTR1.numpy(), 'a(ADAM17)': ADAM17.numpy(),
                        'a(TOCI)': TOCI.numpy(), 'a(TNF)': TNF.numpy(), 'a(sIL_6_alpha)': sIL_6_alpha.numpy(),

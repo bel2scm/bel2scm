@@ -23,6 +23,7 @@ class SigmoidNet(torch.nn.Module):
 
 class TrainNet():
     """
+    """
 	This class initiates SigmoidNet, sets hyperparameters,
 	and performs training.
 	"""

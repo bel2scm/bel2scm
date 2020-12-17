@@ -11,7 +11,7 @@ import torch
 import pyro
 
 from . import graph_node as gn
-
+from .graph_node import bayes_node, scm_node, mle_node
 # create a class of causal graphs
 
 class cg_graph():

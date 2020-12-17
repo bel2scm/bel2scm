@@ -1,4 +1,4 @@
-import pyro
+import pyro.distributions
 
 PYRO_DISTRIBUTIONS = {
     "Bernoulli": pyro.distributions.Bernoulli,

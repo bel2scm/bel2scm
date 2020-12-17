@@ -1,7 +1,7 @@
 import collections
 
 import torch
-from Neuirps_BEL2SCM.constants import VALID_RELATIONS, LABEL_DICT
+from bel2scm.neurips_bel2scm.constants import VALID_RELATIONS, LABEL_DICT
 
 
 class Node:

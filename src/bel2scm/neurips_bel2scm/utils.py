@@ -6,10 +6,10 @@ import pyro.distributions as dist
 import json
 import torch
 import torch.nn.functional as F
-from Neuirps_BEL2SCM.node import Node
-from Neuirps_BEL2SCM.scm import *
-from Neuirps_BEL2SCM.parent_interaction_types import ParentInteractionTypes
-from Neuirps_BEL2SCM.constants import PYRO_DISTRIBUTIONS, VARIABLE_TYPE
+from bel2scm.neurips_bel2scm.node import Node
+from bel2scm.neurips_bel2scm.scm import *
+from bel2scm.neurips_bel2scm.parent_interaction_types import ParentInteractionTypes
+from bel2scm.neurips_bel2scm.constants import PYRO_DISTRIBUTIONS, VARIABLE_TYPE
 import pickle
 
 

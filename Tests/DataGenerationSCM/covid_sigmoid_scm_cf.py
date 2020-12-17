@@ -5,7 +5,7 @@ from torch import tensor
 import statistics
 import pyro
 from pyro import condition, do, sample
-from pyro.optim import SGD
+from torch.optim import SGD
 import torch.distributions.constraints as constraints
 import torch
 from pyro.distributions import Normal, Delta

@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 import time
 import pyro
-from Neuirps_BEL2SCM.constants import VARIABLE_TYPE
+from bel2scm.neurips_bel2scm.constants import VARIABLE_TYPE
 import numpy as np
 
 
@@ -22,7 +22,6 @@ class SigmoidNet(torch.nn.Module):
 
 
 class TrainNet():
-    """
     """
 	This class initiates SigmoidNet, sets hyperparameters,
 	and performs training.

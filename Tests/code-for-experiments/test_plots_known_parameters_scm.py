@@ -5,7 +5,7 @@
     for covid-19 graph.
 
 
-    Check Tests/code-for-experiments/test_be2scm.py
+    Check Tests/code-for-experiments/test_plots_bel2scm.py
     to see experiments that were used to generate data from bel2scm algorithms.
 
     All dataframes generated for this paper are in Tests/Data folder.

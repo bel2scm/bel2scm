@@ -178,7 +178,7 @@ class cg_graph():
 
         return str_out[:-1]
     
-    def d_sep(self,x,y,z,graph_in):
+    def d_sep(self,x,y,z,graph_in=None):
         # determine if all paths from x to y are d-separated by z in graph_temp
         
         # convert digraph to undirected graph for d-separation

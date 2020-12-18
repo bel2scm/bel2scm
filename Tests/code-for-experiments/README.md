@@ -3,7 +3,7 @@
 ## Files in this folder:
 
 ### 1. test_bel2scm.py
-This file contains all te test functions we used to generate sample data, testing and debugging
+This file contains all the test functions we used to generate sample data, testing and debugging
 code for bel2scm algorithm.
 Input files:
 - BELSourceFiles contains bel graphs for all our test cases

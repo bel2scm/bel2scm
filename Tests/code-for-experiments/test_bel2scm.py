@@ -21,8 +21,8 @@ class TestSCM(unittest.TestCase):
 
     def test_scm_integration_test(self):
 
-        from Neuirps_BEL2SCM.scm import SCM
-        from Neuirps_BEL2SCM.utils import json_load
+        from neurips_bel2scm.scm import SCM
+        from neurips_bel2scm.utils import json_load
 
         bel_file_path = "../Tests/BELSourceFiles/small-IGF-pwy.nanopub.graphdati.json"
         config_file_path = "../Configs/COVID-19-config.json"
@@ -46,8 +46,8 @@ class TestSCM(unittest.TestCase):
         return len(names)
 
     def test_mapk(self):
-        from Neuirps_BEL2SCM.scm import SCM
-        from Neuirps_BEL2SCM.utils import save_scm_object
+        from neurips_bel2scm.scm import SCM
+        from neurips_bel2scm.utils import save_scm_object
 
         bel_file_path = "../BELSourceFiles/mapk.json"
         config_file_path = "../Configs/COVID-19-config.json"
@@ -60,8 +60,8 @@ class TestSCM(unittest.TestCase):
         # Add loading and saving from pkl to utils
 
     def test_mapk_erk_samples(self):
-        from Neuirps_BEL2SCM.scm import SCM
-        from Neuirps_BEL2SCM.utils import save_scm_object
+        from neurips_bel2scm.scm import SCM
+        from neurips_bel2scm.utils import save_scm_object
 
         bel_file_path = "../BELSourceFiles/mapk.json"
         config_file_path = "../Configs/COVID-19-config.json"
@@ -76,7 +76,7 @@ class TestSCM(unittest.TestCase):
         # save_scm_object(output_pickle_object_file, scm)
 
     def test_generate_mapk_samples(self):
-        from Neuirps_BEL2SCM.utils import load_scm_object
+        from neurips_bel2scm.utils import load_scm_object
 
         scm = load_scm_object("../../mapk_scm.pkl")
         exogenous_noise = scm.exogenous_dist_dict
@@ -86,8 +86,8 @@ class TestSCM(unittest.TestCase):
         self.assertTrue(True)
 
     def test_binary_mapk(self):
-        from Neuirps_BEL2SCM.scm import SCM
-        from Neuirps_BEL2SCM.utils import save_scm_object
+        from neurips_bel2scm.scm import SCM
+        from neurips_bel2scm.utils import save_scm_object
 
         bel_file_path = "../BELSourceFiles/mapk-binary.json"
         config_file_path = "../Configs/COVID-19-config.json"
@@ -99,7 +99,7 @@ class TestSCM(unittest.TestCase):
 
     def test_generate_binary_mapk_samples(self):
 
-        from Neuirps_BEL2SCM.utils import load_scm_object
+        from neurips_bel2scm.utils import load_scm_object
         scm = load_scm_object("../../mapk_binary_scm.pkl")
         exogenous_noise = scm.exogenous_dist_dict
         samples = [scm.model(exogenous_noise) for i in range(5000)]
@@ -107,7 +107,7 @@ class TestSCM(unittest.TestCase):
         self.assertTrue(True)
 
     def test_mapk_counterfactual(self):
-        from Neuirps_BEL2SCM.scm import SCM
+        from neurips_bel2scm.scm import SCM
         import torch
         import numpy as np
         torch.manual_seed(101)
@@ -144,11 +144,11 @@ class TestSCM(unittest.TestCase):
 
     def test_igf(self):
 
-        from Neuirps_BEL2SCM.scm import SCM
+        from neurips_bel2scm.scm import SCM
         import pandas as pd
         import torch
         torch.manual_seed(101)
-        from Neuirps_BEL2SCM.utils import save_scm_object
+        from neurips_bel2scm.utils import save_scm_object
 
         bel_file_path = "../BELSourceFiles/igf.json"
         config_file_path = "../Configs/COVID-19-config.json"
@@ -168,8 +168,8 @@ class TestSCM(unittest.TestCase):
         self.assertTrue(True, True)
 
     def test_igf_intervention_on_ras(self):
-        from Neuirps_BEL2SCM.scm import SCM
-        from Neuirps_BEL2SCM.utils import json_load
+        from neurips_bel2scm.scm import SCM
+        from neurips_bel2scm.utils import json_load
         import torch
         torch.manual_seed(101)
         import pandas as pd
@@ -203,7 +203,7 @@ class TestSCM(unittest.TestCase):
         self.assertTrue(True, True)
 
     def test_igf_intervention_on_mek(self):
-        from Neuirps_BEL2SCM.scm import SCM
+        from neurips_bel2scm.scm import SCM
         import torch
         torch.manual_seed(23)
         import pandas as pd
@@ -247,8 +247,8 @@ class TestSCM(unittest.TestCase):
         self.assertTrue(True, True)
 
     def test_covid(self):
-        from Neuirps_BEL2SCM.scm import SCM
-        from Neuirps_BEL2SCM.utils import save_scm_object
+        from neurips_bel2scm.scm import SCM
+        from neurips_bel2scm.utils import save_scm_object
         import pandas as pd
         import torch
         torch.manual_seed(23)
@@ -271,7 +271,7 @@ class TestSCM(unittest.TestCase):
         # Add loading and saving from pkl to utils
 
     def test_covid_direct_simulation_causal_effect(self):
-        from Neuirps_BEL2SCM.scm import SCM
+        from neurips_bel2scm.scm import SCM
         import torch
         import numpy as np
         import pandas as pd
@@ -303,7 +303,7 @@ class TestSCM(unittest.TestCase):
         self.assertTrue(True, True)
 
     def test_covid_noisy_model_samples(self):
-        from Neuirps_BEL2SCM.scm import SCM
+        from neurips_bel2scm.scm import SCM
         import torch
         import numpy as np
         import pandas as pd
@@ -321,7 +321,7 @@ class TestSCM(unittest.TestCase):
         np.savetxt("../Tests/Data/covid_bel2scm_noisy_reparameterized_samples.csv", samples, delimiter=',')
 
     def test_covid_toci0_mm_causal_effect(self):
-        from Neuirps_BEL2SCM.scm import SCM
+        from neurips_bel2scm.scm import SCM
         import torch
         from torch import tensor
         import pandas as pd
@@ -379,7 +379,7 @@ class TestSCM(unittest.TestCase):
         samples_df.to_csv("../Tests/Data/causal_effect_MM_bel2scm.csv", index=False)
 
     def test_covid_toci0_bel2scm_causal_effect(self):
-        from Neuirps_BEL2SCM.scm import SCM
+        from neurips_bel2scm.scm import SCM
         import torch
         from torch import tensor
         import pandas as pd

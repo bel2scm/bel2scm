@@ -869,7 +869,7 @@ class cg_graph():
                 #print('Step 7')
                 
                 if s_sets == []:
-                    #print('s_sets is empty')
+                    print('s_sets is empty')
                 
                 gamma_temp = [item for item in s_sets[0] if 'U^{' not in item]
                 

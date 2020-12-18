@@ -132,7 +132,7 @@ class cg_graph():
             elif self.graph_type == 'MLE':
                 node_dict[item] = mle_node(n_pars,item,node_type)
             elif self.graph_type == 'SCM':
-                node_dict[item] = scm_node(n_pars,item,node_type)
+                node_dict[item] = gn.scm_node(n_pars,item,node_type)
             else:
                 print('node type ' + self.graph_type + 'not recognized -- defaulting to MLE')
                 node_dict[item] = mle_node(n_pars,item,node_type)

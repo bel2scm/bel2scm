@@ -166,10 +166,9 @@ igf_ode_obs <- obs_data[nrow(obs_data),]
 #####################################################################################################
 ######################################### SDE #######################################################
 #####################################################################################################
-pre_file <- system.file('growth_factor_sheets/growth_factor', 'Values-Pre.csv', package="ode2scm")
-post_file <- system.file('growth_factor_sheets/growth_factor', 'Values-Post.csv', package="ode2scm")
-PRE <- as.matrix(read.csv(pre_file, header = TRUE))
-POST <- as.matrix(read.csv(post_file, header = TRUE))
+#set the directory to where the codes are located and then run these 2 lines
+PRE <- as.matrix(read.csv('growth_factor/Values-Pre.csv', header = TRUE))
+POST <- as.matrix(read.csv('growth_factor/Values-Post.csv', header = TRUE))
 
 gf_sde <- function(states, rates, interventions = NULL){
   sde <- list()
@@ -250,15 +249,6 @@ sde_sim <- function(transition_function, initial_states, times, interventions = 
   return(out)
 }
 
-### Intervene on Raf
-# times <- seq(0, 1, by = .1)
-# #interventions <- NULL
-# interventions <- list(Raf_inactive=80, Raf_active=20)
-# faster_rates <- lapply(rates, `*`, 20)
-# stoc_transition_func <- gf_sde(initial_states, faster_rates,interventions)
-# sde_out <- sde_sim(stoc_transition_func, initial_states, times,interventions)
-
-
 # create observational and interventional data from SDE when number of phosphorylated Ras = 30
 # We can do the same thing with intervening on Mek and fixing number of phosphorylated Mek = 40
 
@@ -268,10 +258,10 @@ observational_data <- data.frame("time" = 0, "EGFR" = 0, "IGFR" = 0, "SOS_inacti
                  "Mek_inactive" = 0,"Mek_active" = 0, "Erk_inactive" = 0, "Erk_active" = 0)
 intervention_data <- observational_data
 
-for (i in 1:5000) {
+num_data_points = 5000 
+for (i in 1:num_data_points) {
   set.seed(i)
-  print(i)
-  times <- seq(0, 1.1, by = .1)
+  times <- seq(0, 1, by = .1)
   faster_rates <- lapply(rates, `*`, 20)
   
   stoc_transition_func <- gf_sde(initial_states, faster_rates,interventions = NULL)
@@ -283,26 +273,18 @@ for (i in 1:5000) {
   intervention_data <- rbind(intervention_data,sde_out[nrow(sde_out),])
 }
 
-setwd("/Users/sarataheri/GitHub/ode2scm/data")
-#saveRDS(intervention_data,"intervention_igf100.RData") 
-
-od <- readRDS("observational_igf100.RData")
-observational_data <- od
+#select only the active columns from observational data
 observational_data <- observational_data[,c("SOS_active","Ras_active","PI3K_active","AKT_active","Raf_active","Mek_active","Erk_active")]
-colnames(observational_data) <- c("SOS","Ras","PI3K","AKT","Raf","Mek","Erk")
-observational_data <- observational_data[-1,]
-rownames(observational_data) <- seq(1:5000)
-
-id <- readRDS("intervention_igf100.RData")
-intervention_data <- id
 intervention_data <- intervention_data[,c("SOS_active","Ras_active","PI3K_active","AKT_active","Raf_active","Mek_active","Erk_active")]
+#shorten the column names
+colnames(observational_data) <- c("SOS","Ras","PI3K","AKT","Raf","Mek","Erk")
 colnames(intervention_data) <- c("SOS","Ras","PI3K","AKT","Raf","Mek","Erk")
+#remove the first row as it contains all zeros
+observational_data <- observational_data[-1,]
 intervention_data <- intervention_data[-1,]
-rownames(intervention_data) <- seq(1:5000)
-
-
-write.csv(observational_data,"/Users/sarataheri/GitHub/ode2scm/data/observational_igf.csv")
-write.csv(intervention_data,"/Users/sarataheri/GitHub/ode2scm/data/intervention_igf.csv")
+#rearrange the order of row numbers to start from 1 instead of 2
+rownames(observational_data) <- seq(1:num_data_points)
+rownames(intervention_data) <- seq(1:num_data_points)
 
 #causal effect of do(Ras = 30) on Erk
 library(ggplot2)

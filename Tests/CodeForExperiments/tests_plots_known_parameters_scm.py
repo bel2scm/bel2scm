@@ -5,7 +5,7 @@
     for covid-19 graph.
 
 
-    Check Tests/code-for-experiments/test_plots_bel2scm.py
+    Check test_plots_bel2scm.py
     to see experiments that were used to generate data from bel2scm algorithms.
 
     All dataframes generated for this paper are in Tests/Data folder.
@@ -15,10 +15,12 @@ import torch
 from torch import tensor
 import sys
 import os
+
 sys.path.append(os.path.realpath('..'))
-from DataGenerationSCM.covid_sigmoid_scm_cf import SigmoidSCM
-from DataGenerationSCM.covid_sigmoid_scm_cf import scm_covid_counterfactual
+from Tests.DataGenerationSCM_for_covid.covid_sigmoid_scm_cf import SigmoidSCM
+from Tests.DataGenerationSCM_for_covid.covid_sigmoid_scm_cf import scm_covid_counterfactual
 import pandas as pd
+
 torch.manual_seed(23)
 
 
@@ -139,7 +141,7 @@ def main():
     noisy_samples = [covid_scm.noisy_model(noise) for _ in range(5000)]
     samples_df = pd.DataFrame(noisy_samples)
     samples_df.to_csv(
-        "C:/Users/somya/Documents/GitHub/bel2scm/Tests/Data/observational_samples_from_sigmoid_known_parameters.csv",
+        "../Data/observational_samples_from_sigmoid_known_parameters.csv",
         index=False)
 
     ### get observational samples from mutilated graph by intervening on TOCI
@@ -147,39 +149,43 @@ def main():
     noisy_samples_mutilated = [covid_scm_mutilated.noisy_mutilated_model(noise) for _ in range(5000)]
     samples_df_mutilated = pd.DataFrame(noisy_samples_mutilated)
     samples_df_mutilated.to_csv(
-        "C:/Users/somya/Documents/GitHub/bel2scm/Tests/Data/observational_samples_from_intervened_sigmoid_with_known_parameters.csv",
+        "../Data/observational_samples_from_intervened_sigmoid_with_known_parameters.csv",
         index=False)
-    
-## Comment the following out while running above functions
-## While running these two functions, comment out above functions
+###################################################################################################
+    ## Comment the following out while running above functions
+    ## While running these two functions, comment out above functions
     ### calculate causal effect from direct simulation
 
-    direct_causal_effect = pd.DataFrame()
-    direct_causal_effect['causal_effect'] = samples_df['a(cytokine)'] - samples_df_mutilated['a(cytokine)']
-    direct_causal_effect.to_csv("C:/Users/somya/Documents/GitHub/Tests/Data/causal_effect_from_direct_simulation", index=False)
+    # direct_causal_effect = pd.DataFrame()
+    # direct_causal_effect['causal_effect'] = samples_df['a(cytokine)'] - samples_df_mutilated['a(cytokine)']
+    # direct_causal_effect.to_csv("../Data/causal_effect_from_direct_simulation.csv",
+    #                             index=False)
 
-    ## get causal effect by conditioning on data point 1
-    out_dp1 = scm_covid_counterfactual(
-        betas,
-        max_abundance,
-        observation_datapoint_1,
-        intervention_data,
-        spike_width=1.0,
-        svi=True
-    )
-    out_df = pd.DataFrame(out_dp1)
-    out_df.to_csv("C:/Users/somya/Documents/GitHub/Tests/Data/causal_effect_sigmoid_with_known_parameters_datapoint1", index=False)
+    # ## get causal effect by conditioning on data point 1
+    # out_dp1 = scm_covid_counterfactual(
+    #     betas,
+    #     max_abundance,
+    #     observation_datapoint_1,
+    #     intervention_data,
+    #     spike_width=1.0,
+    #     svi=True
+    # )
+    # out_df = pd.DataFrame(out_dp1)
+    # out_df.to_csv("C:/Users/somya/Documents/GitHub/Tests/Data/causal_effect_sigmoid_with_known_parameters_datapoint1",
+    #               index=False)
+    #
+    # ## get causal effect by conditioning on data point 2
+    # out_dp2 = scm_covid_counterfactual(
+    #     betas,
+    #     max_abundance,
+    #     observation_datapoint_2,
+    #     intervention_data,
+    #     spike_width=1.0,
+    #     svi=True
+    # )
+    # out_df2 = pd.DataFrame(out_dp2)
+    # out_df2.to_csv("../Data/causal_effect_sigmoid_with_known_parameters_datapoint1",
+    #                index=False)
 
-    ## get causal effect by conditioning on data point 2
-    out_dp2 = scm_covid_counterfactual(
-        betas,
-        max_abundance,
-        observation_datapoint_2,
-        intervention_data,
-        spike_width=1.0,
-        svi=True
-    )
-    out_df2 = pd.DataFrame(out_dp2)
-    out_df2.to_csv("C:/Users/somya/Documents/GitHub/Tests/Data/causal_effect_sigmoid_with_known_parameters_datapoint1", index=False)
 
 main()

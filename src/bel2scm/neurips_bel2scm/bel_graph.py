@@ -1,7 +1,7 @@
 import json
 import pandas as pd
 
-from bel2scm.neurips_bel2scm.node import *
+from src.bel2scm.neurips_bel2scm.node import *
 
 
 # a generic function to take BEL statements as input

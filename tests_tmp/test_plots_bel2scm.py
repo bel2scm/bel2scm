@@ -31,9 +31,9 @@ class TestSCM(unittest.TestCase):
                     intervening on mek for igf graph using bel2scm algorithm
         """
 
-        bel_file_path = "BELSourceFiles/igf.json"
-        config_file_path = "Configs/COVID-19-config.json"
-        data_file_path = "Data/observational_igf.csv"
+        bel_file_path = "data/igf.json"
+        config_file_path = "data/COVID-19-config.json"
+        data_file_path = "data/observational_igf.csv"
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
 
@@ -51,17 +51,17 @@ class TestSCM(unittest.TestCase):
             for i in range(len(df)):
                 if torch.is_tensor(df[col][i]):
                     df[col][i] = df[col][i].item()
-        df2 = pd.read_csv("Data/bel2scm_samples_igf.csv")
+        df2 = pd.read_csv("data/bel2scm_samples_igf.csv")
         erk_diff = df["a(p(Erk))"] - df2["a(p(Erk))"]
-        erk_diff.to_csv("Data/erk_do_ras_30_minus_erk.csv")
-        df.to_csv("Data/intervention_samples_igf.csv")
+        erk_diff.to_csv("data/erk_do_ras_30_minus_erk.csv")
+        df.to_csv("data/intervention_samples_igf.csv")
         self.assertTrue(True, True)
 
     def test_igf_intervention_on_mek(self):
 
-        bel_file_path = "BELSourceFiles/igf.json"
-        config_file_path = "Configs/COVID-19-config.json"
-        data_file_path = "Data/observational_igf.csv"
+        bel_file_path = "data/igf.json"
+        config_file_path = "data/COVID-19-config.json"
+        data_file_path = "data/observational_igf.csv"
         output_pickle_object_file = "igf_scm.pkl"
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
@@ -81,19 +81,19 @@ class TestSCM(unittest.TestCase):
             for i in range(len(df)):
                 if torch.is_tensor(df[col][i]):
                     df[col][i] = df[col][i].item()
-        df2 = pd.read_csv("Data/bel2scm_samples_igf.csv")
+        df2 = pd.read_csv("data/bel2scm_samples_igf.csv")
         erk_diff = df["a(p(Erk))"] - df2["a(p(Erk))"]
-        erk_diff.to_csv("Data/erk_do_mek_40_minus_erk.csv")
-        df.to_csv("Data/intervention_mek_40_samples_igf.csv")
+        erk_diff.to_csv("data/erk_do_mek_40_minus_erk.csv")
+        df.to_csv("data/intervention_mek_40_samples_igf.csv")
         self.assertTrue(True, True)
 
     def test_covid_causal_effect_with_estimated_parameters_datapoint1(self):
 
         torch.manual_seed(23)
         time1 = time.time()
-        bel_file_path = "BELSourceFiles/covid_input.json"
-        config_file_path = "Configs/COVID-19-config.json"
-        data_file_path = "Data/observational_samples_from_sigmoid_known_parameters.csv"
+        bel_file_path = "data/covid_input.json"
+        config_file_path = "data/COVID-19-config.json"
+        data_file_path = "data/observational_samples_from_sigmoid_known_parameters.csv"
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
         condition_data = {
@@ -123,15 +123,15 @@ class TestSCM(unittest.TestCase):
                                                                                 target, True)
         print("time required for causal effects", time.time() - time1)
         samples_df = pd.DataFrame(causal_effects1)
-        samples_df.to_csv("Data/causal_effect_sigmoid_with_estimated_parameters_datapoint1.csv", index=False)
+        samples_df.to_csv("data/causal_effect_sigmoid_with_estimated_parameters_datapoint1.csv", index=False)
 
     def test_covid_causal_effect_with_estimated_parameters_datapoint2(self):
 
         torch.manual_seed(23)
         time1 = time.time()
-        bel_file_path = "BELSourceFiles/covid_input.json"
-        config_file_path = "Configs/COVID-19-config.json"
-        data_file_path = "Data/observational_samples_from_sigmoid_known_parameters.csv"
+        bel_file_path = "data/covid_input.json"
+        config_file_path = "data/COVID-19-config.json"
+        data_file_path = "data/observational_samples_from_sigmoid_known_parameters.csv"
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
         condition_data = {
@@ -161,7 +161,7 @@ class TestSCM(unittest.TestCase):
                                                                                 target, True)
         print("time required for causal effects", time.time() - time1)
         samples_df = pd.DataFrame(causal_effects1)
-        samples_df.to_csv("Data/causal_effect_sigmoid_with_estimated_parameters_datapoint2.csv", index=False)
+        samples_df.to_csv("data/causal_effect_sigmoid_with_estimated_parameters_datapoint2.csv", index=False)
 
 
 if __name__ == '__main__':

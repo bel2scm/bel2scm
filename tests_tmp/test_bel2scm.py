@@ -11,15 +11,13 @@ import numpy as np
 from torch import tensor
 
 HERE = os.path.abspath(os.path.dirname(__file__))
-BEL = os.path.join(HERE, 'BELSourceFiles')
-CONFIGS = os.path.join(HERE, 'Configs')
-DATA = os.path.join(HERE, 'Data')
+DATA = os.path.join(HERE, 'data')
 
 class TestSCM(unittest.TestCase):
 
     def test_mapk_erk_samples(self):
-        bel_file_path = os.path.join(BEL, "mapk.json")
-        config_file_path = os.path.join(CONFIGS, "COVID-19-config.json")
+        bel_file_path = os.path.join(DATA, "mapk.json")
+        config_file_path = os.path.join(DATA, "COVID-19-config.json")
         data_file_path = os.path.join(DATA, "mapk3000.csv")
         # output_pickle_object_file = os.path.join(HERE, "../mapk_scm.pkl"
 
@@ -41,8 +39,8 @@ class TestSCM(unittest.TestCase):
     def test_igf(self):
         torch.manual_seed(101)
 
-        bel_file_path = os.path.join(BEL, "igf.json")
-        config_file_path = os.path.join(CONFIGS, "COVID-19-config.json")
+        bel_file_path = os.path.join(DATA, "igf.json")
+        config_file_path = os.path.join(DATA, "COVID-19-config.json")
         data_file_path = os.path.join(DATA, "observational_igf.csv")
         # output_pickle_object_file = "../../igf_scm.pkl"
 
@@ -60,8 +58,8 @@ class TestSCM(unittest.TestCase):
     def test_igf_intervention_on_ras(self):
         torch.manual_seed(101)
 
-        bel_file_path = os.path.join(BEL, "igf.json")
-        config_file_path = os.path.join(CONFIGS, "COVID-19-config.json")
+        bel_file_path = os.path.join(DATA, "igf.json")
+        config_file_path = os.path.join(DATA, "COVID-19-config.json")
         data_file_path = os.path.join(DATA, "observational_igf.csv")
         output_pickle_object_file = "../../../igf_scm.pkl"
 
@@ -90,8 +88,8 @@ class TestSCM(unittest.TestCase):
     def test_igf_intervention_on_mek(self):
         torch.manual_seed(23)
 
-        bel_file_path = os.path.join(BEL, "igf.json")
-        config_file_path = os.path.join(CONFIGS, "COVID-19-config.json")
+        bel_file_path = os.path.join(DATA, "igf.json")
+        config_file_path = os.path.join(DATA, "COVID-19-config.json")
         data_file_path = os.path.join(DATA, "observational_igf.csv")
         output_pickle_object_file = "../../../igf_scm.pkl"
 
@@ -128,8 +126,8 @@ class TestSCM(unittest.TestCase):
     def test_covid(self):
         torch.manual_seed(23)
 
-        bel_file_path = os.path.join(BEL, "covid_input.json")
-        config_file_path = os.path.join(CONFIGS, "COVID-19-config.json")
+        bel_file_path = os.path.join(DATA, "covid_input.json")
+        config_file_path = os.path.join(DATA, "COVID-19-config.json")
         data_file_path = os.path.join(DATA, "observational_samples_from_sigmoid_known_parameters.csv")
         output_pickle_object_file = "../../../covid_scm.pkl"
 
@@ -148,8 +146,8 @@ class TestSCM(unittest.TestCase):
     def test_covid_direct_simulation_causal_effect(self):
         torch.manual_seed(23)
         time1 = time.time()
-        bel_file_path = os.path.join(BEL, "covid_input.json")
-        config_file_path = os.path.join(CONFIGS, "COVID-19-config.json")
+        bel_file_path = os.path.join(DATA, "covid_input.json")
+        config_file_path = os.path.join(DATA, "COVID-19-config.json")
         data_file_path = os.path.join(DATA, "observational_samples_from_sigmoid_known_parameters.csv")
         scm = SCM(bel_file_path, config_file_path, data_file_path)
 
@@ -174,8 +172,8 @@ class TestSCM(unittest.TestCase):
     def test_covid_noisy_model_samples(self):
         torch.manual_seed(23)
         time1 = time.time()
-        bel_file_path = os.path.join(BEL, "covid_input.json")
-        config_file_path = os.path.join(CONFIGS, "COVID-19-config.json")
+        bel_file_path = os.path.join(DATA, "covid_input.json")
+        config_file_path = os.path.join(DATA, "COVID-19-config.json")
         data_file_path = os.path.join(DATA, "covid_noisy_reparameterized_data.csv")
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
@@ -187,8 +185,8 @@ class TestSCM(unittest.TestCase):
     def test_covid_toci0_mm_causal_effect(self):
         torch.manual_seed(23)
         time1 = time.time()
-        bel_file_path = os.path.join(BEL, "covid_input.json")
-        config_file_path = os.path.join(CONFIGS, "COVID-19-config.json")
+        bel_file_path = os.path.join(DATA, "covid_input.json")
+        config_file_path = os.path.join(DATA, "COVID-19-config.json")
         data_file_path = os.path.join(DATA, "observational_samples_from_sigmoid_known_parameters.csv")
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
@@ -239,8 +237,8 @@ class TestSCM(unittest.TestCase):
 
     def test_covid_toci0_bel2scm_causal_effect(self):
         torch.manual_seed(23)
-        bel_file_path = os.path.join(BEL, "covid_input.json")
-        config_file_path = os.path.join(CONFIGS, "COVID-19-config.json")
+        bel_file_path = os.path.join(DATA, "covid_input.json")
+        config_file_path = os.path.join(DATA, "COVID-19-config.json")
         data_file_path = os.path.join(DATA, "observational_samples_from_sigmoid_known_parameters.csv")
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)

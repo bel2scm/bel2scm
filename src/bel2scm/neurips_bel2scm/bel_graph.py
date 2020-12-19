@@ -1,6 +1,6 @@
 import json
 import pandas as pd
-
+import os
 from bel2scm.neurips_bel2scm.node import *
 
 
@@ -200,22 +200,21 @@ class BelGraph:
         Returns: node_data dictionary <str,
 
         """
-        try:
-            data = pd.read_csv(self.data_file_path)
-        except:
-            raise Exception("Data file not found!")
+        if not os.path.exists(self.data_file_path):
+            raise FileNotFoundError(self.data_file_path)
 
+        data = pd.read_csv(self.data_file_path)
         data_headers = data.columns.tolist()
 
         for node_str, node in self.nodes.items():
-            if node_str in data_headers:
-                if node.root:
-                    features = pd.DataFrame()
-                    target = self._get_single_node_data(node, data)
-                else:
-                    features, target = self._get_non_root_data(node, data)
+            if node_str not in data_headers:
+                raise KeyError(f"{node_str} not in BEL Graph headers: {data_headers}")
+
+            if node.root:
+                features = pd.DataFrame()
+                target = self._get_single_node_data(node, data)
             else:
-                raise Exception("Invalid data! Some columns are not in the bel graph.")
+                features, target = self._get_non_root_data(node, data)
 
             self.node_data[node_str] = {
                 "features": features,

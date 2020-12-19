@@ -1,5 +1,20 @@
 # bel2scm
 
+<p>
+<a href="https://github.com/bel2scm/bel2scm/actions?query=workflow%3ATests">
+    <img alt="GitHub Actions" src="https://github.com/bel2scm/bel2scm/workflows/Tests/badge.svg" />
+</a>
+<a href="https://pypi.org/project/bel2scm">
+    <img alt="PyPI" src="https://img.shields.io/pypi/v/bel2scm" />
+</a>
+<a href="https://pypi.org/project/bel2scm">
+    <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/bel2scm" />
+</a>
+<a href="https://github.com/bel2scm/bel2scm/blob/main/LICENSE">
+    <img alt="PyPI - License" src="https://img.shields.io/pypi/l/bel2scm" />
+</a>
+</p>
+
 This package is for creating Structural Causal Models (SCMs) in Pyro and evaluating various conditions with those
 models.
 

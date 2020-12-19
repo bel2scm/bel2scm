@@ -367,7 +367,7 @@ def scm_covid_counterfactual(
         updated_noise = gf_scm.update_noise_importance(observation, noise)
     counterfactual_model = do(gf_scm.model, ras_intervention)
     cf_posterior = gf_scm.infer(counterfactual_model, updated_noise)
-    cf_cytokine_marginal = EmpiricalMarginal(cf_posterior, sites='cytokine')
+    cf_cytokine_marginal = EmpiricalMarginal(cf_posterior, sites=['cytokine'])
     scm_causal_effect_samples = [
         observation['cytokine'] - float(cf_cytokine_marginal.sample())
         for _ in range(5000)

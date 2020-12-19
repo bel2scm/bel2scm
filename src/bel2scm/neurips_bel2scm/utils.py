@@ -172,6 +172,7 @@ def get_child_name_list(children_info, node_list):
     node_list.extend(child_name_list)
     return node_list
 
+
 def save_scm_object(pkl_file_path, scm):
     """
     Serialize SCM object to a pickle file
@@ -179,9 +180,8 @@ def save_scm_object(pkl_file_path, scm):
         pkl_file_path: str
         scm: SCM()
     """
-    pickle_out = open(pkl_file_path, "wb")
-    pickle.dump(scm, pickle_out)
-    pickle_out.close()
+    with open(pkl_file_path, "wb") as file:
+        pickle.dump(scm, file, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def load_scm_object(pkl_file_path):
@@ -193,8 +193,8 @@ def load_scm_object(pkl_file_path):
     Returns: SCM()
 
     """
-    pickle_in = open(pkl_file_path, "rb")
-    return pickle.load(pickle_in)
+    with open(pkl_file_path, "rb") as file:
+        return pickle.load(file)
 
 
 # def sample_gumbel(shape, eps=1e-20):

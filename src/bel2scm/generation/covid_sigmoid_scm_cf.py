@@ -12,8 +12,13 @@ from scipy.special import expit
 from torch import tensor
 from torch.optim import SGD
 
+__all__ = [
+    'SigmoidSCM',
+    'scm_covid_counterfactual',
+]
 
-class SigmoidSCM():
+
+class SigmoidSCM:
     def __init__(self, betas, max_abundance, spike_width):
         # dictionary of w and b for each node
         self.betas = betas

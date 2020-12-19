@@ -10,13 +10,17 @@ from pyro.infer import EmpiricalMarginal, Importance, SVI, Trace_ELBO
 from torch import tensor
 from torch.optim import SGD
 
+__all__ = [
+    'COVID_SCM',
+    'scm_covid_counterfactual',
+]
 
 
 def percentage_in(a: float, b: float) -> float:
     return a / (a + b)
 
 
-class COVID_SCM():
+class COVID_SCM:
     def __init__(self, rates, totals, spike_width):
         self.rates = rates
         self.totals = totals

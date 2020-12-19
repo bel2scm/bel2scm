@@ -1,5 +1,5 @@
 import unittest
-
+import os
 from bel2scm.neurips_bel2scm.scm import SCM
 from bel2scm.neurips_bel2scm.utils import json_load
 from bel2scm.neurips_bel2scm.utils import save_scm_object
@@ -10,13 +10,18 @@ import time
 import numpy as np
 from torch import tensor
 
+HERE = os.path.abspath(os.path.dirname(__file__))
+BEL = os.path.join(HERE, 'BELSourceFiles')
+CONFIGS = os.path.join(HERE, 'Configs')
+DATA = os.path.join(HERE, 'Data')
+
 class TestSCM(unittest.TestCase):
 
     def test_mapk_erk_samples(self):
-        bel_file_path = "../BELSourceFiles/mapk.json"
-        config_file_path = "../Configs/COVID-19-config.json"
-        data_file_path = "../Data/mapk3000.csv"
-        # output_pickle_object_file = "../../mapk_scm.pkl"
+        bel_file_path = os.path.join(BEL, "mapk.json")
+        config_file_path = os.path.join(CONFIGS, "COVID-19-config.json")
+        data_file_path = os.path.join(DATA, "mapk3000.csv")
+        # output_pickle_object_file = os.path.join(HERE, "../mapk_scm.pkl"
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
         exogenous_noise = scm.exogenous_dist_dict
@@ -36,9 +41,9 @@ class TestSCM(unittest.TestCase):
     def test_igf(self):
         torch.manual_seed(101)
 
-        bel_file_path = "../BELSourceFiles/igf.json"
-        config_file_path = "../Configs/COVID-19-config.json"
-        data_file_path = "../Data/observational_igf.csv"
+        bel_file_path = os.path.join(BEL, "igf.json")
+        config_file_path = os.path.join(CONFIGS, "COVID-19-config.json")
+        data_file_path = os.path.join(DATA, "observational_igf.csv")
         # output_pickle_object_file = "../../igf_scm.pkl"
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
@@ -50,18 +55,14 @@ class TestSCM(unittest.TestCase):
             for i in range(len(df)):
                 if torch.is_tensor(df[col][i]):
                     df[col][i] = df[col][i].item()
-        df.to_csv("../Data/bel2scm_samples_igf.csv")
-        self.assertTrue(True, True)
+        df.to_csv(os.path.join(DATA, "bel2scm_samples_igf.csv"))
 
     def test_igf_intervention_on_ras(self):
-
-        import torch
         torch.manual_seed(101)
-        import pandas as pd
 
-        bel_file_path = "../BELSourceFiles/igf.json"
-        config_file_path = "../Configs/COVID-19-config.json"
-        data_file_path = "../Data/observational_igf.csv"
+        bel_file_path = os.path.join(BEL, "igf.json")
+        config_file_path = os.path.join(CONFIGS, "COVID-19-config.json")
+        data_file_path = os.path.join(DATA, "observational_igf.csv")
         output_pickle_object_file = "../../../igf_scm.pkl"
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
@@ -81,18 +82,17 @@ class TestSCM(unittest.TestCase):
             for i in range(len(df)):
                 if torch.is_tensor(df[col][i]):
                     df[col][i] = df[col][i].item()
-        df2 = pd.read_csv("../Data/bel2scm_samples_igf.csv")
+        df2 = pd.read_csv(os.path.join(DATA, "bel2scm_samples_igf.csv"))
         erk_diff = df["a(p(Erk))"] - df2["a(p(Erk))"]
-        erk_diff.to_csv("../Data/erk_do_ras_30_minus_erk.csv")
-        df.to_csv("../Data/intervention_samples_igf.csv")
-        self.assertTrue(True, True)
+        erk_diff.to_csv(os.path.join(DATA, "erk_do_ras_30_minus_erk.csv"))
+        df.to_csv(os.path.join(DATA, "intervention_samples_igf.csv"))
 
     def test_igf_intervention_on_mek(self):
         torch.manual_seed(23)
 
-        bel_file_path = "../BELSourceFiles/igf.json"
-        config_file_path = "../Configs/COVID-19-config.json"
-        data_file_path = "../Data/observational_igf.csv"
+        bel_file_path = os.path.join(BEL, "igf.json")
+        config_file_path = os.path.join(CONFIGS, "COVID-19-config.json")
+        data_file_path = os.path.join(DATA, "observational_igf.csv")
         output_pickle_object_file = "../../../igf_scm.pkl"
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
@@ -112,27 +112,25 @@ class TestSCM(unittest.TestCase):
             for i in range(len(df)):
                 if torch.is_tensor(df[col][i]):
                     df[col][i] = df[col][i].item()
-        df2 = pd.read_csv("../Data/bel2scm_samples_igf.csv")
+        df2 = pd.read_csv(os.path.join(DATA, "bel2scm_samples_igf.csv"))
         erk_diff = df["a(p(Erk))"] - df2["a(p(Erk))"]
-        erk_diff.to_csv("../Data/erk_do_mek_40_minus_erk.csv")
-        df.to_csv("../Data/intervention_mek_40_samples_igf.csv")
-        self.assertTrue(True, True)
+        erk_diff.to_csv(os.path.join(DATA, "erk_do_mek_40_minus_erk.csv"))
+        df.to_csv(os.path.join(DATA, "intervention_mek_40_samples_igf.csv"))
 
     def test_error_with_sde(self):
-        df_bel = pd.read_csv("../Data/intervention_samples_igf.csv")
-        df_sde = pd.read_csv("../Data/intervention_igf.csv")
+        df_bel = pd.read_csv(os.path.join(DATA, "intervention_samples_igf.csv"))
+        df_sde = pd.read_csv(os.path.join(DATA, "intervention_igf.csv"))
         errors = {}
         for col in range(len(df_sde.columns)):
             errors[df_sde.columns[col]] = df_sde[df_sde.columns[col]].mean() - df_bel[df_bel.columns[col]].mean()
         print(errors)
-        self.assertTrue(True, True)
 
     def test_covid(self):
         torch.manual_seed(23)
 
-        bel_file_path = "../BELSourceFiles/covid_input.json"
-        config_file_path = "../Configs/COVID-19-config.json"
-        data_file_path = "../Data/observational_samples_from_sigmoid_known_parameters.csv"
+        bel_file_path = os.path.join(BEL, "covid_input.json")
+        config_file_path = os.path.join(CONFIGS, "COVID-19-config.json")
+        data_file_path = os.path.join(DATA, "observational_samples_from_sigmoid_known_parameters.csv")
         output_pickle_object_file = "../../../covid_scm.pkl"
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
@@ -143,16 +141,16 @@ class TestSCM(unittest.TestCase):
             for i in range(len(df)):
                 if torch.is_tensor(df[col][i]):
                     df[col][i] = df[col][i].item()
-        df.to_csv("../Data/bel2scm_samples_covid.csv")
+        df.to_csv(os.path.join(DATA, "bel2scm_samples_covid.csv"))
         save_scm_object(output_pickle_object_file, scm)
         # Add loading and saving from pkl to utils
 
     def test_covid_direct_simulation_causal_effect(self):
         torch.manual_seed(23)
         time1 = time.time()
-        bel_file_path = "../BELSourceFiles/covid_input.json"
-        config_file_path = "../Configs/COVID-19-config.json"
-        data_file_path = "../Data/observational_samples_from_sigmoid_known_parameters.csv"
+        bel_file_path = os.path.join(BEL, "covid_input.json")
+        config_file_path = os.path.join(CONFIGS, "COVID-19-config.json")
+        data_file_path = os.path.join(DATA, "observational_samples_from_sigmoid_known_parameters.csv")
         scm = SCM(bel_file_path, config_file_path, data_file_path)
 
         exogenous_noise = scm.exogenous_dist_dict
@@ -168,31 +166,30 @@ class TestSCM(unittest.TestCase):
             for i in range(len(df)):
                 if torch.is_tensor(df[col][i]):
                     df[col][i] = df[col][i].item()
-        df2 = pd.read_csv("../Data/bel2scm_samples_covid.csv")
+        df2 = pd.read_csv(os.path.join(DATA, "bel2scm_samples_covid.csv"))
         cytokine_diff = df["a(cytokine)"] - df2["a(cytokine)"]
-        cytokine_diff.to_csv("../Data/cytokine_do_toci_0_minus_cytokine.csv")
-        df.to_csv("../Data/intervention_toci_0_samples_covid.csv")
-        self.assertTrue(True, True)
+        cytokine_diff.to_csv(os.path.join(DATA, "cytokine_do_toci_0_minus_cytokine.csv"))
+        df.to_csv(os.path.join(DATA, "intervention_toci_0_samples_covid.csv"))
 
     def test_covid_noisy_model_samples(self):
         torch.manual_seed(23)
         time1 = time.time()
-        bel_file_path = "../BELSourceFiles/covid_input.json"
-        config_file_path = "../Configs/COVID-19-config.json"
-        data_file_path = "../Data/covid_noisy_reparameterized_data.csv"
+        bel_file_path = os.path.join(BEL, "covid_input.json")
+        config_file_path = os.path.join(CONFIGS, "COVID-19-config.json")
+        data_file_path = os.path.join(DATA, "covid_noisy_reparameterized_data.csv")
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
 
         exogenous_noise = scm.exogenous_dist_dict
         samples = torch.tensor([list(scm.model(exogenous_noise).values()) for _ in range(5500)]).detach().numpy()
-        np.savetxt("../Data/covid_bel2scm_noisy_reparameterized_samples.csv", samples, delimiter=',')
+        np.savetxt(os.path.join(DATA, "covid_bel2scm_noisy_reparameterized_samples.csv"), samples, delimiter=',')
 
     def test_covid_toci0_mm_causal_effect(self):
         torch.manual_seed(23)
         time1 = time.time()
-        bel_file_path = "../BELSourceFiles/covid_input.json"
-        config_file_path = "../Configs/COVID-19-config.json"
-        data_file_path = "../Data/observational_samples_from_sigmoid_known_parameters.csv"
+        bel_file_path = os.path.join(BEL, "covid_input.json")
+        config_file_path = os.path.join(CONFIGS, "COVID-19-config.json")
+        data_file_path = os.path.join(DATA, "observational_samples_from_sigmoid_known_parameters.csv")
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
         condition_data = {
@@ -238,13 +235,13 @@ class TestSCM(unittest.TestCase):
                                                                                 target, True)
         print("time required for causal effects", time.time() - time1)
         samples_df = pd.DataFrame(causal_effects1)
-        samples_df.to_csv("../Data/causal_effect_MM_bel2scm.csv", index=False)
+        samples_df.to_csv(os.path.join(DATA, "causal_effect_MM_bel2scm.csv"), index=False)
 
     def test_covid_toci0_bel2scm_causal_effect(self):
         torch.manual_seed(23)
-        bel_file_path = "../BELSourceFiles/covid_input.json"
-        config_file_path = "../Configs/COVID-19-config.json"
-        data_file_path = "../Data/observational_samples_from_sigmoid_known_parameters.csv"
+        bel_file_path = os.path.join(BEL, "covid_input.json")
+        config_file_path = os.path.join(CONFIGS, "COVID-19-config.json")
+        data_file_path = os.path.join(DATA, "observational_samples_from_sigmoid_known_parameters.csv")
 
         scm = SCM(bel_file_path, config_file_path, data_file_path)
         condition_data = {
@@ -288,7 +285,7 @@ class TestSCM(unittest.TestCase):
         causal_effects1, counterfactual_samples1 = scm.counterfactual_inference(condition_data, intervention_data,
                                                                                 target, True)
         samples_df = pd.DataFrame(causal_effects1)
-        samples_df.to_csv("../Data/causal_effect_bel2scm_hardcoded_sigmoid_moderately_ill.csv", index=False)
+        samples_df.to_csv(os.path.join(DATA, "causal_effect_bel2scm_hardcoded_sigmoid_moderately_ill.csv"), index=False)
 
 
 if __name__ == '__main__':

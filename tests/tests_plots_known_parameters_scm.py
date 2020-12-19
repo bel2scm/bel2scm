@@ -140,7 +140,7 @@ def main():
     noisy_samples = [covid_scm.noisy_model(noise) for _ in range(5000)]
     samples_df = pd.DataFrame(noisy_samples)
     samples_df.to_csv(
-        "../Data/observational_samples_from_sigmoid_known_parameters.csv",
+        "Data/observational_samples_from_sigmoid_known_parameters.csv",
         index=False)
 
     ### get observational samples from mutilated graph by intervening on TOCI
@@ -148,7 +148,7 @@ def main():
     noisy_samples_mutilated = [covid_scm_mutilated.noisy_mutilated_model(noise) for _ in range(5000)]
     samples_df_mutilated = pd.DataFrame(noisy_samples_mutilated)
     samples_df_mutilated.to_csv(
-        "../Data/observational_samples_from_intervened_sigmoid_with_known_parameters.csv",
+        "Data/observational_samples_from_intervened_sigmoid_with_known_parameters.csv",
         index=False)
 ###################################################################################################
     ## Comment the following out while running above functions
@@ -157,7 +157,7 @@ def main():
 
     # direct_causal_effect = pd.DataFrame()
     # direct_causal_effect['causal_effect'] = samples_df['a(cytokine)'] - samples_df_mutilated['a(cytokine)']
-    # direct_causal_effect.to_csv("../Data/causal_effect_from_direct_simulation.csv",
+    # direct_causal_effect.to_csv("Data/causal_effect_from_direct_simulation.csv",
     #                             index=False)
 
     # ## get causal effect by conditioning on data point 1
@@ -183,8 +183,9 @@ def main():
     #     svi=True
     # )
     # out_df2 = pd.DataFrame(out_dp2)
-    # out_df2.to_csv("../Data/causal_effect_sigmoid_with_known_parameters_datapoint1",
+    # out_df2.to_csv("Data/causal_effect_sigmoid_with_known_parameters_datapoint1",
     #                index=False)
 
 
-main()
+if __name__ == '__main__':
+    main()

@@ -33,40 +33,6 @@ class TestSCM(unittest.TestCase):
         self.assertTrue(True)
 
 
-    def test_mapk_counterfactual(self):
-        torch.manual_seed(23)
-        time1 = time.time()
-        bel_file_path = "../BELSourceFiles/mapk.json"
-        config_file_path = "../Configs/COVID-19-config.json"
-        data_file_path = "../Data/mapk3000.csv"
-
-        scm = SCM(bel_file_path, config_file_path, data_file_path)
-
-        exogenous_noise = scm.exogenous_dist_dict
-        condition_data = scm.model(exogenous_noise)
-        print(condition_data)
-        self.assertTrue(True)
-        target = "a(p(Erk))"
-        intervention_data = {
-            "a(p(Mek))": 60.0
-        }
-
-        erk_causal_effects, counterfactual_samples1 = scm.counterfactual_inference(condition_data, intervention_data,
-                                                                                   target, True)
-        print(counterfactual_samples1)
-        new_list = [x.cpu().detach().numpy() for x in counterfactual_samples1]
-        print("Counterfactual Erk when Mek = 60:: Mean", np.mean(new_list), np.std(new_list))
-
-        intervention_data2 = {
-            "a(p(Mek))": 80.0
-        }
-        _, counterfactual_samples2 = scm.counterfactual_inference(condition_data, intervention_data2,
-                                                                  target, True)
-        print(counterfactual_samples2)
-        new_list2 = [x.cpu().detach().numpy() for x in counterfactual_samples2]
-        print("Counterfactual Erk when Mek = 80:: Mean", np.mean(new_list2), np.std(new_list2))
-        print("total time taken to run this experiment is ", time.time() - time1)
-
     def test_igf(self):
         torch.manual_seed(101)
 

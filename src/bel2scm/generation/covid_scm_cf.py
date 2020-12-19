@@ -394,7 +394,7 @@ class COVID_SCM():
         svi = SVI(
             model=observation_model,
             guide=guide,
-            optim=SGD({"lr": 0.001, "momentum": 0.1}),
+            optim=SGD(**{"lr": 0.001, "momentum": 0.1}),
             loss=Trace_ELBO()
         )
 

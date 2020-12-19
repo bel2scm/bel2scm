@@ -1,16 +1,16 @@
+import statistics
 from collections import defaultdict
 from functools import partial
-from torch import tensor
 
-import statistics
-import pyro
-from pyro import condition, do, sample
-from torch.optim import SGD
-import torch.distributions.constraints as constraints
-import torch
-from pyro.distributions import Normal, Delta
-from pyro.infer import EmpiricalMarginal, Importance, SVI, Trace_ELBO
 import numpy as np
+import pyro
+import torch
+import torch.distributions.constraints as constraints
+from pyro import condition, do, sample
+from pyro.distributions import Delta, Normal
+from pyro.infer import EmpiricalMarginal, Importance, SVI, Trace_ELBO
+from torch import tensor
+from torch.optim import SGD
 
 
 def sigmoid(x):
@@ -117,7 +117,7 @@ class SigmoidSCM():
             N_PRR = sample('N_PRR', Normal(noise['N_PRR'][0], noise['N_PRR'][1]))
             N_AngII = sample('N_AngII', Normal(noise['N_AngII'][0], noise['N_AngII'][1]))
             N_AGTR1 = sample('N_AGTR1', Normal(noise['N_AGTR1'][0], noise['N_AGTR1'][1]))
-            N_ADAM17 = sample('N_ADAM17',Normal(noise['N_ADAM17'][0], noise['N_ADAM17'][1]))
+            N_ADAM17 = sample('N_ADAM17', Normal(noise['N_ADAM17'][0], noise['N_ADAM17'][1]))
             N_sIL_6_alpha = sample('N_sIL_6_alpha', Normal(noise['N_sIL_6_alpha'][0], noise['N_sIL_6_alpha'][1]))
             N_TNF = sample('N_TNF', Normal(noise['N_TNF'][0], noise['N_TNF'][1]))
             N_EGF = sample('N_EGF', Normal(noise['N_EGF'][0], noise['N_EGF'][1]))
@@ -156,7 +156,7 @@ class SigmoidSCM():
             ## Use the variable list for generating samples for causal effect
             ## comment the dictionary for that
             samples = SARS_COV2, PRR, ACE2, AngII, AGTR1, ADAM17, TOCI, TNF, sIL_6_alpha, EGF, EGFR, NF_xB, \
-                    IL6_STAT3, IL_6_AMP, cytokine
+                      IL6_STAT3, IL_6_AMP, cytokine
             return samples, noise_samples
 
         Spike = partial(Normal, scale=tensor(self.spike_width))
@@ -168,7 +168,7 @@ class SigmoidSCM():
             N_PRR = sample('N_PRR', Normal(noise['N_PRR'][0], noise['N_PRR'][1]))
             N_AngII = sample('N_AngII', Normal(noise['N_AngII'][0], noise['N_AngII'][1]))
             N_AGTR1 = sample('N_AGTR1', Normal(noise['N_AGTR1'][0], noise['N_AGTR1'][1]))
-            N_ADAM17 = sample('N_ADAM17',Normal(noise['N_ADAM17'][0], noise['N_ADAM17'][1]))
+            N_ADAM17 = sample('N_ADAM17', Normal(noise['N_ADAM17'][0], noise['N_ADAM17'][1]))
             N_sIL_6_alpha = sample('N_sIL_6_alpha', Normal(noise['N_sIL_6_alpha'][0], noise['N_sIL_6_alpha'][1]))
             N_TNF = sample('N_TNF', Normal(noise['N_TNF'][0], noise['N_TNF'][1]))
             N_EGF = sample('N_EGF', Normal(noise['N_EGF'][0], noise['N_EGF'][1]))
@@ -177,7 +177,6 @@ class SigmoidSCM():
             N_NF_xB = sample('N_NF_xB', Normal(noise['N_NF_xB'][0], noise['N_NF_xB'][1]))
             N_IL_6_AMP = sample('N_IL_6_AMP', Normal(noise['N_IL_6_AMP'][0], noise['N_IL_6_AMP'][1]))
             N_cytokine = sample('N_cytokine', Normal(noise['N_cytokine'][0], noise['N_cytokine'][1]))
-
 
             SARS_COV2 = sample('SARS_COV2', Normal(f_SARS_COV2(50, 10, N_SARS_COV2), 1.0))
             TOCI = sample('TOCI', Normal(f_TOCI(50, 10, N_TOCI), 1.0))
@@ -207,7 +206,7 @@ class SigmoidSCM():
             ## Use the variable list for generating samples for causal effect
             ## comment the dictionary for that
             samples = SARS_COV2, PRR, ACE2, AngII, AGTR1, ADAM17, TOCI, TNF, sIL_6_alpha, EGF, EGFR, NF_xB, \
-                    IL6_STAT3, IL_6_AMP, cytokine
+                      IL6_STAT3, IL_6_AMP, cytokine
             return samples
 
         def noisy_mutilated_model(noise):
@@ -217,7 +216,7 @@ class SigmoidSCM():
             N_PRR = sample('N_PRR', Normal(noise['N_PRR'][0], noise['N_PRR'][1]))
             N_AngII = sample('N_AngII', Normal(noise['N_AngII'][0], noise['N_AngII'][1]))
             N_AGTR1 = sample('N_AGTR1', Normal(noise['N_AGTR1'][0], noise['N_AGTR1'][1]))
-            N_ADAM17 = sample('N_ADAM17',Normal(noise['N_ADAM17'][0], noise['N_ADAM17'][1]))
+            N_ADAM17 = sample('N_ADAM17', Normal(noise['N_ADAM17'][0], noise['N_ADAM17'][1]))
             N_sIL_6_alpha = sample('N_sIL_6_alpha', Normal(noise['N_sIL_6_alpha'][0], noise['N_sIL_6_alpha'][1]))
             N_TNF = sample('N_TNF', Normal(noise['N_TNF'][0], noise['N_TNF'][1]))
             N_EGF = sample('N_EGF', Normal(noise['N_EGF'][0], noise['N_EGF'][1]))
@@ -226,7 +225,6 @@ class SigmoidSCM():
             N_NF_xB = sample('N_NF_xB', Normal(noise['N_NF_xB'][0], noise['N_NF_xB'][1]))
             N_IL_6_AMP = sample('N_IL_6_AMP', Normal(noise['N_IL_6_AMP'][0], noise['N_IL_6_AMP'][1]))
             N_cytokine = sample('N_cytokine', Normal(noise['N_cytokine'][0], noise['N_cytokine'][1]))
-
 
             SARS_COV2 = sample('SARS_COV2', Normal(f_SARS_COV2(50, 10, N_SARS_COV2), 1.0))
             TOCI = sample('TOCI', Delta(tensor(0.0)))
@@ -244,13 +242,14 @@ class SigmoidSCM():
             IL_6_AMP = sample('IL_6_AMP', Spike(f_IL_6_AMP(NF_xB, IL6_STAT3, N_IL_6_AMP)))
             cytokine = sample('cytokine', Spike(f_cytokine(IL_6_AMP, N_cytokine)))
 
-            samples = {'a(SARS_COV2)': SARS_COV2.numpy(), 'a(PRR)': PRR.numpy(), 'a(ACE2)': ACE2.numpy(),
-                       'a(AngII)': AngII.numpy(), 'a(AGTR1)': AGTR1.numpy(), 'a(ADAM17)': ADAM17.numpy(),
-                       'a(TOCI)': TOCI.numpy(), 'a(TNF)': TNF.numpy(), 'a(sIL_6_alpha)': sIL_6_alpha.numpy(),
-                       'a(EGF)': EGF.numpy(), 'a(EGFR)': EGFR.numpy(), 'a(IL6_STAT3)': IL6_STAT3.numpy(),
-                       'a(NF_xB)': NF_xB.numpy(), 'a(IL6_AMP)': IL_6_AMP.numpy(), 'a(cytokine)': cytokine.numpy()}
+            samples = {
+                'a(SARS_COV2)': SARS_COV2.numpy(), 'a(PRR)': PRR.numpy(), 'a(ACE2)': ACE2.numpy(),
+                'a(AngII)': AngII.numpy(), 'a(AGTR1)': AGTR1.numpy(), 'a(ADAM17)': ADAM17.numpy(),
+                'a(TOCI)': TOCI.numpy(), 'a(TNF)': TNF.numpy(), 'a(sIL_6_alpha)': sIL_6_alpha.numpy(),
+                'a(EGF)': EGF.numpy(), 'a(EGFR)': EGFR.numpy(), 'a(IL6_STAT3)': IL6_STAT3.numpy(),
+                'a(NF_xB)': NF_xB.numpy(), 'a(IL6_AMP)': IL_6_AMP.numpy(), 'a(cytokine)': cytokine.numpy()
+            }
             return samples
-
 
         self.model = model
         self.noisy_model = noisy_model
@@ -334,12 +333,12 @@ class SigmoidSCM():
 
 
 def scm_covid_counterfactual(
-        betas,
-        max_abundance,
-        observation,
-        ras_intervention,
-        spike_width=1.0,
-        svi=True
+    betas,
+    max_abundance,
+    observation,
+    ras_intervention,
+    spike_width=1.0,
+    svi=True
 ):
     gf_scm = SigmoidSCM(betas, max_abundance, spike_width)
     noise = {

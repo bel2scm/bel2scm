@@ -11,7 +11,8 @@ from torch import tensor
 from torch.optim import SGD
 
 
-def g(a, b):
+
+def percentage_in(a: float, b: float) -> float:
     return a / (a + b)
 
 
@@ -22,7 +23,7 @@ class COVID_SCM():
         self.spike_width = spike_width
 
         def f_PRR(SARS_2, N):
-            p = g(
+            p = percentage_in(
                 rates['PRR_activation_by_SARS_COV2'] * SARS_2,
                 rates['PRR_deactivation']
             )
@@ -50,7 +51,7 @@ class COVID_SCM():
             return AngII
 
         def f_AGTR1(AngII, N):
-            p = g(
+            p = percentage_in(
                 rates['AGTR1_activation_by_AngII'] * AngII,
                 rates['AGTR1_deactivation']
             )
@@ -61,7 +62,7 @@ class COVID_SCM():
             return AGTR1
 
         def f_ADAM17(AGTR1, N):
-            p = g(
+            p = percentage_in(
                 rates['ADAM17_activation_by_AGTR1'] * AGTR1,
                 rates['ADAM17_deactivation']
             )
@@ -72,7 +73,7 @@ class COVID_SCM():
             return ADAM17
 
         def f_EGF(ADAM17, N):
-            p = g(
+            p = percentage_in(
                 rates['EGF_activation_by_ADAM17'] * ADAM17,
                 rates['EGF_deactivation']
             )
@@ -83,7 +84,7 @@ class COVID_SCM():
             return EGF
 
         def f_TNF(ADAM17, N):
-            p = g(
+            p = percentage_in(
                 rates['TNF_activation_by_ADAM17'] * ADAM17,
                 rates['TNF_deactivation']
             )
@@ -94,7 +95,7 @@ class COVID_SCM():
             return TNF
 
         def f_sIL_6_alpha(ADAM17, TOCI, N):
-            p = g(
+            p = percentage_in(
                 rates['sIL_6_alpha_activation_by_ADAM17'] * ADAM17,
                 rates['sIL_6_alpha_deactivation_by_TOCI'] * TOCI
             )
@@ -105,7 +106,7 @@ class COVID_SCM():
             return sIL_6_alpha
 
         def f_IL_6Ralpha(TOCI, N):
-            p = g(
+            p = percentage_in(
                 rates['IL_6Ralpha_activation'],
                 rates['IL_6Ralpha_deactivation_by_TOCI'] * TOCI
             )
@@ -116,7 +117,7 @@ class COVID_SCM():
             return IL_6Ralpha
 
         def f_EGFR(EGF, N):
-            p = g(
+            p = percentage_in(
                 rates['EGFR_activation_by_EGF'] * EGF,
                 rates['EGFR_deactivation']
             )
@@ -127,7 +128,7 @@ class COVID_SCM():
             return EGFR
 
         def f_IL6_STAT3(sIL_6_alpha, N):
-            p = g(
+            p = percentage_in(
                 rates['IL6_STAT3_activation_by_sIL_6_alpha'] * sIL_6_alpha,
                 rates['IL6_STAT3_deactivation']
             )
@@ -138,7 +139,7 @@ class COVID_SCM():
             return IL6_STAT3
 
         def f_STAT3(sIL_6_alpha, N):
-            p = g(
+            p = percentage_in(
                 rates['STAT3_activation'],
                 rates['STAT3_deactivation_by_sIL_6_alpha'] * sIL_6_alpha
             )
@@ -149,7 +150,7 @@ class COVID_SCM():
             return STAT3
 
         def f_NF_xB(PRR, EGFR, TNF, N):
-            p = g(
+            p = percentage_in(
                 rates['NF_xB_activation_by_PRR'] * PRR +
                 rates['NF_xB_activation_by_EGFR'] * EGFR +
                 rates['NF_xB_activation_by_TNF'] * TNF,
@@ -166,7 +167,7 @@ class COVID_SCM():
                 NF_xB = 0.0
             if IL6_STAT3 < 50.0:
                 IL6_STAT3 = 0.0
-            p = g(
+            p = percentage_in(
                 rates['IL_6_AMP_activation_by_NF_xB'] * NF_xB +
                 rates['IL_6_AMP_activation_by_IL6_STAT3'] * IL6_STAT3,
                 rates['IL_6_AMP_deactivation']
@@ -178,7 +179,7 @@ class COVID_SCM():
             return IL_6_AMP
 
         def f_cytokine(IL_6_AMP, N):
-            p = g(
+            p = percentage_in(
                 rates['cytokine_activation_by_IL_6_AMP'] * IL_6_AMP,
                 rates['cytokine_deactivation']
             )

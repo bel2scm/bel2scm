@@ -12,6 +12,7 @@ from pyro.distributions import Normal, Delta
 from pyro.infer import EmpiricalMarginal, Importance, SVI, Trace_ELBO
 import numpy as np
 
+
 def sigmoid(x):
     """
     sigmoid function

@@ -13,10 +13,10 @@
 
 import unittest
 
-from src.bel2scm.neurips_bel2scm.scm import SCM
-from src.bel2scm.neurips_bel2scm.utils import json_load
-from src.bel2scm.neurips_bel2scm.utils import save_scm_object
-from src.bel2scm.neurips_bel2scm.utils import load_scm_object
+from bel2scm.neurips_bel2scm.scm import SCM
+from bel2scm.neurips_bel2scm.utils import json_load
+from bel2scm.neurips_bel2scm.utils import save_scm_object
+from bel2scm.neurips_bel2scm.utils import load_scm_object
 import torch
 import pandas as pd
 import time

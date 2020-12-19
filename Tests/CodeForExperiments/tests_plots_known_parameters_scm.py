@@ -16,9 +16,8 @@ from torch import tensor
 import sys
 import os
 
-sys.path.append(os.path.realpath('..'))
-from Tests.DataGenerationSCM_for_covid.covid_sigmoid_scm_cf import SigmoidSCM
-from Tests.DataGenerationSCM_for_covid.covid_sigmoid_scm_cf import scm_covid_counterfactual
+from bel2scm.generation.covid_sigmoid_scm_cf import SigmoidSCM
+from bel2scm.generation.covid_sigmoid_scm_cf import scm_covid_counterfactual
 import pandas as pd
 
 torch.manual_seed(23)

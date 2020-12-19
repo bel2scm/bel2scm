@@ -10,7 +10,7 @@ Input files:
 - Data folder contains all the input and output data files
 - Neuirps_BEL2SCM contains all python scripts for bel2scm algorithm
 
-### 2. test_plots_bel2scm
+### 2. test_plots_bel2scm.py
  This is the test file which stores experiments to generate data 
  for plots in the paper that were generated using bel2scm algorithm.
 Input files:

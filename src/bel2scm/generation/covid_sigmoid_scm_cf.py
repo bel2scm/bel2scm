@@ -2,22 +2,15 @@ import statistics
 from collections import defaultdict
 from functools import partial
 
-import numpy as np
 import pyro
 import torch
 import torch.distributions.constraints as constraints
 from pyro import condition, do, sample
 from pyro.distributions import Delta, Normal
 from pyro.infer import EmpiricalMarginal, Importance, SVI, Trace_ELBO
+from scipy.special import expit
 from torch import tensor
 from torch.optim import SGD
-
-
-def sigmoid(x):
-    """
-    sigmoid function
-    """
-    return 1 / (1 + np.exp(-x))
 
 
 class SigmoidSCM():
@@ -34,7 +27,7 @@ class SigmoidSCM():
             Calculate PRR using parent SARS_2
             """
             y = betas['PRR_SARS_2_w'] * SARS_2 + betas['PRR_b']
-            PRR = max_abundance['ADAM17'] * sigmoid(y) + N
+            PRR = max_abundance['ADAM17'] * expit(y) + N
             return PRR
 
         def f_ACE2(SARS_2, N):
@@ -49,49 +42,49 @@ class SigmoidSCM():
 
         def f_AGTR1(AngII, N):
             y = betas['AGTR1_AngII_w'] * AngII + betas['AGTR1_b']
-            AGTR1 = max_abundance['AGTR1'] * sigmoid(y) + N
+            AGTR1 = max_abundance['AGTR1'] * expit(y) + N
             return AGTR1
 
         def f_ADAM17(AGTR1, N):
             y = betas['ADAM17_AGTR1_w'] * AGTR1 + betas['ADAM17_b']
-            ADAM17 = max_abundance['ADAM17'] * sigmoid(y) + N
+            ADAM17 = max_abundance['ADAM17'] * expit(y) + N
             return ADAM17
 
         def f_EGF(ADAM17, N):
             y = betas['EGF_ADAM17_w'] * ADAM17 + betas['EGF_b']
-            EGF = max_abundance['EGF'] * sigmoid(y) + N
+            EGF = max_abundance['EGF'] * expit(y) + N
             return EGF
 
         def f_TNF(ADAM17, N):
             y = betas['TNF_ADAM17_w'] * ADAM17 + betas['TNF_b']
-            TNF = max_abundance['TNF'] * sigmoid(y) + N
+            TNF = max_abundance['TNF'] * expit(y) + N
             return TNF
 
         def f_sIL_6_alpha(ADAM17, TOCI, N):
             y = betas['sIL6_ADAM17_w'] * ADAM17 + betas['sIL6_TOCI_w'] * TOCI + betas['sIL6_b']
-            sIL6 = max_abundance['sIL6'] * sigmoid(y) + N
+            sIL6 = max_abundance['sIL6'] * expit(y) + N
             return sIL6
 
         def f_EGFR(EGF, N):
             y = betas['EGFR_EGF_w'] * EGF + betas['EGFR_b']
-            EGFR = max_abundance['EGFR'] * sigmoid(y) + N
+            EGFR = max_abundance['EGFR'] * expit(y) + N
             return EGFR
 
         def f_IL6_STAT3(sIL_6_alpha, N):
             y = betas['IL6STAT3_sIL_6_alpha_w'] * sIL_6_alpha + betas['IL6STAT3_b']
-            IL6STAT3 = max_abundance['IL6_STAT3'] * sigmoid(y) + N
+            IL6STAT3 = max_abundance['IL6_STAT3'] * expit(y) + N
             return IL6STAT3
 
         def f_NF_xB(PRR, EGFR, TNF, N):
             y = betas['NF_xB_PRR_w'] * PRR + betas['NF_xB_TNF_w'] * TNF + \
                 betas['NF_xB_EGFR_w'] * EGFR + betas['NF_xB_b']
-            NF_xB = max_abundance['NF_xB'] * sigmoid(y) + N
+            NF_xB = max_abundance['NF_xB'] * expit(y) + N
             return NF_xB
 
         def f_IL_6_AMP(NF_xB, IL6_STAT3, N):
             y = betas['IL6_AMP_NF_xB_w'] * NF_xB + betas['IL6_AMP_IL6_STAT3_w'] * IL6_STAT3 + \
                 + betas['IL6_AMP_b']
-            IL6_AMP = max_abundance['IL6_AMP'] * sigmoid(y) + N
+            IL6_AMP = max_abundance['IL6_AMP'] * expit(y) + N
             return IL6_AMP
 
         def f_cytokine(IL6_AMP, N):
@@ -99,7 +92,7 @@ class SigmoidSCM():
                 IL6_AMP = IL6_AMP.detach().numpy()
             y = betas['cytokine_IL6_AMP_w'] * IL6_AMP + \
                 + betas['cytokine_b']
-            cytokine = max_abundance['cytokine'] * sigmoid(y) + N
+            cytokine = max_abundance['cytokine'] * expit(y) + N
             return cytokine
 
         def f_SARS_COV2(SARS_COV2_mu, SARS_COV2_sigma, N):

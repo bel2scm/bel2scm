@@ -73,6 +73,17 @@ SCM can estimate the Controlled Direct Effect (example.cd_effect), the Natural D
 the Natural Indirect Effect (example.ni_effect). Finally, the SCM can write itself to a json file that can then be
 imported directly to Causal Fusion (example.write_to_cf).
 
+## Testing
+
+After cloning the repository and installing `tox` with `pip install tox`, the unit tests in the `Tests/` folder can be
+run reproducibly with:
+
+```bash
+$ tox -e finish
+```
+
+Additionally, these tests are automatically re-run with each commit in a GitHub action.
+
 ## Making a Release
 
 After installing the package in development mode and installing

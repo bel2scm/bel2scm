@@ -1,5 +1,5 @@
-from src.bel2scm.neurips_bel2scm.utils import json_load
-from src.bel2scm.neurips_bel2scm.constants import PYRO_DISTRIBUTIONS
+from bel2scm.neurips_bel2scm.utils import json_load
+from bel2scm.neurips_bel2scm.constants import PYRO_DISTRIBUTIONS
 
 class Config:
     """

@@ -5,12 +5,12 @@ from pyro.infer import SVI, Trace_ELBO, Importance, EmpiricalMarginal
 import torch.distributions.constraints as constraints
 from torch.optim import Adam, SGD
 
-from src.bel2scm.neurips_bel2scm.bel_graph import BelGraph
-from src.bel2scm.neurips_bel2scm.parameter_estimation import ParameterEstimation
-from src.bel2scm.neurips_bel2scm.utils import get_sample_for_non_roots, get_parent_tensor, all_parents_visited, json_load, \
+from bel2scm.neurips_bel2scm.bel_graph import BelGraph
+from bel2scm.neurips_bel2scm.parameter_estimation import ParameterEstimation
+from bel2scm.neurips_bel2scm.utils import get_sample_for_non_roots, get_parent_tensor, all_parents_visited, json_load, \
     get_parent_samples, get_child_name_list
-from src.bel2scm.neurips_bel2scm.constants import PYRO_DISTRIBUTIONS, NOISE_TYPE, VARIABLE_TYPE, get_variable_type_from_label
-from src.bel2scm.neurips_bel2scm.config import Config
+from bel2scm.neurips_bel2scm.constants import PYRO_DISTRIBUTIONS, NOISE_TYPE, VARIABLE_TYPE, get_variable_type_from_label
+from bel2scm.neurips_bel2scm.config import Config
 import torch
 import pyro
 

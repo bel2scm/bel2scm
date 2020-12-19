@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 import time
 import pyro
-from src.bel2scm.neurips_bel2scm.constants import VARIABLE_TYPE
+from bel2scm.neurips_bel2scm.constants import VARIABLE_TYPE
 import numpy as np
 
 

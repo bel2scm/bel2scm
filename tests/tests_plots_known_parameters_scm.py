@@ -16,7 +16,7 @@ from torch import tensor
 import sys
 import os
 
-from bel2scm.generation.covid_sigmoid_scm_cf import SigmoidSCM
+from bel2scm.generation.covid_sigmoid_scm_cf import SigmoidSCM, NOISE
 from bel2scm.generation.covid_sigmoid_scm_cf import scm_covid_counterfactual
 import pandas as pd
 
@@ -76,25 +76,7 @@ def main():
         'IL6_AMP': 100,
         'cytokine': 100
     }
-    noise = {
-        'N_SARS_COV2': (0., 1.),
-        'N_TOCI': (0., 1.),
-        'N_PRR': (0., 1.),
-        'N_ACE2': (0., 1.),
-        'N_AngII': (0., 1.),
-        'N_AGTR1': (0., 1.),
-        'N_ADAM17': (0., 1.),
-        'N_IL_6Ralpha': (0., 1.),
-        'N_sIL_6_alpha': (0., 1.),
-        'N_STAT3': (0., 1.),
-        'N_EGF': (0., 1.),
-        'N_TNF': (0., 1.),
-        'N_EGFR': (0., 1.),
-        'N_IL6_STAT3': (0., 1.),
-        'N_NF_xB': (0., 1.),
-        'N_IL_6_AMP': (0., 1.),
-        'N_cytokine': (0., 1.)
-    }
+
     observation_datapoint_1 = {
 
         'SARS_COV2': 67.35032,
@@ -137,7 +119,7 @@ def main():
     ### get observational samples
 
     covid_scm = SigmoidSCM(betas, max_abundance, 1.0)
-    noisy_samples = [covid_scm.noisy_model(noise) for _ in range(5000)]
+    noisy_samples = [covid_scm.noisy_model(NOISE) for _ in range(5000)]
     samples_df = pd.DataFrame(noisy_samples)
     samples_df.to_csv(
         "Data/observational_samples_from_sigmoid_known_parameters.csv",
@@ -145,7 +127,7 @@ def main():
 
     ### get observational samples from mutilated graph by intervening on TOCI
     covid_scm_mutilated = SigmoidSCM(betas, max_abundance, 1.0)
-    noisy_samples_mutilated = [covid_scm_mutilated.noisy_mutilated_model(noise) for _ in range(5000)]
+    noisy_samples_mutilated = [covid_scm_mutilated.noisy_mutilated_model(NOISE) for _ in range(5000)]
     samples_df_mutilated = pd.DataFrame(noisy_samples_mutilated)
     samples_df_mutilated.to_csv(
         "Data/observational_samples_from_intervened_sigmoid_with_known_parameters.csv",

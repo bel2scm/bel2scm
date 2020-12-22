@@ -14,18 +14,16 @@ from . import graph_node as gn
 from .graph_node import bayes_node, scm_node, mle_node
 # create a class of causal graphs
 
-class cg_graph():
+class cg_graph:
     """define a superclass for causal graphs"""
-    
-    def __init__(self):
-        return
-    
-    
-    def proc_data(self,graph_type,type_dict={}):
+
+    def proc_data(self,graph_type,type_dict=None):
         """ take the list of edges and entities (i.e., nodes) and process that information to produce
         parent -> children and child -> parent mappings
         initialize all of the nodes of the causal graph"""
-        
+        if type_dict is None:
+            type_dict = {}
+
         self.graph_type = graph_type
         n_nodes = len(self.entity_list)
         self.n_nodes = n_nodes
@@ -224,9 +222,13 @@ class cg_graph():
         
         return True
     
-    def id_alg(self,y,x,p_in=[],graph_in=[]):
+    def id_alg(self,y,x,p_in=None,graph_in=None):
         """ calculate P(y | do(x)) or return failure if this is not possible """
-        
+        if p_in is None:
+            p_in = []
+        if graph_in is None:
+            graph_in = []
+
         if np.any([item in y for item in x]):
             print('Error -- overlap between x and y')
             print(x)
@@ -394,9 +396,12 @@ class cg_graph():
                     print('error')
                     return ''
 
-    def idc_alg(self,y,x,z,p_in=[],graph_in=[]):
+    def idc_alg(self,y,x,z,p_in=None,graph_in=None):
         """ calculate P(y | do(x), z) or return failure if this is not possible """
-        
+        if p_in is None:
+            p_in = []
+        if graph_in is None:
+            graph_in = []
         if np.any([item in y for item in x]):
             print('Error -- overlap between x and y')
             print(x)
@@ -457,11 +462,13 @@ class cg_graph():
         
         return str_out
     
-    def make_pw_graph(self,do_in,graph_in=[]):
+    def make_pw_graph(self,do_in,graph_in=None):
         """ create the parallel-world graph of subgraph of graph_in or self.graph """
         
         # graph_out only has 'real' nodes -- conf_out has confounding nodes
-        
+        if graph_in is None:
+            graph_in = []
+
         if graph_in:
             graph_temp = nx.DiGraph(graph_in)
             conf_temp = self.graph_c.subgraph(graph_temp.nodes)
@@ -536,9 +543,13 @@ class cg_graph():
         
         return graph_out,conf_out
     
-    def make_cf_graph(self,do_in,obs_in=[],graph_in=[]):
+    def make_cf_graph(self,do_in,obs_in=None,graph_in=None):
         """ create the counterfactual graph of subgraph of graph_in or self.graph """
-        
+        if obs_in is None:
+            obs_in = []
+        if graph_in is None:
+            graph_in = []
+
         if graph_in:
             graph_temp = nx.DiGraph(graph_in)
             conf_temp = self.graph_c.subgraph(graph_temp.nodes)
@@ -719,10 +730,14 @@ class cg_graph():
                 
         return do_in,obs_in
     
-    def id_star_alg(self,do_in,obs_in=[],graph_in=[]):
+    def id_star_alg(self,do_in,obs_in=None,graph_in=None):
         """ implement ID* algorithm 
         Denote interventions with asterisks (e.g., 'X*') and observations without asterisks (e.g., 'X') """       
-        
+        if obs_in is None:
+            obs_in = []
+        if graph_in is None:
+            graph_in = []
+
         gamma_list = self.conv_to_gamma(do_in,obs_in)
         #print(gamma_list)
         
@@ -911,11 +926,16 @@ class cg_graph():
                     return 'P(' + self.str_list(gamma_temp) + ')'
         return
         
-    def idc_star_alg(self,do_in,do_delta,obs_in=[],obs_delta=[],graph_in=[]):
+    def idc_star_alg(self,do_in,do_delta,obs_in=None,obs_delta=None,graph_in=None):
         """ Implement IDC* algorithm  
         Denote interventions with asterisks (e.g., 'X*') and observations without asterisks (e.g., 'X') """
-        
-        
+        if obs_in is None:
+            obs_in = []
+        if obs_delta is None:
+            obs_delta = []
+        if graph_in is None:
+            graph_in = []
+
         if graph_in:
             graph_temp = nx.DiGraph(graph_in)
             conf_temp = self.graph_c.subgraph(graph_temp.nodes)
@@ -1471,10 +1491,9 @@ class cg_graph():
 class str_graph(cg_graph):
     """define class of causal graphs initialized using a list of BEL-statements represented as strings"""
     
-    def __init__(self,str_list,graph_type,type_dict={}):
-        
-        super().__init__()
-        
+    def __init__(self,str_list,graph_type,type_dict=None):
+        if type_dict is None:
+            type_dict = {}
         edge_list = []
         entity_list = []
         
@@ -1506,15 +1525,13 @@ class str_graph(cg_graph):
         self.edge_list = edge_list
         
         self.proc_data(graph_type,type_dict)
-        
-        return
 
 class bel_graph(cg_graph):
     """define class of causal graphs initialized using a pyBEL graph"""
     
-    def __init__(self,bel_graph,b_or_mle,type_dict={},subset_rels=False):
-        
-        super().__init__()
+    def __init__(self,bel_graph,b_or_mle,type_dict=None,subset_rels=False):
+        if type_dict is None:
+            type_dict = {}
         
         edge_list = []
         entity_list = []
@@ -1553,15 +1570,13 @@ class bel_graph(cg_graph):
         
         self.proc_data(b_or_mle,type_dict)
         
-        return
-    
 class cf_graph(cg_graph):
     """define class of causal graphs initialized using a json file generated by exporting from Causal Fusion"""
     
-    def __init__(self,json_file,b_or_mle,type_dict={}):
-        
-        super().__init__()
-        
+    def __init__(self,json_file,b_or_mle,type_dict=None):
+        if type_dict is None:
+            type_dict = {}
+
         edge_list = []
         entity_list = []
         
@@ -1585,5 +1600,3 @@ class cf_graph(cg_graph):
         self.edge_list = edge_list
         
         self.proc_data(b_or_mle,type_dict)
-
-        return

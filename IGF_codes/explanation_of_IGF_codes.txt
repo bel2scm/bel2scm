@@ -1,1 +1,3 @@
-# IGF.R produces observational and interventional data for ODE and SDE of IGF case study. If you have any questions about the code, please contact Sara Mohammad-Taheri at mohammadtaheri.s@northeastern.edu
+# IGF.R first produces ODE and SDE observational and interventional data for IGF case study. 
+It then calculates the causal effect on ERK upon intervention on RAS.
+If you have any questions about the code, please contact Sara Mohammad-Taheri at mohammadtaheri.s@northeastern.edu

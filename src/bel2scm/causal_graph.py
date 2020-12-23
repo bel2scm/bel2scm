@@ -454,7 +454,7 @@ class cg_graph:
             digraph_xbar_zbar.remove_edges_from(graph_temp.out_edges(item))
             digraph_xbar_zbar = digraph_xbar_zbar.to_undirected()
             
-            graph_xbar_zbar.add_edges_from(self.graph_c.subgraph(graph_temp.nodes).edges)
+            digraph_xbar_zbar.add_edges_from(self.graph_c.subgraph(graph_temp.nodes).edges)
                 
             # calculate d-separation
             d_sep = self.d_sep(y,[item],[item2 for item2 in x+z if item2 != item],graph_xbar_zbar)

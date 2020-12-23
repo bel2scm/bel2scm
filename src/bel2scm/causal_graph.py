@@ -357,7 +357,10 @@ class cg_graph:
                         # identify parents of node i
                         parents = list(graph_temp.predecessors(item))
                         
-                        str_out += 'P(' + item + '|' + self.str_list(parents) + ')'
+                        if parents:
+                            str_out += 'P(' + item + '|' + self.str_list(parents) + ')'
+                        else:
+                            str_out += 'P(' + item + ')'
                     #print(s_sets[0])
                     #print('Step 6')
                     return str_out + ']'
@@ -376,7 +379,11 @@ class cg_graph:
                         pred = list(nx.algorithms.dag.ancestors(graph_temp,item))
                         par_set = [item2 for item2 in pred if item2 in s_sets_prime[ind]]
                         par_set += [item2 for item2 in pred if item2 not in s_sets_prime[ind]]
-                        str_out += 'P(' + item + '|' + self.str_list(par_set) + ')'
+                        
+                        if par_set:
+                            str_out += 'P(' + item + '|' + self.str_list(par_set) + ')'
+                        else:
+                            str_out += 'P(' + item + ')'
                         
                     #print('Begin Step 7')
                     #print((s_sets[0],s_sets_prime[ind]))
@@ -445,7 +452,7 @@ class cg_graph:
         for item in z:
             digraph_xbar_zbar = nx.DiGraph(digraph_xbar)
             digraph_xbar_zbar.remove_edges_from(graph_temp.out_edges(item))
-            graph_xbar_zbar = digraph_xbar_zbar.to_undirected()
+            digraph_xbar_zbar = digraph_xbar_zbar.to_undirected()
             
             graph_xbar_zbar.add_edges_from(self.graph_c.subgraph(graph_temp.nodes).edges)
                 
@@ -811,8 +818,13 @@ class cg_graph:
                 g_temp = []
                 for item in d_temp:
                     g_temp += [item[0]]
-                    g_temp += [item2.replace('*','') for item2 in item[1] if item2.replace('*','') not in g_temp]
-                g_temp += [item.replace('*','') for item in o_temp if item.replace('*','') not in g_temp]
+                    g_temp += [item2 for item2 in item[1] if item2 not in g_temp]
+                g_temp += [item for item in o_temp if item not in g_temp]
+                
+                #for item in d_temp:
+                    #g_temp += [item[0]]
+                    #g_temp += [item2.replace('*','') for item2 in item[1] if item2.replace('*','') not in g_temp]
+                #g_temp += [item.replace('*','') for item in o_temp if item.replace('*','') not in g_temp]
                     
                 # get all node variables contained in graph_out
                 node_list_temp = [item for item in graph_out.nodes if item[:3] != 'U^{']
@@ -821,13 +833,20 @@ class cg_graph:
                 v_temp = []
                 for item in d_temp2:
                     v_temp += [item[0]]
-                    v_temp += [item2.replace('*','') for item2 in item[1] if item2.replace('*','') not in v_temp]
-                v_temp += [item.replace('*','') for item in o_temp2 if item.replace('*','') not in v_temp]
+                    v_temp += [item2 for item2 in item[1] if item2 not in v_temp]
+                v_temp += [item for item in o_temp2 if item not in v_temp]
+                
+                #for item in d_temp2:
+                    #v_temp += [item[0]]
+                    #v_temp += [item2.replace('*','') for item2 in item[1] if item2.replace('*','') not in v_temp]
+                #v_temp += [item.replace('*','') for item in o_temp2 if item.replace('*','') not in v_temp]
                 
                 sum_list = [item for item in v_temp if item not in g_temp]
                 
                 str_out = 'sum_{' + self.str_list(sum_list) + '}'
                 for item in s_sets:
+                    
+                    check_list = []
                     
                     # define the new do-statements
                     do_in_temp = []
@@ -842,35 +861,48 @@ class cg_graph:
                             else:
                                 item_temp = [item2]
                                 do_list_temp = []
+                                
+                            for item3 in nx.algorithms.dag.ancestors(graph_out,item2):
+                                if 'U^{' not in item3 and item3 not in item:
+                                    if item3.find('_') > 0 and item3[:item3.find('_')] not in do_list_temp:
+                                        do_list_temp.append(item3[:item3.find('_')] + '*')
+                                    elif item3 not in do_list_temp:
+                                        do_list_temp.append(item3 + '*')
+                                        
+                                        
                             
                             # add variables to do_list_temp
-                            for item3 in graph_out.nodes:
-                                if (item3 not in item and 'U^{' not in item3 and item3.replace('*','') 
-                                    not in [item4.replace('*','') for item4 in do_vars_temp]):
+                            #for item3 in graph_out.nodes:
+                                #if (item3 not in item and 'U^{' not in item3 and item3.replace('*','') 
+                                    #not in [item4.replace('*','') for item4 in do_vars_temp]):
                                         
-                                    if item3.find('_') > 0:
-                                        do_list_temp.append(item3[:item3.find('_')] + '*')
-                                    else:
-                                        do_list_temp.append(item3 + '*')
+                                    #if item3.find('_') > 0:
+                                        #do_list_temp.append(item3[:item3.find('_')] + '*')
+                                    #else:
+                                        #do_list_temp.append(item3 + '*')
                                         
                             # only consider interventions on ancestors of the target node
                             #do_list_temp = [item3 for item3 in do_list_temp 
                                 #if item3 in nx.algorithms.dag.ancestors(graph_out,item2)]
                             do_in_temp += [[item_temp[0],do_list_temp]]
+                            check_list += [item3 for item3 in do_list_temp if item3 not in check_list]
                     
                     
                     #print(do_in_temp)
                     
                     str_temp = self.id_star_alg(do_in_temp,[],graph_temp)
-                    
                     # make sure that all the variables being summed over don't have asterisks
-                    for item2 in sum_list:
-                        str_temp = str_temp.replace(item2 + '*',item2)
+                    #for item2 in sum_list:
+                        #str_temp = str_temp.replace(item2 + '*',item2)
                         
                     # make sure that the value of variables correspond to those in the current graph
-                    for item2 in do_list_temp:
-                        if item2 not in sum_list and item2.replace('*','') in g_temp:
-                            str_temp = str_temp.replace(item2, item2.replace('*',''))
+                    for item2 in check_list:
+                        if item2 not in sum_list and item2 not in g_temp:
+                            str_temp = str_temp.replace(item2, item2.replace('*',''))                    
+                    
+                    #for item2 in do_list_temp:
+                        #if item2 not in sum_list and item2.replace('*','') in g_temp:
+                            #str_temp = str_temp.replace(item2, item2.replace('*',''))
                     
                     str_out += str_temp
                     #print()
@@ -1000,7 +1032,22 @@ class cg_graph:
                     #print(gam_temp)
                     #print(do_del_temp)
                     #print(obs_del_temp)
-                    return self.idc_star_alg(gam_temp,do_del_temp,[],obs_del_temp,graph_temp)
+                    
+                    str_temp = self.idc_star_alg(gam_temp,do_del_temp,[],obs_del_temp,graph_temp)
+                    
+                    # remove extraneous asterisks
+                    do_temp,obs_temp = self.conv_from_gamma(gamma_list)
+                    do_vars = []
+                    for item in do_temp:
+                        do_vars += [item2 for item2 in item[1] if item2 not in do_vars]
+                    
+                    print(obs_temp)
+                    print(do_temp)
+                    for item in obs_temp:
+                        if item + '*' in str_temp and item + '*' not in do_vars:
+                            str_temp = str_temp.replace(item + '*',item)
+                    
+                    return str_temp
                 
                 else:
                     do_temp,obs_temp = self.conv_from_gamma(gamma_list)
@@ -1013,6 +1060,16 @@ class cg_graph:
                     sum_list = [item[0] for item in do_temp2]
                     sum_list += obs_temp2
                     
+                    # remove extraneous asterisks
+                    do_vars = []
+                    for item in do_temp:
+                        do_vars += [item2 for item2 in item[1] if item2 not in do_vars]
+                    
+                    print(obs_temp)
+                    print(do_temp)
+                    for item in obs_temp:
+                        if item + '*' in P_prime and item + '*' not in do_vars:
+                            P_prime = P_prime.replace(item + '*',item)
 
                     return '[' + P_prime + ']/[sum_{' + self.str_list(sum_list) + '}[' + P_prime + ']]'
         

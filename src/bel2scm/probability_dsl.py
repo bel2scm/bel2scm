@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import typing
-from typing import List
+from typing import List, Optional, Union
 
 __all__ = [
     'Variable',
@@ -14,7 +13,7 @@ __all__ = [
 
 
 class Variable(dict):
-    def __init__(self, name: str, index: typing.Optional[int] = None):
+    def __init__(self, name: str, *, index: Optional[int] = None):
         d = {'name': name}
         if index is not None:
             d['index'] = index
@@ -74,4 +73,4 @@ class Frac(dict):
         return f"{self['frac']['numerator']} / {self['frac']['denominator']}"
 
 
-Expression = typing.Union[Condition, Sum, Frac]
+Expression = Union[Condition, Sum, Frac]

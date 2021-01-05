@@ -6,15 +6,16 @@ import unittest
 
 from bel2scm.probability_dsl import Condition, Expression, Probability, Sum, Variable
 
-S = Variable(name='S')
-T = Variable(name='T')
-A = Variable(name='A')
-A_1 = Variable(name='A', index=1)
-B = Variable(name='B')
-B_1 = Variable(name='B', index=1)
-B_2 = Variable(name='B', index=2)
-C = Variable(name='C')
-D = Variable(name='D')
+S = Variable('S')
+T = Variable('T')
+Q = Variable('Q')
+A = Variable('A')
+A_1 = Variable('A', index=1)
+B = Variable('B')
+B_1 = Variable('B', index=1)
+B_2 = Variable('B', index=2)
+C = Variable('C')
+D = Variable('D')
 A_GIVEN = Condition(child=A, parents=[])
 A_GIVEN_B = Condition(child=A, parents=[B])
 A_GIVEN_B_C = Condition(child=A, parents=[B, C])
@@ -36,6 +37,23 @@ class TestDSL(unittest.TestCase):
                 expressions=[
                     Probability(probability=A_GIVEN_B),
                     Probability(probability=C_GIVEN_D),
+                ],
+            ),
+        )
+
+        # Sum with sum inside
+        self.assert_latex(
+            "[ sum_{S,T} P(A|B) [ sum_{Q} P(C|D) ] ]",
+            Sum(
+                ranges=[S, T],
+                expressions=[
+                    Probability(probability=A_GIVEN_B),
+                    Sum(
+                        ranges=[Q],
+                        expressions=[
+                            Probability(probability=C_GIVEN_D),
+                        ],
+                    ),
                 ],
             ),
         )

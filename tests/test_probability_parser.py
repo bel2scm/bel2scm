@@ -5,7 +5,7 @@
 import unittest
 
 import pyparsing
-from bel2scm.probability_dsl import Frac, P, Sum
+from bel2scm.probability_dsl import P, Sum
 from bel2scm.probability_parser import conditional, frac_expr, inside_stuff, sum_expr, variable
 
 from tests.probability_constants import *
@@ -33,42 +33,28 @@ class TestGrammar(unittest.TestCase):
 
     def test_sum(self):
         self.assert_parse_equal(
-            Sum(
-                ranges=[],
-                expressions=[
-                    P(A | B),
-                ],
-            ),
+            Sum([], P(A | B)),
             sum_expr,
             "[ sum_{} P(A|B) ]",
         )
         self.assert_parse_equal(
-            Sum(
-                ranges=[S],
-                expressions=[
-                    P(A | B),
-                ],
-            ),
+            Sum(None, P(A | B)),
+            sum_expr,
+            "[ sum_{} P(A|B) ]",
+        )
+
+        self.assert_parse_equal(
+            Sum(S, P(A | B)),
             sum_expr,
             "[ sum_{S} P(A|B) ]",
         )
         self.assert_parse_equal(
-            Sum(
-                ranges=[S, T],
-                expressions=[
-                    P(A | B),
-                ],
-            ),
+            Sum([S, T], P(A | B)),
             sum_expr,
             "[ sum_{S,T} P(A|B) ]",
         )
         self.assert_parse_equal(
-            Sum(
-                ranges=[S, T],
-                expressions=[
-                    P(A | [B, C]),
-                ],
-            ),
+            Sum([S, T], P(A | [B, C])),
             sum_expr,
             "[ sum_{S,T} P(A|B,C) ]",
         )
@@ -86,24 +72,12 @@ class TestGrammar(unittest.TestCase):
 
     def test_frac(self):
         self.assert_parse_equal(
-            Frac(
-                P(A | B),
-                P(C | D),
-            ),
+            P(A | B) / P(C | D),
             frac_expr,
             'P(A|B) / P(C|D)',
         )
         self.assert_parse_equal(
-            Frac(
-                Sum(
-                    ranges=[S, T],
-                    expressions=[
-                        P(A | B),
-                        P(C | D),
-                    ]
-                ),
-                P(C | D),
-            ),
+            Sum([S, T], [P(A | B), P(C | D)]) / P(C | D),
             frac_expr,
             '[ sum_{S,T} P(A|B) P(C|D) ] / P(C|D)',
         )

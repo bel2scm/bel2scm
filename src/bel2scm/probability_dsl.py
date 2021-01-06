@@ -97,6 +97,9 @@ class Probability(dict):
     def probability(self) -> Condition:
         return self["probability"]
 
+    def __truediv__(self, other) -> 'Frac':
+        return Frac(self, other)
+
     def to_latex(self) -> str:
         return f'P({self.probability.to_latex()})'
 
@@ -105,7 +108,17 @@ P = Probability
 
 
 class Sum(dict):
-    def __init__(self, ranges: List[Variable], expressions: List[Union[Probability, 'Expression']]):
+    def __init__(
+        self,
+        ranges: Union[None, Variable, List[Variable]],
+        expressions: Union[Probability, 'Expression', List[Union[Probability, 'Expression']]],
+    ):
+        if ranges is None:
+            ranges = []
+        elif isinstance(ranges, Variable):
+            ranges = [ranges]
+        if not isinstance(expressions, list):  # TODO make more specific later
+            expressions = [expressions]
         super().__init__({
             'sum': {
                 'ranges': ranges,
@@ -120,6 +133,9 @@ class Sum(dict):
     @property
     def expressions(self) -> List[Union[Probability, 'Expression']]:
         return self['sum']['expressions']
+
+    def __truediv__(self, other) -> 'Frac':
+        return Frac(self, other)
 
     def to_latex(self) -> str:
         ranges = ','.join(r.to_latex() for r in self.ranges)

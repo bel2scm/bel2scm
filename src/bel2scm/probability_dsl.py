@@ -51,7 +51,7 @@ class Sum(dict):
             'sum': {
                 'ranges': ranges,
                 'expressions': expressions,
-            }
+            },
         })
 
     def to_latex(self) -> str:
@@ -66,7 +66,7 @@ class Frac(dict):
             'frac': {
                 'numerator': numerator,
                 'denominator': denominator,
-            }
+            },
         })
 
     def to_latex(self) -> str:

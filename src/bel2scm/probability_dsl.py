@@ -5,6 +5,7 @@ from typing import List, Optional, Union
 __all__ = [
     'Variable',
     'Condition',
+    'P',
     'Probability',
     'Sum',
     'Frac',
@@ -26,6 +27,11 @@ class Variable(dict):
     @property
     def index(self) -> Optional[int]:
         return self.get('index')
+
+    def __getitem__(self, item: int) -> 'Variable':
+        if isinstance(item, int):
+            return Variable(name=self.name, index=item)
+        return super().__getitem__(item)
 
     def to_latex(self) -> str:
         if self.index:
@@ -93,6 +99,9 @@ class Probability(dict):
 
     def to_latex(self) -> str:
         return f'P({self.probability.to_latex()})'
+
+
+P = Probability
 
 
 class Sum(dict):

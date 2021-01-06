@@ -1,54 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import typing
+"""Test the probability parser."""
+
 import unittest
 
 import pyparsing
 from bel2scm.probability_dsl import Condition, Frac, Probability, Sum, Variable
-from pyparsing import (
-    Group, OneOrMore, Optional, Suppress, TokenConverter, Word, alphas, delimitedList, nestedExpr,
-    pyparsing_common as ppc,
-)
-
-variable = (
-    Word(alphas).setResultsName('name')
-    + Optional(Suppress('_') + ppc.number.setResultsName('index'))
-)
-inside_stuff = (
-    Group(variable).setResultsName('child')
-    + Group(Optional(Suppress('|') + delimitedList(Group(variable)))).setResultsName('parents')
-)
-
-conditional = TokenConverter(Suppress('P') + nestedExpr('(', ')', inside_stuff)).setResultsName('probability')
-
-# expr = pyparsing.Forward()
-
-sum_expr = Group(
-    Suppress('[')
-    + Suppress('sum_{')
-    + Group(Optional(delimitedList(Group(variable)))).setResultsName('ranges')
-    + Suppress('}')
-    + Group(OneOrMore(Group(conditional))).setResultsName('expressions')
-    + Suppress(']')
-).setResultsName('sum')
-
-# TODO replace with Forward()
-expr = (conditional | sum_expr)
-
-frac_expr = Group(
-    Group(expr).setResultsName('numerator')
-    + Suppress('/')
-    + Group(expr).setResultsName('denominator')
-).setResultsName('frac')
-
-# expr <<= (
-#     frac_expr | sum_expr |  conditional
-# )
-
-'''
-[sum_{W,D,Z,V} [sum_{}P(W|X)][sum_{} [sum_{X,W,Z,Y,V} P(X,W,D,Z,Y,V)]][sum_{}P(Z|D,V)][sum_{} [sum_{X} P(Y|X,D,V,Z,W)P(X|)]][sum_{} [sum_{X,W,D,Z,Y} P(X,W,D,Z,Y,V)]]]
-[[sum_{D,Z,V} [sum_{} [sum_{X,W,Z,Y,V} P(X,W,D,Z,Y,V)]][sum_{}P(Z|D,V)][sum_{} [sum_{X} P(Y|X,D,V,Z,W)P(X|)]][sum_{} [sum_{X,W,D,Z,Y} P(X,W,D,Z,Y,V)]]]]/[ sum_{Y}[sum_{D,Z,V} [sum_{} [sum_{X,W,Z,Y,V} P(X,W,D,Z,Y,V)]][sum_{}P(Z|D,V)][sum_{} [sum_{X} P(Y|X,D,V,Z,W)P(X|)]][sum_{} [sum_{X,W,D,Z,Y} P(X,W,D,Z,Y,V)]]]]
-'''
+from bel2scm.probability_parser import conditional, frac_expr, inside_stuff, sum_expr, variable
 
 S = Variable(name='S')
 T = Variable(name='T')
@@ -61,17 +19,14 @@ C = Variable(name='C')
 D = Variable(name='D')
 A_GIVEN = Condition(child=A, parents=[])
 A_GIVEN_B = Condition(child=A, parents=[B])
-A_GIVEN_B = Condition(child=A, parents=[B])
 A_GIVEN_B_C = Condition(child=A, parents=[B, C])
 A_GIVEN_B_1 = Condition(child=A, parents=[B_1])
 A_GIVEN_B_1_B_2 = Condition(child=A, parents=[B_1, B_2])
 C_GIVEN_D = Condition(child=C, parents=[D])
 
 
-
-
 class TestGrammar(unittest.TestCase):
-    def assert_parse_equal(self, expression: Expression, parse_expression: pyparsing.ParseExpression, instring: str):
+    def assert_parse_equal(self, expression, parse_expression: pyparsing.ParseExpression, instring: str):
         self.assertEqual(expression, parse_expression.parseString(instring).asDict())
 
     def test_variable(self):

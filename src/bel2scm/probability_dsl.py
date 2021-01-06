@@ -119,7 +119,7 @@ class Sum(dict):
 
 
 class Frac(dict):
-    def __init__(self, numerator: List['Expression'], denominator: List['Expression']):
+    def __init__(self, numerator: 'Expression', denominator: 'Expression'):
         super().__init__({
             'frac': {
                 'numerator': numerator,
@@ -128,10 +128,10 @@ class Frac(dict):
         })
 
     @property
-    def numerator(self) -> List['Expression']:
+    def numerator(self) -> 'Expression':
         return self['frac']['numerator']
 
-    def denominator(self) -> List['Expression']:
+    def denominator(self) -> 'Expression':
         return self['frac']['denominator']
 
     def to_latex(self) -> str:

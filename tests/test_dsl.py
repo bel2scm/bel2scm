@@ -34,6 +34,21 @@ class TestDSL(unittest.TestCase):
 
     def test_stringify(self):
         """Test stringifying DSL instances."""
+        self.assert_latex('P(A|B)', Probability(Condition('A', 'B')))
+        self.assert_latex('P(A|B)', Probability(Condition(A, B)))
+        self.assert_latex('P(A|B)', Probability(Condition(A, [B])))
+        self.assert_latex('P(A|B)', Probability(Condition(A, ['B'])))
+        # Fun operator overloading
+        self.assert_latex('P(A|B)', Probability(A | B))
+        self.assert_latex('P(A|B)', Probability(A | 'B'))
+        self.assert_latex('P(A|B)', Probability(A | [B]))
+        self.assert_latex('P(A|B)', Probability(A | ['B']))
+
+        self.assert_latex('P(A|B,C)', Probability(A | [B, C]))
+        self.assert_latex('P(A|B,C)', Probability(A | [B, 'C']))
+        self.assert_latex('P(A|B,C)', Probability(A | ['B', 'C']))
+        self.assert_latex('P(A|B,C)', Probability(A | B | C))
+
         self.assert_latex(
             "[ sum_{S,T} P(A|B) P(C|D) ]",
             Sum(

@@ -40,14 +40,16 @@ class Variable(dict):
             parents=parents,
         )
 
-    def __ror__(self, parents: Union[str, 'Variable', List[Union[str, 'Variable']]]) -> 'Condition':
+    def __or__(self, parents: Union[str, 'Variable', List[Union[str, 'Variable']]]) -> 'Condition':
         return self.given(parents)
 
 
 class Condition(dict):
-    def __init__(self, child: Union[str, Variable], parents: List[Union[str, Variable]]):
+    def __init__(self, child: Union[str, Variable], parents: Union[str, Variable, List[Union[str, Variable]]]):
         if isinstance(child, str):
             child = Variable(child)
+        if isinstance(parents, (str, Variable)):
+            parents = [parents]
         parents = [
             Variable(parent) if isinstance(parent, str) else parent
             for parent in parents
@@ -77,7 +79,7 @@ class Condition(dict):
             parents=[*self.parents, *parents]
         )
 
-    def __ror__(self, parents: Union[str, 'Variable', List[Union[str, 'Variable']]]) -> 'Condition':
+    def __or__(self, parents: Union[str, 'Variable', List[Union[str, 'Variable']]]) -> 'Condition':
         return self.given(parents)
 
 
@@ -102,15 +104,17 @@ class Sum(dict):
             },
         })
 
+    @property
     def ranges(self) -> List[Variable]:
         return self['sum']['ranges']
 
+    @property
     def expressions(self) -> List[Union[Probability, 'Expression']]:
         return self['sum']['expressions']
 
     def to_latex(self) -> str:
         ranges = ','.join(r.to_latex() for r in self.ranges)
-        summands = ' '.join(e.to_latex() for e in self.expressions())
+        summands = ' '.join(e.to_latex() for e in self.expressions)
         return f'[ sum_{{{ranges}}} {summands} ]'
 
 
@@ -134,4 +138,4 @@ class Frac(dict):
         return f"{self.numerator} / {self.denominator()}"
 
 
-Expression = Union[Condition, Sum, Frac]
+Expression = Union[Probability, Sum, Frac]

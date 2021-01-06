@@ -26,7 +26,13 @@ class Variable(dict):
 
 
 class Condition(dict):
-    def __init__(self, *, child: Variable, parents: List[Variable]):
+    def __init__(self, child: Union[str, Variable], parents: List[Union[str, Variable]]):
+        if isinstance(child, str):
+            child = Variable(child)
+        parents = [
+            Variable(parent) if isinstance(parent, str) else parent
+            for parent in parents
+        ]
         super().__init__({
             'child': child,
             'parents': parents,

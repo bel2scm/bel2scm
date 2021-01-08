@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import itertools as itt
 from dataclasses import dataclass, field
 from typing import Callable, List, Tuple, TypeVar, Union
@@ -190,15 +191,11 @@ class Sum:
         return Fraction(self, other)
 
     def __class_getitem__(cls, ranges: Union[Variable, Tuple[Variable, ...]]) -> Callable[[Expression], Sum]:
-        def _make(expression: Expression) -> Sum:
-            nonlocal ranges
-            if isinstance(ranges, tuple):
-                ranges = list(ranges)
-            else:
-                ranges = [ranges]
-            return Sum(ranges=ranges, expression=expression)
-
-        return _make
+        if isinstance(ranges, tuple):
+            ranges = list(ranges)
+        else:  # a single element is not given as a tuple, such as in Sum[T]
+            ranges = [ranges]
+        return functools.partial(Sum, ranges=ranges)
 
 
 @dataclass

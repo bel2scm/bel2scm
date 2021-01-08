@@ -49,6 +49,10 @@ class Variable(Mathable):
     #: The name of the variable
     name: str
 
+    def __post_init__(self):
+        if self.name == 'P':
+            raise ValueError('trust me, P is a bad variable name.')
+
     def to_text(self) -> str:
         return self.name
 

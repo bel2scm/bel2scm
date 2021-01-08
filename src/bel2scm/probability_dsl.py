@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from typing import List, Optional, Union
+from __future__ import annotations
+
+import itertools as itt
+from dataclasses import dataclass, field
+from typing import List, TypeVar, Union
 
 __all__ = [
     'Variable',
-    'Condition',
+    'ConditionalProbability',
     'P',
     'Probability',
     'Sum',
@@ -12,92 +16,137 @@ __all__ = [
     'Expression',
 ]
 
+X = TypeVar('X')
+XList = Union[X, List[X]]
 
-class Variable(dict):
-    def __init__(self, name: str, *, index: Optional[int] = None):
-        d = {'name': name}
-        if index is not None:
-            d['index'] = index
-        super().__init__(d)
 
-    @property
-    def name(self) -> str:
-        return self['name']
+def _upgrade_variables(variables):
+    return [variables] if isinstance(variables, Variable) else variables
 
-    @property
-    def index(self) -> Optional[int]:
-        return self.get('index')
 
-    def __getitem__(self, item: int) -> 'Variable':
-        if isinstance(item, int):
-            return Variable(name=self.name, index=item)
-        return super().__getitem__(item)
+@dataclass(frozen=True)
+class Variable:
+    #: The name of the variable
+    name: str
 
     def to_latex(self) -> str:
-        if self.index:
-            return f'{self.name}_{self.index}'
         return self.name
 
-    def given(self, parents: Union[str, 'Variable', List[Union[str, 'Variable']]]) -> 'Condition':
-        if isinstance(parents, (str, Variable)):
-            parents = [parents]
-        return Condition(
-            child=self,
-            parents=parents,
+    def intervene(self, interventions: XList[Intervention]) -> CounterfactualVariable:
+        return CounterfactualVariable(
+            name=self.name,
+            interventions=_upgrade_variables(interventions),
         )
 
-    def __or__(self, parents: Union[str, 'Variable', List[Union[str, 'Variable']]]) -> 'Condition':
+    def given(self, parents: XList[Variable]) -> ConditionalProbability:
+        return ConditionalProbability(
+            child=self,
+            parents=_upgrade_variables(parents),
+        )
+
+    def joint(self, children: XList[Variable]) -> JointProbability:
+        children = _upgrade_variables(children)
+        return JointProbability([self, *children])
+
+    def __or__(self, parents: XList[Variable]) -> ConditionalProbability:
         return self.given(parents)
 
+    def __and__(self, children: XList[Variable]) -> JointProbability:
+        return self.joint(children)
 
-class Condition(dict):
-    def __init__(self, child: Union[str, Variable], parents: Union[str, Variable, List[Union[str, Variable]]]):
-        if isinstance(child, str):
-            child = Variable(child)
-        if isinstance(parents, (str, Variable)):
-            parents = [parents]
-        parents = [
-            Variable(parent) if isinstance(parent, str) else parent
-            for parent in parents
-        ]
-        super().__init__({
-            'child': child,
-            'parents': parents,
-        })
+    def __matmul__(self, interventions: XList[Intervention]):
+        return self.intervene(interventions)
 
-    @property
-    def child(self) -> Variable:
-        return self['child']
+    def __invert__(self):
+        return Intervention(name=self.name, star=True)
 
-    @property
-    def parents(self) -> List[Variable]:
-        return self['parents']
+
+@dataclass(frozen=True)
+class Intervention(Variable):
+    #: The name of the intervention
+    name: str
+    #: If true, indicates this intervention represents a value different from what was observed
+    star: bool = False
 
     def to_latex(self) -> str:
-        parents = ','.join(p.to_latex() for p in self.parents)
-        return f'{self.child.to_latex()}|{parents}'
+        return f'{self.name}*' if self.star else self.name
 
-    def given(self, parents: Union[str, 'Variable', List[Union[str, 'Variable']]]) -> 'Condition':
-        if isinstance(parents, (str, Variable)):
-            parents = [parents]
-        return Condition(
-            child=self.child,
-            parents=[*self.parents, *parents]
+    def __invert__(self):
+        return Intervention(name=self.name, star=not self.star)
+
+
+@dataclass(frozen=True)
+class CounterfactualVariable(Variable):
+    #: The name of the counterfactual variable
+    name: str
+    #: The interventions on the variable. Should be non-empty
+    interventions: List[Intervention]
+
+    def to_latex(self) -> str:
+        intervention_latex = ','.join(intervention.to_latex() for intervention in self.interventions)
+        return f'{self.name}_{{{intervention_latex}}}'
+
+    def intervene(self, interventions: XList[Intervention]) -> CounterfactualVariable:
+        interventions = _upgrade_variables(interventions)
+        self._raise_for_overlapping_interventions(interventions)
+        return CounterfactualVariable(
+            name=self.name,
+            interventions=[*self.interventions, *interventions],
         )
 
-    def __or__(self, parents: Union[str, 'Variable', List[Union[str, 'Variable']]]) -> 'Condition':
+    def _raise_for_overlapping_interventions(self, new_interventions: List[Intervention]):
+        overlaps = {
+            new
+            for old, new in itt.product(self.interventions, new_interventions)
+            if old.name == new.name
+        }
+        if overlaps:
+            raise ValueError(f'Overlapping interventions in new interventions: {overlaps}')
+
+
+@dataclass
+class JointProbability:
+    children: List[Variable]
+
+    def to_latex(self) -> str:
+        return ','.join(child.to_latex() for child in self.children)
+
+    def joint(self, children: XList[Variable]) -> JointProbability:
+        return JointProbability([
+            *self.children,
+            *_upgrade_variables(children),
+        ])
+
+    def __and__(self, children: XList[Variable]) -> JointProbability:
+        return self.joint(children)
+
+
+@dataclass
+class ConditionalProbability:
+    child: Variable
+    parents: List[Variable]
+
+    def to_latex(self) -> str:
+        parents = ','.join(parent.to_latex() for parent in self.parents)
+        return f'{self.child.to_latex()}|{parents}'
+
+    def given(self, parents: XList[Variable]) -> ConditionalProbability:
+        return ConditionalProbability(
+            child=self.child,
+            parents=[*self.parents, *_upgrade_variables(parents)]
+        )
+
+    def __or__(self, parents: XList[Variable]) -> ConditionalProbability:
         return self.given(parents)
 
 
-class Probability(dict):
-    def __init__(self, probability: Condition):
-        super().__init__({'probability': probability})
+class Probability:
+    def __init__(self, probability: Union[Variable, List[Variable], ConditionalProbability, JointProbability]):
+        if isinstance(probability, list):
+            probability = JointProbability(probability)
+        self.probability = probability
 
-    @property
-    def probability(self) -> Condition:
-        return self["probability"]
-
-    def __truediv__(self, other) -> 'Frac':
+    def __truediv__(self, other) -> Frac:
         return Frac(self, other)
 
     def to_latex(self) -> str:
@@ -107,60 +156,28 @@ class Probability(dict):
 P = Probability
 
 
-class Sum(dict):
-    def __init__(
-        self,
-        ranges: Union[None, Variable, List[Variable]],
-        expressions: Union[Probability, 'Expression', List[Union[Probability, 'Expression']]],
-    ):
-        if ranges is None:
-            ranges = []
-        elif isinstance(ranges, Variable):
-            ranges = [ranges]
-        if not isinstance(expressions, list):  # TODO make more specific later
-            expressions = [expressions]
-        super().__init__({
-            'sum': {
-                'ranges': ranges,
-                'expressions': expressions,
-            },
-        })
-
-    @property
-    def ranges(self) -> List[Variable]:
-        return self['sum']['ranges']
-
-    @property
-    def expressions(self) -> List[Union[Probability, 'Expression']]:
-        return self['sum']['expressions']
-
-    def __truediv__(self, other) -> 'Frac':
-        return Frac(self, other)
+@dataclass
+class Sum:
+    expressions: List[Expression]
+    # The variables over which the sum is done. Defaults to an empty list, meaning no variables.
+    ranges: List[Variable] = field(default_factory=list)
 
     def to_latex(self) -> str:
         ranges = ','.join(r.to_latex() for r in self.ranges)
         summands = ' '.join(e.to_latex() for e in self.expressions)
         return f'[ sum_{{{ranges}}} {summands} ]'
 
+    def __truediv__(self, other) -> Frac:
+        return Frac(self, other)
 
-class Frac(dict):
-    def __init__(self, numerator: 'Expression', denominator: 'Expression'):
-        super().__init__({
-            'frac': {
-                'numerator': numerator,
-                'denominator': denominator,
-            },
-        })
 
-    @property
-    def numerator(self) -> 'Expression':
-        return self['frac']['numerator']
-
-    def denominator(self) -> 'Expression':
-        return self['frac']['denominator']
+@dataclass
+class Frac:
+    numerator: Expression
+    denominator: Expression
 
     def to_latex(self) -> str:
-        return f"{self.numerator} / {self.denominator()}"
+        return f"{self.numerator.to_latex()} / {self.denominator.to_latex()}"
 
 
 Expression = Union[Probability, Sum, Frac]

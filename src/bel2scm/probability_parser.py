@@ -1,46 +1,108 @@
 # -*- coding: utf-8 -*-
 
-from pyparsing import (
-    Group, OneOrMore, Optional, Suppress, TokenConverter, Word, alphas, delimitedList, nestedExpr,
-    pyparsing_common as ppc,
+from pyparsing import Group, OneOrMore, Optional, ParseResults, Suppress, Word, alphas, delimitedList
+
+from bel2scm.probability_dsl import (
+    ConditionalProbability, CounterfactualVariable, Fraction, Intervention, JointProbability, Probability, Product, Sum,
+    Variable,
 )
 
-variable = (
-    Word(alphas).setResultsName('name')
-    + Optional(Suppress('_') + ppc.number.setResultsName('index'))
+
+def _parse_variable(_s, _l, tokens: ParseResults):
+    return Variable(tokens[0])
+
+
+letter = Word(alphas)
+
+
+def _set_star(_s, _l, tokens: ParseResults):
+    return 1 == len(tokens.asList())
+
+
+def _make_intervention(_s, _l, tokens: ParseResults):
+    if tokens['star']:
+        return Intervention(name=tokens['name'], star=True)
+    else:
+        return Variable(name=tokens['name'])
+
+
+def _unpack(_s, _l, tokens: ParseResults):
+    return tokens[0]
+
+
+def _make_variable(_s, _l, tokens: ParseResults) -> Variable:
+    if 'interventions' not in tokens:
+        return Variable(name=tokens['name'])
+    return CounterfactualVariable(
+        name=tokens['name'],
+        interventions=tokens['interventions'].asList(),
+    )
+
+
+def _make_probability(_s, _l, tokens: ParseResults) -> Probability:
+    children, parents = tokens['children'].asList(), tokens['parents'].asList()
+    if not parents:
+        return Probability(JointProbability(children=children))
+    if not children:
+        raise ValueError
+    if len(children) > 1:
+        raise ValueError
+    return Probability(ConditionalProbability(child=children[0], parents=parents))
+
+
+def _make_sum(_s, _l, tokens: ParseResults) -> Sum:
+    return Sum(
+        ranges=tokens['ranges'].asList() if 'ranges' in tokens else [],
+        expression=tokens['expression'][0],
+    )
+
+
+def _make_frac(_s, _l, tokens: ParseResults) -> Fraction:
+    return Fraction(
+        numerator=tokens['numerator'][0],
+        denominator=tokens['denominator'][0],
+    )
+
+
+# The suffix "pe" refers to :class:`pyparsing.ParserElement`, which is the
+#  class in pyparsing that everything inherits from
+star_pe = Optional('*')('star').setParseAction(_set_star)
+intervention_pe = letter('name') + star_pe
+intervention_pe.setParseAction(_make_intervention)
+interventions_pe = Optional(
+    Suppress('_{')
+    + delimitedList(Group(intervention_pe).setParseAction(_unpack)).setResultsName('interventions')
+    + Suppress('}')
 )
-inside_stuff = (
-    Group(variable).setResultsName('child')
-    + Group(Optional(Suppress('|') + delimitedList(Group(variable)))).setResultsName('parents')
-)
+variable_pe = letter('name') + interventions_pe
+variable_pe.setParseAction(_make_variable)
 
-conditional = TokenConverter(Suppress('P') + nestedExpr('(', ')', inside_stuff)).setResultsName('probability')
+_variables_pe = delimitedList(Group(variable_pe).setParseAction(_unpack))
+_children_pe = Group(_variables_pe).setResultsName('children')
+_parents_pe = Group(Optional(Suppress('|') + _variables_pe)).setResultsName('parents')
+probability_pe = Suppress('P(') + _children_pe + _parents_pe + Suppress(')')
+probability_pe.setParseAction(_make_probability)
 
-# expr = pyparsing.Forward()
+product_pe = probability_pe + OneOrMore(probability_pe)
+product_pe.setParseAction(lambda _, __, t: Product(t.asList()))
 
-sum_expr = Group(
+expr = product_pe | probability_pe
+
+sum_pe = (
     Suppress('[')
     + Suppress('sum_{')
-    + Group(Optional(delimitedList(Group(variable)))).setResultsName('ranges')
+    + Optional(Group(_variables_pe).setResultsName('ranges'))
     + Suppress('}')
-    + Group(OneOrMore(Group(conditional))).setResultsName('expressions')
+    + expr.setResultsName('expression')
     + Suppress(']')
-).setResultsName('sum')
+)
+sum_pe.setParseAction(_make_sum)
 
-# TODO replace with Forward()
-expr = (conditional | sum_expr)
+expr = sum_pe | expr
 
-frac_expr = Group(
-    Group(expr).setResultsName('numerator')
+fraction_pe = (
+    expr.setResultsName('numerator')
     + Suppress('/')
-    + Group(expr).setResultsName('denominator')
-).setResultsName('frac')
-
-# expr <<= (
-#     frac_expr | sum_expr |  conditional
-# )
-
-'''
-[sum_{W,D,Z,V} [sum_{}P(W|X)][sum_{} [sum_{X,W,Z,Y,V} P(X,W,D,Z,Y,V)]][sum_{}P(Z|D,V)][sum_{} [sum_{X} P(Y|X,D,V,Z,W)P(X|)]][sum_{} [sum_{X,W,D,Z,Y} P(X,W,D,Z,Y,V)]]]
-[[sum_{D,Z,V} [sum_{} [sum_{X,W,Z,Y,V} P(X,W,D,Z,Y,V)]][sum_{}P(Z|D,V)][sum_{} [sum_{X} P(Y|X,D,V,Z,W)P(X|)]][sum_{} [sum_{X,W,D,Z,Y} P(X,W,D,Z,Y,V)]]]]/[ sum_{Y}[sum_{D,Z,V} [sum_{} [sum_{X,W,Z,Y,V} P(X,W,D,Z,Y,V)]][sum_{}P(Z|D,V)][sum_{} [sum_{X} P(Y|X,D,V,Z,W)P(X|)]][sum_{} [sum_{X,W,D,Z,Y} P(X,W,D,Z,Y,V)]]]]
-'''
+    + expr.setResultsName('denominator')
+)
+fraction_pe.setParseAction(_make_frac)

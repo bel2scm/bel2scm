@@ -50,6 +50,10 @@ def _make_probability(_s, _l, tokens: ParseResults) -> Probability:
     return Probability(ConditionalProbability(child=children[0], parents=parents))
 
 
+def _make_product(_s, _l, tokens: ParseResults) -> Product:
+    return Product(tokens.asList())
+
+
 def _make_sum(_s, _l, tokens: ParseResults) -> Sum:
     return Sum(
         ranges=tokens['ranges'].asList() if 'ranges' in tokens else [],
@@ -77,23 +81,23 @@ interventions_pe = Optional(
 variable_pe = letter('name') + interventions_pe
 variable_pe.setParseAction(_make_variable)
 
-_variables_pe = delimitedList(Group(variable_pe).setParseAction(_unpack))
-_children_pe = Group(_variables_pe).setResultsName('children')
-_parents_pe = Group(Optional(Suppress('|') + _variables_pe)).setResultsName('parents')
+variables_pe = delimitedList(Group(variable_pe).setParseAction(_unpack))
+_children_pe = Group(variables_pe).setResultsName('children')
+_parents_pe = Group(Optional(Suppress('|') + variables_pe)).setResultsName('parents')
 probability_pe = Suppress('P(') + _children_pe + _parents_pe + Suppress(')')
 probability_pe.setParseAction(_make_probability)
 
 expr = probability_pe
 
 product_pe = expr + OneOrMore(expr)
-product_pe.setParseAction(lambda _, __, t: Product(t.asList()))
+product_pe.setParseAction(_make_product)
 
 expr = product_pe | probability_pe
 
 sum_pe = (
     Suppress('[')
     + Suppress('sum_{')
-    + Optional(Group(_variables_pe).setResultsName('ranges'))
+    + Optional(Group(variables_pe).setResultsName('ranges'))
     + Suppress('}')
     + expr.setResultsName('expression')
     + Suppress(']')

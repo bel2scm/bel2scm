@@ -2,18 +2,18 @@
 
 from pyparsing import Forward, Group, OneOrMore, Optional, Suppress
 
-from bel2scm.probability_dsl import Expression, Product
-from bel2scm.probability_parser import _make_frac, _make_sum, _variables_pe, probability_pe
+from bel2scm.probability_dsl import Expression
+from bel2scm.probability_parser import _make_frac, _make_product, _make_sum, probability_pe, variables_pe
 
 expr = Forward()
 
 product_pe = expr + OneOrMore(expr)
-product_pe.setParseAction(lambda _, __, t: Product(t.asList()))
+product_pe.setParseAction(_make_product)
 
 sum_pe = (
     Suppress('[')
     + Suppress('sum_{')
-    + Optional(Group(_variables_pe).setResultsName('ranges'))
+    + Optional(Group(variables_pe).setResultsName('ranges'))
     + Suppress('}')
     + expr.setResultsName('expression')
     + Suppress(']')

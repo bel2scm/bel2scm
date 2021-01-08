@@ -3,8 +3,8 @@
 from pyparsing import Group, OneOrMore, Optional, ParseResults, Suppress, Word, alphas, delimitedList
 
 from bel2scm.probability_dsl import (
-    ConditionalProbability, CounterfactualVariable, Fraction, Intervention, JointProbability, Probability, Product, Sum,
-    Variable,
+    ConditionalProbability, CounterfactualVariable, Expression, Fraction, Intervention, JointProbability, Probability,
+    Product, Sum, Variable,
 )
 
 
@@ -83,7 +83,9 @@ _parents_pe = Group(Optional(Suppress('|') + _variables_pe)).setResultsName('par
 probability_pe = Suppress('P(') + _children_pe + _parents_pe + Suppress(')')
 probability_pe.setParseAction(_make_probability)
 
-product_pe = probability_pe + OneOrMore(probability_pe)
+expr = probability_pe
+
+product_pe = expr + OneOrMore(expr)
 product_pe.setParseAction(lambda _, __, t: Product(t.asList()))
 
 expr = product_pe | probability_pe
@@ -98,7 +100,7 @@ sum_pe = (
 )
 sum_pe.setParseAction(_make_sum)
 
-expr = sum_pe | expr
+expr = sum_pe | product_pe | probability_pe
 
 fraction_pe = (
     expr.setResultsName('numerator')
@@ -106,3 +108,16 @@ fraction_pe = (
     + expr.setResultsName('denominator')
 )
 fraction_pe.setParseAction(_make_frac)
+
+expr = fraction_pe | sum_pe | product_pe | probability_pe
+
+
+def parse(s: str) -> Expression:
+    """Parse an expression."""
+    x = expr.parseString(s)
+    return x.asList()[0]
+
+
+if __name__ == '__main__':
+    print(parse('P(A)'))
+    print(parse('[ sum_{} P(A|B) ]'))

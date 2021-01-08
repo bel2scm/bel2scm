@@ -109,6 +109,7 @@ class TestDSL(unittest.TestCase):
     def test_joint_probability(self):
         # Shortcut for list building
         self.assert_text('P(A,B)', P([A, B]))
+        self.assert_text('P(A,B)', P(A, B))
         self.assert_text('P(A,B)', P(A & B))
         self.assert_text('P(A,B,C)', P(A & B & C))
 

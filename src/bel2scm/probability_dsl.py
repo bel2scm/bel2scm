@@ -213,12 +213,13 @@ class Probability(Expression):
         probability: Union[Variable, List[Variable], ConditionalProbability, JointProbability],
         *args,
     ):
-        if args:
-            if not isinstance(probability, Variable):
+        if isinstance(probability, Variable):
+            if not args:
+                probability = [probability]
+            elif not all(isinstance(p, Variable) for p in args):
                 raise ValueError
-            if not all(isinstance(p, Variable) for p in args):
-                raise ValueError
-            probability = [probability, *args]
+            else:
+                probability = [probability, *args]
         if isinstance(probability, list):
             probability = JointProbability(probability)
         self.probability = probability

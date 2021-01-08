@@ -229,6 +229,9 @@ class Probability(Expression):
     def to_latex(self) -> str:
         return f'P({self.probability.to_latex()})'
 
+    def __repr__(self):
+        return f'P({repr(self.probability)})'
+
     def __mul__(self, other: Expression) -> Expression:
         if isinstance(other, Product):
             return Product([self, *other.expressions])

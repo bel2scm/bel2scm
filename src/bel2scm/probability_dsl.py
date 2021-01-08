@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import itertools as itt
 from dataclasses import dataclass, field
-from typing import List, TypeVar, Union
+from typing import Callable, List, Tuple, TypeVar, Union
 
 __all__ = [
     'Variable',
@@ -12,7 +12,7 @@ __all__ = [
     'P',
     'Probability',
     'Sum',
-    'Frac',
+    'Fraction',
     'Expression',
 ]
 
@@ -146,33 +146,63 @@ class Probability:
             probability = JointProbability(probability)
         self.probability = probability
 
-    def __truediv__(self, other) -> Frac:
-        return Frac(self, other)
+    def __truediv__(self, other) -> Fraction:
+        return Fraction(self, other)
 
     def to_latex(self) -> str:
         return f'P({self.probability.to_latex()})'
+
+    def __mul__(self, other: Expression) -> Product:
+        if isinstance(other, Product):
+            return Product([self, *other.expressions])
+        else:
+            return Product([self, other])
 
 
 P = Probability
 
 
 @dataclass
-class Sum:
+class Product:
     expressions: List[Expression]
+
+    def __mul__(self, other):
+        if isinstance(other, list):
+            return Product([*self.expressions, *other])
+        else:
+            return Product([*self.expressions, other])
+
+    def to_latex(self):
+        return ' '.join(e.to_latex() for e in self.expressions)
+
+
+@dataclass
+class Sum:
+    expression: Expression
     # The variables over which the sum is done. Defaults to an empty list, meaning no variables.
     ranges: List[Variable] = field(default_factory=list)
 
     def to_latex(self) -> str:
         ranges = ','.join(r.to_latex() for r in self.ranges)
-        summands = ' '.join(e.to_latex() for e in self.expressions)
-        return f'[ sum_{{{ranges}}} {summands} ]'
+        return f'[ sum_{{{ranges}}} {self.expression.to_latex()} ]'
 
-    def __truediv__(self, other) -> Frac:
-        return Frac(self, other)
+    def __truediv__(self, other) -> Fraction:
+        return Fraction(self, other)
+
+    def __class_getitem__(cls, ranges: Union[Variable, Tuple[Variable, ...]]) -> Callable[[Expression], Sum]:
+        def _make(expression: Expression) -> Sum:
+            nonlocal ranges
+            if isinstance(ranges, tuple):
+                ranges = list(ranges)
+            else:
+                ranges = [ranges]
+            return Sum(ranges=ranges, expression=expression)
+
+        return _make
 
 
 @dataclass
-class Frac:
+class Fraction:
     numerator: Expression
     denominator: Expression
 
@@ -180,4 +210,4 @@ class Frac:
         return f"{self.numerator.to_latex()} / {self.denominator.to_latex()}"
 
 
-Expression = Union[Probability, Sum, Frac]
+Expression = Union[Probability, Sum, Fraction, Product]

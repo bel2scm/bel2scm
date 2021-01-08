@@ -6,7 +6,7 @@ import itertools as itt
 import unittest
 
 from bel2scm.probability_dsl import (
-    ConditionalProbability, CounterfactualVariable, Frac, Intervention, JointProbability, P, Sum, Variable,
+    ConditionalProbability, CounterfactualVariable, Fraction, Intervention, JointProbability, P, Sum, Variable,
 )
 from tests.probability_constants import A, B, C, D, Q, S, T, W, X, Y, Z
 
@@ -110,56 +110,60 @@ class TestDSL(unittest.TestCase):
         self.assert_latex('P(A,B)', P(A & B))
         self.assert_latex('P(A,B,C)', P(A & B & C))
 
-    def test_stringify(self):
+    def test_sum(self):
         """Test stringifying DSL instances."""
+        # Sum with no variables
+        self.assert_latex(
+            "[ sum_{} P(A|B) P(C|D) ]",
+            Sum(P(A | B) * P(C | D)),
+        )
+        # Sum with one variable
+        self.assert_latex(
+            "[ sum_{S} P(A|B) P(C|D) ]",
+            Sum(P(A | B) * P(C | D), [S]),
+        )
+        # Sum with two variables
         self.assert_latex(
             "[ sum_{S,T} P(A|B) P(C|D) ]",
-            Sum(
-                [
-                    P(A | B),
-                    P(C | D),
-                ],
-                ranges=[S, T],
-            ),
+            Sum(P(A | B) * P(C | D), [S, T]),
+        )
+
+        # CRAZY sum syntax! pycharm doesn't like this usage of __class_getitem__ though so idk if we'll keep this
+        self.assert_latex(
+            "[ sum_{S} P(A|B) P(C|D) ]",
+            Sum[S](P(A | B) * P(C | D)),
+        )
+        self.assert_latex(
+            "[ sum_{S,T} P(A|B) P(C|D) ]",
+            Sum[S, T](P(A | B) * P(C | D)),
         )
 
         # Sum with sum inside
         self.assert_latex(
             "[ sum_{S,T} P(A|B) [ sum_{Q} P(C|D) ] ]",
-            Sum(
-                ranges=[S, T],
-                expressions=[
-                    P(A | B),
-                    Sum(
-                        ranges=[Q],
-                        expressions=[
-                            P(C | D),
-                        ],
-                    ),
-                ],
-            ),
+            Sum(P(A | B) * Sum(P(C | D), [Q]), [S, T])
         )
 
     def test_jeremy(self):
         self.assert_latex(
             '[ sum_{W} P(Y_{Z*,W},X) P(D) P(Z_{D}) P(W_{X*}) ]',
-            Sum([P((Y @ ~Z @ W) & X), P(D), P(Z @ D), P(W @ ~X)], [W]),
+            Sum(P((Y @ ~Z @ W) & X) * P(D) * P(Z @ D) * P(W @ ~X), [W]),
         )
 
         self.assert_latex(
             '[ sum_{W} P(Y_{Z*,W},X) P(W_{X*}) ]',
-            Sum([P(Y @ ~Z @ W & X), P(W @ ~X)], [W]),
+            Sum(P(Y @ ~Z @ W & X) * P(W @ ~X), [W]),
         )
 
         self.assert_latex(
             '[ sum_{W} P(Y_{Z,W},X) P(W_{X*}) ] / [ sum_{Y} [ sum_{W} P(Y_{Z,W},X) P(W_{X*}) ] ]',
-            Frac(
-                Sum([P(Y @ Z @ W & X), P(W @ ~X)], [W]),
-                Sum([Sum([P(Y @ Z @ W & X), P(W @ ~X)], [W])], [Y]),
+            Fraction(
+                Sum(P(Y @ Z @ W & X) * P(W @ ~X), [W]),
+                Sum(Sum(P(Y @ Z @ W & X) * P(W @ ~X), [W]), [Y]),
             ),
         )
 
         self.assert_latex(
             '[ sum_{D} P(Y_{Z*,W},X) P(D) P(Z_{D}) P(W_{X*}) ]',
-            Sum([P(Y @ ~Z @ W & X), P(D), P(Z @ D), P(W @ ~X)], [D]),
+            Sum(P(Y @ ~Z @ W & X) * P(D) * P(Z @ D) * P(W @ ~X), [D]),
         )

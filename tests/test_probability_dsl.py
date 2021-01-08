@@ -10,6 +10,8 @@ from bel2scm.probability_dsl import (
 )
 from tests.probability_constants import A, B, C, D, Q, S, T, W, X, Y, Z
 
+V = Variable('V')
+
 
 class TestDSL(unittest.TestCase):
     """Tests for the stringifying instances of the probability DSL."""
@@ -167,3 +169,20 @@ class TestDSL(unittest.TestCase):
             '[ sum_{D} P(Y_{Z*,W},X) P(D) P(Z_{D}) P(W_{X*}) ]',
             Sum(P(Y @ ~Z @ W & X) * P(D) * P(Z @ D) * P(W @ ~X), [D]),
         )
+
+        self.assert_text(
+            '[ sum_{W,D,Z,V} [ sum_{} P(W|X) ] [ sum_{} [ sum_{X,W,Z,Y,V} P(X,W,D,Z,Y,V) ] ]'
+            ' [ sum_{} P(Z|D,V) ] [ sum_{} [ sum_{X} P(Y|X,D,V,Z,W) P(X) ] ]'
+            ' [ sum_{} [ sum_{X,W,D,Z,Y} P(X,W,D,Z,Y,V) ] ] ]',
+            Sum[W, D, Z, V](
+                Sum(P(W | X))
+                * Sum(Sum[X, W, Z, Y, V](P(X, W, D, Z, Y, V)))
+                * Sum(P(Z | [D, V]))
+                * Sum(Sum[X](P(Y | [X, D, V, Z, W]) * P(X)))
+                * Sum(Sum[X, W, D, Z, Y](P(X, W, D, Z, Y, V)))
+            ),
+        )
+
+        '''
+        [[sum_{D,Z,V} [sum_{} [sum_{X,W,Z,Y,V} P(X,W,D,Z,Y,V)]][sum_{}P(Z|D,V)][sum_{} [sum_{X} P(Y|X,D,V,Z,W)P(X|)]][sum_{} [sum_{X,W,D,Z,Y} P(X,W,D,Z,Y,V)]]]]/[ sum_{Y}[sum_{D,Z,V} [sum_{} [sum_{X,W,Z,Y,V} P(X,W,D,Z,Y,V)]][sum_{}P(Z|D,V)][sum_{} [sum_{X} P(Y|X,D,V,Z,W)P(X|)]][sum_{} [sum_{X,W,D,Z,Y} P(X,W,D,Z,Y,V)]]]]
+        '''

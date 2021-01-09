@@ -1,5 +1,6 @@
 graft src
 graft docs
+graft tests
 prune notebooks
 
 # FIXME
@@ -7,7 +8,6 @@ prune EGFR
 prune IGF_codes
 prune output
 prune sample_data
-prune Tests
 
 global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store *.gpickle
 

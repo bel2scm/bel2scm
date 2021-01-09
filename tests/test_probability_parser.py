@@ -7,7 +7,8 @@ import unittest
 from pyparsing import ParserElement
 
 from bel2scm.probability_dsl import P, Sum
-from bel2scm.probability_parser import fraction_pe, probability_pe, sum_pe, variable_pe
+from bel2scm.probability_parser_grammar import fraction_pe, grammar, sum_pe
+from bel2scm.probability_parser_utils import probability_pe, variable_pe
 from tests.probability_constants import *
 
 
@@ -17,7 +18,7 @@ class TestGrammar(unittest.TestCase):
     def assert_many(self, expressions, parser_element: ParserElement, direct: bool = True):
         """Help testing many."""
         for expression in expressions:
-            with self.subTest(expr=expression.to_text()):
+            with self.subTest(expr=expression.to_text(), parser_element=parser_element.name):
                 self.assert_parse_equal(expression, parser_element, direct=direct)
 
     def assert_parse_equal(self, expression, parser_element: ParserElement, direct: bool = True):
@@ -54,44 +55,47 @@ class TestGrammar(unittest.TestCase):
 
     def test_probability(self):
         """Tests for probabilities."""
-        self.assert_many(
-            [
-                P(A),
-                P(A, B),
-                P(A | B),
-                P(A @ X | B),
-                P(A @ ~X | B),
-                P(A | B @ Y),
-                P(A | B @ ~Y),
-                P(A @ X | B @ ~Y),
-                P(A @ X | B @ ~Y | C @ Z),
-                P(A | [B, C]),
-                P(A, B, C),
-            ],
-            probability_pe,
-        )
+        for g in (probability_pe, grammar):
+            self.assert_many(
+                [
+                    P(A),
+                    P(A, B),
+                    P(A | B),
+                    P(A @ X | B),
+                    P(A @ ~X | B),
+                    P(A | B @ Y),
+                    P(A | B @ ~Y),
+                    P(A @ X | B @ ~Y),
+                    P(A @ X | B @ ~Y | C @ Z),
+                    P(A | [B, C]),
+                    P(A, B, C),
+                ],
+                g,
+            )
 
     def test_sum(self):
         """Tests for sums."""
-        self.assert_many(
-            [
-                Sum(P(A)),
-                Sum(P(A, B)),
-                Sum(P(A | B)),
-                Sum(P(A | B) * P(B)),
-                Sum[B](P(A | B) * P(B)),
-                Sum[B, C](P(A | B) * P(B)),
-            ],
-            sum_pe,
-        )
+        for g in (sum_pe, grammar):
+            self.assert_many(
+                [
+                    Sum(P(A)),
+                    Sum(P(A, B)),
+                    Sum(P(A | B)),
+                    Sum(P(A | B) * P(B)),
+                    Sum[B](P(A | B) * P(B)),
+                    Sum[B, C](P(A | B) * P(B)),
+                ],
+                g,
+            )
 
     def test_fraction(self):
         """Tests for fractions."""
-        self.assert_many(
-            [
-                Sum(P(A)) / P(B),
-                Sum(P(A, B)) / P(A),
-                Sum[B](P(A | B) * P(B)) / Sum(P(A | B) * P(B)),
-            ],
-            fraction_pe,
-        )
+        for g in (fraction_pe, grammar):
+            self.assert_many(
+                [
+                    Sum(P(A)) / P(B),
+                    Sum(P(A, B)) / P(A),
+                    Sum[B](P(A | B) * P(B)) / Sum(P(A | B) * P(B)),
+                ],
+                g,
+            )

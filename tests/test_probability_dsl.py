@@ -159,7 +159,7 @@ class TestDSL(unittest.TestCase):
         )
 
         self.assert_text(
-            '[ sum_{W} P(Y_{Z,W},X) P(W_{X*}) ] / [ sum_{Y} [ sum_{W} P(Y_{Z,W},X) P(W_{X*}) ] ]',
+            'frac_{[ sum_{W} P(Y_{Z,W},X) P(W_{X*}) ]}{[ sum_{Y} [ sum_{W} P(Y_{Z,W},X) P(W_{X*}) ] ]}',
             Fraction(
                 Sum(P(Y @ Z @ W & X) * P(W @ ~X), [W]),
                 Sum(Sum(P(Y @ Z @ W & X) * P(W @ ~X), [W]), [Y]),

@@ -311,7 +311,7 @@ class Fraction(Expression):
     denominator: Expression
 
     def to_text(self) -> str:
-        return f'{self.numerator.to_text()} / {self.denominator.to_text()}'
+        return f'frac_{{{self.numerator.to_text()}}}{{{self.denominator.to_text()}}}'
 
     def to_latex(self) -> str:
         return rf'\frac{{{self.numerator.to_latex()}}}{{{self.denominator.to_latex()}}}'

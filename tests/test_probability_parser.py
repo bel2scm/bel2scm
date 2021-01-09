@@ -6,10 +6,9 @@ import unittest
 
 from pyparsing import ParserElement
 
-from bel2scm.probability_dsl import P, Sum
+from bel2scm.probability_dsl import A, B, C, P, Sum, X, Y, Z
 from bel2scm.probability_parser_grammar import fraction_pe, grammar, sum_pe
 from bel2scm.probability_parser_utils import probability_pe, variable_pe
-from tests.probability_constants import *
 
 
 class TestGrammar(unittest.TestCase):

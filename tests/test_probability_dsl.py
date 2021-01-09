@@ -6,9 +6,9 @@ import itertools as itt
 import unittest
 
 from bel2scm.probability_dsl import (
-    ConditionalProbability, CounterfactualVariable, Fraction, Intervention, JointProbability, P, Sum, Variable,
+    A, B, C, ConditionalProbability, CounterfactualVariable, D, Fraction, Intervention, JointProbability, P, Q, S, Sum,
+    T, Variable, W, X, Y, Z,
 )
-from tests.probability_constants import A, B, C, D, Q, S, T, W, X, Y, Z
 
 V = Variable('V')
 
